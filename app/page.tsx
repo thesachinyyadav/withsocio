@@ -404,9 +404,9 @@ const WithSocioPage = () => {
     },
     {
       quote: "With Socio combines creativity with strategy. They don't just create content, they build brands that resonate with audiences.",
-      author: "Sachin Yadav",
-      role: "Founder, SOCIO",
-      avatar: "SY",
+      author: "Jebin Jaison",
+      role: "Founder, WITHSOCIO",
+      avatar: "JJ",
       hasComparison: false
     }
   ];
