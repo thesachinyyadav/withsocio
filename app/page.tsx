@@ -149,24 +149,24 @@ const WithSocioPage = () => {
           name: "Essential",
           videos: "Based on needs",
           description: "Perfect for getting started with video content",
-          price: "From 8,000",
-          features: ["HD Quality", "Basic Editing", "2 Revisions", "5-Day Delivery"],
+          price: "From 15,000",
+          features: ["30 Reels","HD Quality", "Basic Editing", "2 Revisions", "5-Day Delivery"],
           highlight: false
         },
         {
           name: "Professional",
           videos: "Customizable",
           description: "Ideal for consistent content creation",
-          price: "From 15,000",
-          features: ["4K Quality", "Advanced Editing", "4 Revisions", "Priority Support", "Color Grading"],
+          price: "From 35,000",
+          features: ["30 Reels","HD Videography", "Advanced Editing", "4 Revisions", "Priority Support", "Color Grading"],
           highlight: true
         },
         {
-          name: "Custom",
-          videos: "Your requirements",
+          name: "End to End Content Production",
+          videos: "Scripting+Videography+Editing",
           description: "Tailored packages for your specific needs",
-          price: "Let's Talk",
-          features: ["4K + Drone", "Premium Editing", "Flexible Revisions", "Dedicated Team", "VFX & Motion Graphics"],
+          price: "48,000",
+          features: ["30 Reels","4K Videography + ", "Premium Editing", "Flexible Revisions", "Dedicated Team", "VFX & Motion Graphics"],
           highlight: false
         }
       ],
@@ -193,26 +193,26 @@ const WithSocioPage = () => {
       packages: [
         {
           name: "Starter",
-          videos: "Based on needs",
+          videos: "Content Strategy + Basic Edits",
           description: "Begin your personal branding journey",
-          price: "From 10,000",
-          features: ["Brand Audit", "Content Strategy", "Social Templates"],
+          price: "From 18,000",
+          features: ["30 Reels","2 Content Strategy Sessions", "Basic Editing", "Social Templates"],
           highlight: false
         },
         {
           name: "Growth",
           videos: "Customizable",
           description: "Build your visibility and reach",
-          price: "From 18,000",
-          features: ["Everything in Starter", "Content Creation", "LinkedIn Makeover", "Monthly Check-ins"],
+          price: "From 40,000",
+          features: ["30 Reels","5 Content Strategy Sessions", "Content Creation", "HD Videography", "Advanced Editing"],
           highlight: true
         },
         {
-          name: "Custom",
-          videos: "Your requirements",
+          name: "End to End Content Production",
+          videos: "Scripting+Videography+Editing",
           description: "Complete branding tailored for you",
-          price: "Let's Talk",
-          features: ["Everything in Growth", "Premium Content", "Engagement Strategy", "1-on-1 Sessions"],
+          price: "52,000",
+          features: ["30 Reels","30 Sessions of Content Strategy", "4K Videography", "Premium Editing", "Flexible Revisions", "Dedicated Team",],
           highlight: false
         }
       ],
@@ -241,7 +241,7 @@ const WithSocioPage = () => {
           name: "Landing Page",
           videos: "Single Page",
           description: "High-converting landing page for your business",
-          price: "From 5,000",
+          price: "From 10,000",
           features: ["Custom Design", "Mobile Responsive", "Contact Form", "Basic SEO", "1 Revision"],
           highlight: false
         },
@@ -249,7 +249,7 @@ const WithSocioPage = () => {
           name: "Business Website",
           videos: "Multi-page",
           description: "Complete website for your business",
-          price: "From 12,000",
+          price: "From 17,000",
           features: ["Custom Multi-page", "CMS Integration", "Blog Setup", "Advanced SEO", "3 Revisions", "Support"],
           highlight: true
         },
@@ -333,7 +333,7 @@ const WithSocioPage = () => {
           name: "Essential",
           videos: "Single Channel",
           description: "Start with one communication channel",
-          price: "From 6,000",
+          price: "From 8,000",
           features: ["1 Channel (SMS/Email/WA)", "Contact Management", "Basic Templates", "Simple Analytics"],
           highlight: false
         },
