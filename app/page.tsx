@@ -1041,7 +1041,7 @@ const WithSocioPage = () => {
                 WhatsApp Us
               </a>
               <a
-                href="https://calendar.app.google/xXQ2RKPcjoEV9tP37"
+                href="https://calendar.app.google/7WqvggmtHta6vDh1A"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-3 bg-[#4285F4] text-white px-10 py-5 rounded-full font-bold text-lg hover:bg-[#3367D6] transition-all"
