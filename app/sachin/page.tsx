@@ -52,6 +52,7 @@ export default function AdminDashboard() {
   const [adminToken, setAdminToken] = useState("");
   const [authError, setAuthError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSendingMail, setIsSendingMail] = useState(false);
 
   const fetchApplicants = useCallback(async () => {
     if (!adminToken) {
@@ -127,6 +128,39 @@ export default function AdminDashboard() {
     );
     if (selectedApplicant?.id === id) {
       setSelectedApplicant((prev) => (prev ? { ...prev, status } : null));
+    }
+  };
+
+  const sendCandidateMail = async (type: "shortlisted" | "selected") => {
+    if (!selectedApplicant) return;
+    setIsSendingMail(true);
+    try {
+      const response = await fetch("/api/admin/notify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": adminToken,
+        },
+        body: JSON.stringify({
+          type,
+          email: selectedApplicant.email,
+          fullName: selectedApplicant.full_name,
+          roleInterest: selectedApplicant.role_interest,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message = payload?.error || "Failed to send email.";
+        alert(message);
+        return;
+      }
+
+      alert(type === "shortlisted" ? "Shortlist email sent." : "Selection email sent.");
+    } catch (error) {
+      alert("Failed to send email.");
+    } finally {
+      setIsSendingMail(false);
     }
   };
 
@@ -516,6 +550,23 @@ export default function AdminDashboard() {
                           {status.charAt(0).toUpperCase() + status.slice(1)}
                         </button>
                       ))}
+                    </div>
+                    <h4 className="text-sm font-medium text-gray-500 mt-6 mb-3">Send Email</h4>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => sendCandidateMail("shortlisted")}
+                        disabled={isSendingMail}
+                        className="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-blue-100 text-blue-800 hover:bg-blue-200 disabled:opacity-60"
+                      >
+                        {isSendingMail ? "Sending..." : "Send Shortlist Email"}
+                      </button>
+                      <button
+                        onClick={() => sendCandidateMail("selected")}
+                        disabled={isSendingMail}
+                        className="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-green-100 text-green-800 hover:bg-green-200 disabled:opacity-60"
+                      >
+                        {isSendingMail ? "Sending..." : "Send Selection Email"}
+                      </button>
                     </div>
                   </div>
                 </div>
