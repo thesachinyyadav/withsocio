@@ -22,11 +22,11 @@ interface FormData {
 }
 
 const roleOptions = [
-  "Database Handling",
-  "Frontend Development",
-  "Operations",
-  "Content Writing",
-  "Marketing",
+  { name: "Database Handling", icon: "🗄️", color: "from-orange-500 to-amber-500" },
+  { name: "Frontend Development", icon: "💻", color: "from-purple-500 to-indigo-500" },
+  { name: "Operations", icon: "⚙️", color: "from-cyan-500 to-teal-500" },
+  { name: "Content Writing", icon: "✍️", color: "from-pink-500 to-rose-500" },
+  { name: "Marketing", icon: "📈", color: "from-green-500 to-emerald-500" },
 ];
 
 export default function CareersApplicationPage() {
@@ -113,22 +113,29 @@ export default function CareersApplicationPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#154CB3] via-[#0f3d8f] to-[#0a2d6b] flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl p-8 md:p-12 max-w-lg w-full text-center shadow-2xl animate-fade-in">
+      <div className="min-h-screen bg-gradient-to-br from-[#154CB3] via-[#0f3d8f] to-[#0a2d6b] flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Background decorations */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-300 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+        
+        <div className="bg-white rounded-3xl p-8 md:p-12 max-w-lg w-full text-center shadow-2xl animate-fade-in relative z-10">
           {/* Logo */}
-          <div className="mb-6">
+          <div className="mb-8">
             <Image
               src="/socio.svg"
               alt="SOCIO"
-              width={120}
-              height={35}
+              width={140}
+              height={42}
               className="mx-auto"
             />
           </div>
           
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          {/* Success Icon with animation */}
+          <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg success-icon">
             <svg
-              className="w-8 h-8 text-green-600"
+              className="w-10 h-10 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -136,30 +143,35 @@ export default function CareersApplicationPage() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2.5}
+                strokeWidth={3}
                 d="M5 13l4 4L19 7"
               />
             </svg>
           </div>
           
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-            Application Submitted!
-          </h2>
-          
-          <p className="text-gray-600 mb-8 leading-relaxed">
-            Thank you for applying to <span className="font-semibold text-[#154CB3]">SOCIO</span>. We&apos;ve received your application and will review it shortly. You&apos;ll hear from us soon!
-          </p>
-          
-          <div className="bg-gray-50 rounded-xl p-4 mb-6">
-            <p className="text-xs text-gray-500 mb-1">Application Reference</p>
-            <p className="font-mono font-semibold text-[#154CB3]">
-              {campusId?.toUpperCase()}-{Date.now().toString(36).toUpperCase()}
+          <div className="success-content">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+              Application Submitted! 🎉
+            </h2>
+            
+            <p className="text-gray-600 mb-8 leading-relaxed text-lg">
+              Thank you for applying to <span className="font-bold text-[#154CB3]">SOCIO</span>. We&apos;ve received your application and will review it shortly.
             </p>
+            
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-5 mb-6 border border-blue-100">
+              <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide font-medium">Application Reference</p>
+              <p className="font-mono font-bold text-xl text-[#154CB3]">
+                {campusId?.toUpperCase()}-{Date.now().toString(36).toUpperCase()}
+              </p>
+            </div>
+            
+            <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
+              <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <span>Confirmation email sent to your inbox</span>
+            </div>
           </div>
-          
-          <p className="text-sm text-gray-500">
-            A confirmation email has been sent to your inbox.
-          </p>
         </div>
       </div>
     );
@@ -197,14 +209,22 @@ export default function CareersApplicationPage() {
 
       {/* Form */}
       <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Progress Indicator */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between text-xs font-medium text-gray-500">
+              <span>Complete all sections to submit</span>
+              <span className="text-[#154CB3]">5 sections</span>
+            </div>
+          </div>
+
           {/* Basic Details Section */}
-          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 bg-[#154CB3] text-white rounded-lg flex items-center justify-center text-sm">
+          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg card-hover border border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+              <span className="w-9 h-9 bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-md">
                 1
               </span>
-              Basic Details
+              <span>Basic Details</span>
             </h2>
 
             <div className="space-y-5">
@@ -286,12 +306,12 @@ export default function CareersApplicationPage() {
           </section>
 
           {/* Role Interest Section */}
-          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 bg-[#154CB3] text-white rounded-lg flex items-center justify-center text-sm">
+          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg card-hover border border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+              <span className="w-9 h-9 bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-md">
                 2
               </span>
-              Role Interest
+              <span>Role Interest</span>
             </h2>
 
             <div className="space-y-5">
@@ -299,26 +319,34 @@ export default function CareersApplicationPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Which area are you most interested in? <span className="text-red-500">*</span>
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {roleOptions.map((role) => (
                     <label
-                      key={role}
-                      className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                        formData.roleInterest === role
-                          ? "border-[#154CB3] bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300"
+                      key={role.name}
+                      className={`relative flex flex-col items-center gap-2 p-5 border-2 rounded-2xl cursor-pointer transition-all duration-300 group ${
+                        formData.roleInterest === role.name
+                          ? "border-[#154CB3] bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg scale-[1.02]"
+                          : "border-gray-200 hover:border-blue-300 hover:bg-gray-50 hover:shadow-md"
                       }`}
                     >
                       <input
                         type="radio"
                         name="roleInterest"
-                        value={role}
-                        checked={formData.roleInterest === role}
+                        value={role.name}
+                        checked={formData.roleInterest === role.name}
                         onChange={handleInputChange}
                         required
-                        className="w-4 h-4 text-[#154CB3] focus:ring-[#154CB3]"
+                        className="sr-only"
                       />
-                      <span className="text-gray-700 font-medium">{role}</span>
+                      <span className="text-3xl mb-1 transform group-hover:scale-110 transition-transform duration-300">{role.icon}</span>
+                      <span className={`text-sm font-semibold text-center ${formData.roleInterest === role.name ? 'text-[#154CB3]' : 'text-gray-700'}`}>{role.name}</span>
+                      {formData.roleInterest === role.name && (
+                        <div className="absolute top-2 right-2 w-5 h-5 bg-[#154CB3] rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
                     </label>
                   ))}
                 </div>
@@ -341,12 +369,12 @@ export default function CareersApplicationPage() {
           </section>
 
           {/* Quick Screening Section */}
-          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 bg-[#154CB3] text-white rounded-lg flex items-center justify-center text-sm">
+          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg card-hover border border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+              <span className="w-9 h-9 bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-md">
                 3
               </span>
-              Quick Screening
+              <span>Quick Screening</span>
             </h2>
 
             <div className="space-y-5">
@@ -412,12 +440,12 @@ export default function CareersApplicationPage() {
           </section>
 
           {/* Practical Check Section */}
-          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 bg-[#154CB3] text-white rounded-lg flex items-center justify-center text-sm">
+          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg card-hover border border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+              <span className="w-9 h-9 bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-md">
                 4
               </span>
-              Practical Check
+              <span>Practical Check</span>
             </h2>
 
             <div className="space-y-5">
@@ -461,12 +489,12 @@ export default function CareersApplicationPage() {
           </section>
 
           {/* Short Response Section */}
-          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 bg-[#154CB3] text-white rounded-lg flex items-center justify-center text-sm">
+          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg card-hover border border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+              <span className="w-9 h-9 bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-md">
                 5
               </span>
-              Short Response
+              <span>Short Response</span>
             </h2>
 
             <div className="space-y-5">
@@ -537,47 +565,49 @@ export default function CareersApplicationPage() {
           )}
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-[#154CB3] hover:bg-[#0f3d8f] text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-          >
-            {isSubmitting ? (
-              <>
-                <svg
-                  className="animate-spin w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                Submitting Application...
-              </>
-            ) : (
-              <>
-                Submit Application
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </>
-            )}
-          </button>
+          <div className="pt-4">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-gradient-to-r from-[#154CB3] to-[#1e6fd4] hover:from-[#0f3d8f] hover:to-[#154CB3] text-white font-bold py-5 px-8 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] text-lg"
+            >
+              {isSubmitting ? (
+                <>
+                  <svg
+                    className="animate-spin w-6 h-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  Submitting Application...
+                </>
+              ) : (
+                <>
+                  Submit Application
+                  <svg className="w-6 h-6 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </>
+              )}
+            </button>
 
-          <p className="text-center text-gray-500 text-sm">
-            By submitting this form, you agree to our terms and conditions.
-          </p>
+            <p className="text-center text-gray-400 text-sm mt-4">
+              By submitting this form, you agree to our terms and conditions.
+            </p>
+          </div>
         </form>
       </div>
 
