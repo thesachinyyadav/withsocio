@@ -19,16 +19,32 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data, error } = await supabaseAdmin
+  const { searchParams } = new URL(request.url);
+  const page = Number(searchParams.get("page") || "1");
+  const limit = Number(searchParams.get("limit") || "20");
+  const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+  const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 100) : 20;
+  const from = (safePage - 1) * safeLimit;
+  const to = from + safeLimit - 1;
+
+  const { data, error, count } = await supabaseAdmin
     .from("internship_applications")
-    .select("*")
-    .order("created_at", { ascending: false });
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({
+    data,
+    pagination: {
+      page: safePage,
+      limit: safeLimit,
+      total: count || 0,
+    },
+  });
 }
 
 export async function POST(request: Request) {

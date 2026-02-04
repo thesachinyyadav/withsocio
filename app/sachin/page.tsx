@@ -53,6 +53,9 @@ export default function AdminDashboard() {
   const [authError, setAuthError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSendingMail, setIsSendingMail] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(20);
+  const [totalApplicants, setTotalApplicants] = useState(0);
 
   const fetchApplicants = useCallback(async () => {
     if (!adminToken) {
@@ -60,7 +63,7 @@ export default function AdminDashboard() {
     }
     setIsLoading(true);
     try {
-      const response = await fetch("/api/admin/applicants", {
+      const response = await fetch(`/api/admin/applicants?page=${page}&limit=${pageSize}`, {
         headers: {
           "x-admin-password": adminToken,
         },
@@ -75,19 +78,22 @@ export default function AdminDashboard() {
 
       const payload = await response.json();
       const data = payload?.data as Applicant[] | undefined;
+      const total = payload?.pagination?.total as number | undefined;
 
       if (!data || data.length === 0) {
         console.log("No applicants found");
         setApplicants([]);
+        setTotalApplicants(total || 0);
       } else {
         setApplicants(data);
+        setTotalApplicants(total || 0);
       }
     } catch (err) {
       console.error("Fetch error:", err);
       alert("Failed to load applicants. Please check console for details.");
     }
     setIsLoading(false);
-  }, [adminToken]);
+  }, [adminToken, page, pageSize]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -175,6 +181,12 @@ export default function AdminDashboard() {
     return matchesRole && matchesStatus && matchesSearch;
   });
 
+  const totalPages = Math.max(1, Math.ceil(totalApplicants / pageSize));
+
+  useEffect(() => {
+    setPage(1);
+  }, [filterRole, filterStatus, searchQuery]);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-IN", {
       day: "numeric",
@@ -254,7 +266,7 @@ export default function AdminDashboard() {
               {isLoading ? "Loading..." : "Refresh"}
             </button>
             <span className="text-sm text-gray-600">
-              Total: <span className="font-semibold">{applicants.length}</span> applicants
+              Total: <span className="font-semibold">{totalApplicants}</span> applicants
             </span>
             <button
               onClick={() => setIsAuthenticated(false)}
@@ -312,6 +324,27 @@ export default function AdminDashboard() {
             <h2 className="font-semibold text-gray-700 mb-3">
               Applicants ({filteredApplicants.length})
             </h2>
+            <div className="flex items-center justify-between bg-white rounded-xl p-3 border border-gray-200 text-sm text-gray-600">
+              <span>
+                Page <span className="font-semibold">{page}</span> of <span className="font-semibold">{totalPages}</span>
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  disabled={page <= 1 || isLoading}
+                  className="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Prev
+                </button>
+                <button
+                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={page >= totalPages || isLoading}
+                  className="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
             {applicants.length === 0 && !isLoading ? (
               <div className="bg-white rounded-xl p-6 text-center space-y-3">
                 <div className="text-gray-400">
