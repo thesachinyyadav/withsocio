@@ -119,10 +119,12 @@ export async function POST(request: NextRequest) {
         },
         html: `
           <!DOCTYPE html>
-          <html lang="en">
+          <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <title>Application Confirmed</title>
             <style>
               body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; line-height: 1.6; color: #333; }
               table { border-collapse: collapse; width: 100%; }
@@ -212,7 +214,7 @@ export async function POST(request: NextRequest) {
                   </p>
                   <p style="margin: 10px 0 0 0; font-size: 11px; color: #bbb;">
                     © ${new Date().getFullYear()} SOCIO. All rights reserved. | 
-                    <a href="https://withsocio.com" style="color: #999;">Visit our website</a>
+                    <a href="https://socio.christuniversity.in" style="color: #999;">Visit our website</a>
                   </p>
                 </td>
               </tr>

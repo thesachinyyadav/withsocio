@@ -69,6 +69,14 @@ export default function CareersApplicationPage() {
   const validatePhone = (phone: string) => /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/.test(phone);
   const validateUrl = (url: string) => url === "" || /^https?:\/\/.+/.test(url);
 
+  const roleSkillOptions: Record<string, string[]> = {
+    "Frontend Development": ["HTML", "CSS", "JavaScript", "React", "Next.js", "Other"],
+    "Database Handling": ["SQL", "PostgreSQL", "MySQL", "MongoDB", "Other"],
+    "Operations": ["Excel/Sheets", "Process Ops", "Project Management", "Documentation", "Other"],
+    "Content Writing": ["Blog Writing", "Copywriting", "SEO Writing", "Social Media Content", "Other"],
+    "Digital Marketing": ["SEO", "SEM", "Social Media", "Email Marketing", "Analytics", "Other"],
+  };
+
   const validateField = (name: string, value: string) => {
     const errors = { ...fieldErrors };
     if (name === "fullName" && !value.trim()) errors[name] = "Required";
@@ -260,7 +268,7 @@ export default function CareersApplicationPage() {
               <h2 className="text-2xl font-bold text-gray-900">Role Interest</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-              {["Database Handling", "Frontend Development", "Operations", "Content Writing"].map((role) => (
+              {["Database Handling", "Frontend Development", "Operations", "Content Writing", "Digital Marketing"].map((role) => (
                 <label key={role} className="cursor-pointer">
                   <input type="radio" name="roleInterest" value={role} checked={formData.roleInterest === role} onChange={handleInputChange} required className="sr-only" />
                   <div className={`p-4 rounded-2xl border-2 transition-all ${formData.roleInterest === role ? "border-[#154CB3] bg-blue-50 shadow-lg" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"}`}>
@@ -270,8 +278,27 @@ export default function CareersApplicationPage() {
               ))}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2.5">Skills you have</label>
-              <textarea name="existingSkills" value={formData.existingSkills} onChange={handleInputChange} rows={2} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none resize-none transition-all" placeholder="React, Node.js, Figma, etc." />
+              <label className="block text-sm font-semibold text-gray-800 mb-2.5">Primary skill</label>
+              <select
+                name="existingSkills"
+                value={formData.existingSkills}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none bg-white transition-all"
+                disabled={!formData.roleInterest}
+              >
+                {!formData.roleInterest ? (
+                  <option value="">Select a role first</option>
+                ) : (
+                  <>
+                    <option value="">Select a primary skill</option>
+                    {roleSkillOptions[formData.roleInterest]?.map((skill) => (
+                      <option key={skill} value={skill}>
+                        {skill}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
             </div>
           </div>
 
