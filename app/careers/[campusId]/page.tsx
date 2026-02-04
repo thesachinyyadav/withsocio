@@ -21,14 +21,6 @@ interface FormData {
   resume: File | null;
 }
 
-const roleOptions = [
-  { name: "Database Handling", icon: "db", color: "from-orange-500 to-amber-500" },
-  { name: "Frontend Development", icon: "code", color: "from-purple-500 to-indigo-500" },
-  { name: "Operations", icon: "settings", color: "from-cyan-500 to-teal-500" },
-  { name: "Content Writing", icon: "pen", color: "from-pink-500 to-rose-500" },
-  { name: "Marketing", icon: "trending", color: "from-green-500 to-emerald-500" },
-];
-
 interface FormErrors {
   [key: string]: string;
 }
@@ -62,7 +54,6 @@ export default function CareersApplicationPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileWarning, setShowMobileWarning] = useState(true);
 
-  // Detect mobile on mount
   useEffect(() => {
     const checkMobile = () => {
       const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
@@ -74,53 +65,29 @@ export default function CareersApplicationPage() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Validation functions
   const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const validatePhone = (phone: string) => /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/.test(phone);
   const validateUrl = (url: string) => url === "" || /^https?:\/\/.+/.test(url);
 
   const validateField = (name: string, value: string) => {
     const errors = { ...fieldErrors };
-    
-    if (name === "fullName" && !value.trim()) {
-      errors[name] = "Full name is required";
-    } else if (name === "fullName") {
-      delete errors[name];
-    }
-
-    if (name === "email" && !value.trim()) {
-      errors[name] = "Email is required";
-    } else if (name === "email" && !validateEmail(value)) {
-      errors[name] = "Please enter a valid email";
-    } else if (name === "email") {
-      delete errors[name];
-    }
-
-    if (name === "phoneNumber" && !value.trim()) {
-      errors[name] = "Phone number is required";
-    } else if (name === "phoneNumber" && !validatePhone(value)) {
-      errors[name] = "Please enter a valid phone number";
-    } else if (name === "phoneNumber") {
-      delete errors[name];
-    }
-
-    if (name === "portfolioLink" && !validateUrl(value)) {
-      errors[name] = "Please enter a valid URL";
-    } else if (name === "portfolioLink") {
-      delete errors[name];
-    }
-
+    if (name === "fullName" && !value.trim()) errors[name] = "Required";
+    else if (name === "fullName") delete errors[name];
+    if (name === "email" && !value.trim()) errors[name] = "Required";
+    else if (name === "email" && !validateEmail(value)) errors[name] = "Invalid email";
+    else if (name === "email") delete errors[name];
+    if (name === "phoneNumber" && !value.trim()) errors[name] = "Required";
+    else if (name === "phoneNumber" && !validatePhone(value)) errors[name] = "Invalid phone";
+    else if (name === "phoneNumber") delete errors[name];
+    if (name === "portfolioLink" && !validateUrl(value)) errors[name] = "Invalid URL";
+    else if (name === "portfolioLink") delete errors[name];
     setFieldErrors(errors);
   };
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (touchedFields.has(name)) {
-      validateField(name, value);
-    }
+    if (touchedFields.has(name)) validateField(name, value);
   };
 
   const handleFieldBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -132,11 +99,6 @@ export default function CareersApplicationPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, resume: file }));
-    if (file) {
-      const errors = { ...fieldErrors };
-      delete errors.resume;
-      setFieldErrors(errors);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -145,25 +107,12 @@ export default function CareersApplicationPage() {
     setError("");
 
     try {
-      // Create FormData for file upload
       const submitData = new FormData();
-      submitData.append("fullName", formData.fullName);
-      submitData.append("courseYearDept", formData.courseYearDept);
-      submitData.append("phoneNumber", formData.phoneNumber);
-      submitData.append("email", formData.email);
-      submitData.append("portfolioLink", formData.portfolioLink);
-      submitData.append("roleInterest", formData.roleInterest);
-      submitData.append("existingSkills", formData.existingSkills);
-      submitData.append("whyConsider", formData.whyConsider);
-      submitData.append("projectExperience", formData.projectExperience);
-      submitData.append("startupComfort", formData.startupComfort);
-      submitData.append("workSample", formData.workSample);
-      submitData.append("hoursPerWeek", formData.hoursPerWeek);
-      submitData.append("internshipGoals", formData.internshipGoals);
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key === "resume" && value) submitData.append(key, value);
+        else if (key !== "resume") submitData.append(key, value as string);
+      });
       submitData.append("campusId", campusId);
-      if (formData.resume) {
-        submitData.append("resume", formData.resume);
-      }
 
       const response = await fetch("/api/apply", {
         method: "POST",
@@ -171,29 +120,17 @@ export default function CareersApplicationPage() {
       });
 
       const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Failed to submit");
 
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to submit application");
-      }
-
-      // Trigger confetti on success
       if (typeof window !== "undefined") {
         try {
           const confetti = require("canvas-confetti");
-          confetti.default({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ["#154CB3", "#1e6fd4", "#10b981", "#f59e0b"],
-          });
-        } catch (e) {
-          // Confetti not available, continue
-        }
+          confetti.default({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ["#154CB3", "#1e6fd4", "#10b981", "#f59e0b"] });
+        } catch (e) {}
       }
-
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
@@ -202,63 +139,30 @@ export default function CareersApplicationPage() {
   if (submitted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#154CB3] via-[#0f3d8f] to-[#0a2d6b] flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Background decorations */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-300 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
         </div>
-        
         <div className="bg-white rounded-3xl p-8 md:p-12 max-w-lg w-full text-center shadow-2xl animate-fade-in relative z-10">
-          {/* Logo */}
           <div className="mb-8">
-            <Image
-              src="/socio.svg"
-              alt="SOCIO"
-              width={140}
-              height={42}
-              className="mx-auto"
-            />
+            <Image src="/socio.svg" alt="SOCIO" width={140} height={42} className="mx-auto" />
           </div>
-          
-          {/* Success Icon with animation */}
           <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg success-icon">
-            <svg
-              className="w-10 h-10 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={3}
-                d="M5 13l4 4L19 7"
-              />
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          
-          <div className="success-content">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-              Application Submitted
-            </h2>
-            
-            <p className="text-gray-600 mb-8 leading-relaxed text-lg">
-              Thank you for applying to <span className="font-bold text-[#154CB3]">SOCIO</span>. We&apos;ve received your application and will review it shortly.
-            </p>
-            
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-5 mb-6 border border-blue-100">
-              <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide font-medium">Application Reference</p>
-              <p className="font-mono font-bold text-xl text-[#154CB3]">
-                {campusId?.toUpperCase()}-{Date.now().toString(36).toUpperCase()}
-              </p>
-            </div>
-            
-            <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
-              <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              <span>Confirmation email sent to your inbox</span>
-            </div>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Application Submitted</h2>
+          <p className="text-gray-600 mb-8 leading-relaxed text-lg">We've received your application. <span className="font-bold text-[#154CB3]">Additional details will be shared after selection.</span></p>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-5 mb-6 border border-blue-100">
+            <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide font-medium">Reference ID</p>
+            <p className="font-mono font-bold text-xl text-[#154CB3]">{campusId?.toUpperCase()}-{Date.now().toString(36).toUpperCase()}</p>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
+            <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span>Email confirmation sent</span>
           </div>
         </div>
       </div>
@@ -267,445 +171,154 @@ export default function CareersApplicationPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Mobile Warning Modal */}
+      {/* Mobile Warning */}
       {isMobile && showMobileWarning && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 md:p-8 max-w-sm w-full shadow-2xl animate-fade-in">
-            {/* Warning Icon */}
             <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4v2m0 0v2m0-2H9m3 0h3m-6 4h6a2 2 0 002-2V7a2 2 0 00-2-2H9a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-
             <h2 className="text-2xl font-bold text-gray-900 mb-3 text-center">Open on Desktop</h2>
-            
-            <p className="text-gray-600 text-center mb-6 leading-relaxed">
-              This application form works best on a laptop or desktop. We recommend opening it on a larger screen for the best experience.
-            </p>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <p className="text-sm text-blue-900">
-                <strong>Why?</strong> The form has multiple sections and file uploads that are easier to complete on a desktop device.
-              </p>
-            </div>
-
+            <p className="text-gray-600 text-center mb-6">This form works best on a laptop or desktop device.</p>
             <div className="flex gap-3">
-              <button
-                onClick={() => setShowMobileWarning(false)}
-                className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all"
-              >
-                Continue Anyway
-              </button>
-              <a
-                href="https://withsocio.com/careers/christid"
-                className="flex-1 px-4 py-3 bg-[#154CB3] text-white font-semibold rounded-lg hover:bg-[#0f3d8f] transition-all text-center"
-              >
-                Open on Desktop
-              </a>
+              <button onClick={() => setShowMobileWarning(false)} className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all">Continue</button>
+              <a href="https://withsocio.com/careers/christid" className="flex-1 px-4 py-3 bg-[#154CB3] text-white font-semibold rounded-lg hover:bg-[#0f3d8f] transition-all text-center">Open on Desktop</a>
             </div>
           </div>
         </div>
       )}
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#154CB3] via-[#1a56c4] to-[#154CB3] text-white py-10 px-4 relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-1/4 w-64 h-64 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white rounded-full blur-3xl" />
+      {/* Premium Header */}
+      <div className="relative bg-gradient-to-b from-[#154CB3] via-[#1a56c4] to-[#0f3d8f] text-white overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-20 -left-40 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl" />
         </div>
-        
-        <div className="max-w-3xl mx-auto text-center relative z-10">
-          <div className="flex items-center justify-center mb-5">
-            <div className="bg-white rounded-2xl flex items-center justify-center shadow-lg px-4 py-3">
-              <Image
-                src="/socio.svg"
-                alt="SOCIO"
-                width={140}
-                height={42}
-              />
+        <div className="max-w-4xl mx-auto px-4 py-16 relative z-10">
+          <div className="flex items-center justify-center mb-8">
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl px-6 py-4 hover:shadow-3xl transition-shadow">
+              <Image src="/socio.svg" alt="SOCIO" width={160} height={48} />
             </div>
           </div>
-          <h1 className="text-2xl md:text-4xl font-bold mb-3 tracking-tight">
-            Internship Application
-          </h1>
-          <p className="text-blue-100 text-sm md:text-base font-medium">
-            {campusId?.replace(/id$/i, " University").replace(/^\w/, (c) => c.toUpperCase()) || "General Application"}
-          </p>
+          <h1 className="text-4xl md:text-5xl font-black text-center mb-3 tracking-tight">Join SOCIO</h1>
+          <p className="text-center text-blue-50 text-lg md:text-xl font-light max-w-2xl mx-auto">Apply for an exciting internship opportunity and grow with our team</p>
         </div>
       </div>
 
-      {/* Form */}
-      <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Progress Indicator */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between text-xs font-medium text-gray-500">
-              <span>Complete all sections to submit</span>
-              <span className="text-[#154CB3]">5 sections</span>
+      {/* Premium Form */}
+      <div className="max-w-2xl mx-auto px-4 py-12">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Section 1 */}
+          <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] flex items-center justify-center text-white font-bold">1</div>
+              <h2 className="text-2xl font-bold text-gray-900">Your Details</h2>
+            </div>
+            <div className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2.5">Full Name</label>
+                  <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} onBlur={handleFieldBlur} required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all" placeholder="Your name" />
+                  {fieldErrors.fullName && touchedFields.has("fullName") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.fullName}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2.5">Email <span className="text-red-500">*</span></label>
+                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} onBlur={handleFieldBlur} required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all" placeholder="your@email.com" />
+                  {fieldErrors.email && touchedFields.has("email") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.email}</p>}
+                  <p className="text-xs text-orange-600 mt-2 font-semibold flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    All communication will be through this email
+                  </p>
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2.5">Phone</label>
+                  <input type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} onBlur={handleFieldBlur} required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all" placeholder="+91 98765 43210" />
+                  {fieldErrors.phoneNumber && touchedFields.has("phoneNumber") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.phoneNumber}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2.5">Course, Year</label>
+                  <input type="text" name="courseYearDept" value={formData.courseYearDept} onChange={handleInputChange} required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all" placeholder="BCA, 2nd Year" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Portfolio / LinkedIn</label>
+                <input type="url" name="portfolioLink" value={formData.portfolioLink} onChange={handleInputChange} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all" placeholder="https://linkedin.com/in/you" />
+              </div>
             </div>
           </div>
 
-          {/* Basic Details Section */}
-          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg card-hover border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-              <span className="w-9 h-9 bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-md">
-                1
-              </span>
-              <span>Basic Details</span>
-            </h2>
-
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    onBlur={handleFieldBlur}
-                    required
-                    className={`w-full px-4 py-3 border-2 rounded-xl transition-all outline-none ${
-                      fieldErrors.fullName && touchedFields.has("fullName")
-                        ? "border-red-500 bg-red-50 focus:ring-2 focus:ring-red-200"
-                        : "border-gray-300 focus:ring-2 focus:ring-[#154CB3] focus:border-[#154CB3]"
-                    }`}
-                    placeholder="Enter your full name"
-                  />
-                  {formData.fullName && !fieldErrors.fullName && (
-                    <div className="absolute right-3 top-3.5 text-green-500">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                {fieldErrors.fullName && touchedFields.has("fullName") && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    {fieldErrors.fullName}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Course, Year, and Department <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="courseYearDept"
-                  value={formData.courseYearDept}
-                  onChange={handleInputChange}
-                  onBlur={handleFieldBlur}
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#154CB3] focus:border-[#154CB3] transition-all outline-none"
-                  placeholder="e.g., BCA, 2nd Year, Computer Science"
-                />
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="tel"
-                      name="phoneNumber"
-                      value={formData.phoneNumber}
-                      onChange={handleInputChange}
-                      onBlur={handleFieldBlur}
-                      required
-                      className={`w-full px-4 py-3 border-2 rounded-xl transition-all outline-none ${
-                        fieldErrors.phoneNumber && touchedFields.has("phoneNumber")
-                          ? "border-red-500 bg-red-50 focus:ring-2 focus:ring-red-200"
-                          : "border-gray-300 focus:ring-2 focus:ring-[#154CB3] focus:border-[#154CB3]"
-                      }`}
-                      placeholder="+91 XXXXX XXXXX"
-                    />
-                    {formData.phoneNumber && !fieldErrors.phoneNumber && (
-                      <div className="absolute right-3 top-3.5 text-green-500">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  {fieldErrors.phoneNumber && touchedFields.has("phoneNumber") && (
-                    <p className="text-red-500 text-xs mt-1">{fieldErrors.phoneNumber}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      onBlur={handleFieldBlur}
-                      required
-                      className={`w-full px-4 py-3 border-2 rounded-xl transition-all outline-none ${
-                        fieldErrors.email && touchedFields.has("email")
-                          ? "border-red-500 bg-red-50 focus:ring-2 focus:ring-red-200"
-                          : "border-gray-300 focus:ring-2 focus:ring-[#154CB3] focus:border-[#154CB3]"
-                      }`}
-                      placeholder="your.email@example.com"
-                    />
-                    {formData.email && !fieldErrors.email && (
-                      <div className="absolute right-3 top-3.5 text-green-500">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  {fieldErrors.email && touchedFields.has("email") && (
-                    <p className="text-red-500 text-xs mt-1">{fieldErrors.email}</p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  LinkedIn, GitHub, or Portfolio Link
-                </label>
-                <input
-                  type="url"
-                  name="portfolioLink"
-                  value={formData.portfolioLink}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#154CB3] focus:border-transparent transition-all outline-none"
-                  placeholder="https://linkedin.com/in/yourprofile"
-                />
-              </div>
+          {/* Section 2 - Role Selection */}
+          <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] flex items-center justify-center text-white font-bold">2</div>
+              <h2 className="text-2xl font-bold text-gray-900">Role Interest</h2>
             </div>
-          </section>
-
-          {/* Role Interest Section */}
-          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg card-hover border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-              <span className="w-9 h-9 bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-md">
-                2
-              </span>
-              <span>Role Interest</span>
-            </h2>
-
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Which area are you most interested in? <span className="text-red-500">*</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              {["Database Handling", "Frontend Development", "Operations", "Content Writing"].map((role) => (
+                <label key={role} className="cursor-pointer">
+                  <input type="radio" name="roleInterest" value={role} checked={formData.roleInterest === role} onChange={handleInputChange} required className="sr-only" />
+                  <div className={`p-4 rounded-2xl border-2 transition-all ${formData.roleInterest === role ? "border-[#154CB3] bg-blue-50 shadow-lg" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"}`}>
+                    <span className="font-semibold text-gray-900">{role}</span>
+                  </div>
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {roleOptions.map((role) => {
-                    const getIcon = (iconType: string) => {
-                      switch (iconType) {
-                        case "db":
-                          return (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-                            </svg>
-                          );
-                        case "code":
-                          return (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4m0 0l-4 4m4-4H3" />
-                            </svg>
-                          );
-                        case "settings":
-                          return (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                          );
-                        case "pen":
-                          return (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          );
-                        case "trending":
-                          return (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8L6.343 19.657" />
-                            </svg>
-                          );
-                        default:
-                          return null;
-                      }
-                    };
-
-                    return (
-                      <label
-                        key={role.name}
-                        className={`relative flex flex-col items-center gap-2 p-5 border-2 rounded-2xl cursor-pointer transition-all duration-300 group ${
-                          formData.roleInterest === role.name
-                            ? "border-[#154CB3] bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg scale-[1.02]"
-                            : "border-gray-200 hover:border-blue-300 hover:bg-gray-50 hover:shadow-md"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="roleInterest"
-                          value={role.name}
-                          checked={formData.roleInterest === role.name}
-                          onChange={handleInputChange}
-                          required
-                          className="sr-only"
-                        />
-                        <div className={`transform group-hover:scale-110 transition-transform duration-300 ${formData.roleInterest === role.name ? 'text-[#154CB3]' : 'text-gray-600'}`}>
-                          {getIcon(role.icon)}
-                        </div>
-                        <span className={`text-sm font-semibold text-center ${formData.roleInterest === role.name ? 'text-[#154CB3]' : 'text-gray-700'}`}>{role.name}</span>
-                        {formData.roleInterest === role.name && (
-                          <div className="absolute top-2 right-2 w-5 h-5 bg-[#154CB3] rounded-full flex items-center justify-center">
-                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                        )}
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mention any tools, platforms, or skills you already know related to your chosen area
-                </label>
-                <textarea
-                  name="existingSkills"
-                  value={formData.existingSkills}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#154CB3] focus:border-transparent transition-all outline-none resize-none"
-                  placeholder="e.g., React, Node.js, Figma, MySQL, Canva, etc."
-                />
-              </div>
+              ))}
             </div>
-          </section>
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2.5">Skills you have</label>
+              <textarea name="existingSkills" value={formData.existingSkills} onChange={handleInputChange} rows={2} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none resize-none transition-all" placeholder="React, Node.js, Figma, etc." />
+            </div>
+          </div>
 
-          {/* Quick Screening Section */}
-          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg card-hover border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-              <span className="w-9 h-9 bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-md">
-                3
-              </span>
-              <span>Quick Screening</span>
-            </h2>
-
-            <div className="space-y-5">
+          {/* Section 3 - About You */}
+          <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] flex items-center justify-center text-white font-bold">3</div>
+              <h2 className="text-2xl font-bold text-gray-900">About You</h2>
+            </div>
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  In one or two lines, why should we consider you for SOCIO? <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="whyConsider"
-                  value={formData.whyConsider}
-                  onChange={handleInputChange}
-                  required
-                  rows={2}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#154CB3] focus:border-transparent transition-all outline-none resize-none"
-                  placeholder="Tell us what makes you stand out..."
-                />
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Why SOCIO?</label>
+                <textarea name="whyConsider" value={formData.whyConsider} onChange={handleInputChange} required rows={2} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none resize-none transition-all" placeholder="What attracts you..." />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mention one project, event, or responsibility you have handled before <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="projectExperience"
-                  value={formData.projectExperience}
-                  onChange={handleInputChange}
-                  required
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#154CB3] focus:border-transparent transition-all outline-none resize-none"
-                  placeholder="If none, describe something you are currently learning..."
-                />
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Past experience</label>
+                <textarea name="projectExperience" value={formData.projectExperience} onChange={handleInputChange} required rows={2} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none resize-none transition-all" placeholder="Project or responsibility..." />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Are you comfortable working in a fast-moving startup environment with real responsibilities? <span className="text-red-500">*</span>
-                </label>
+                <label className="block text-sm font-semibold text-gray-800 mb-3">Startup environment comfort</label>
                 <div className="flex gap-4">
-                  {["Yes", "No"].map((option) => (
-                    <label
-                      key={option}
-                      className={`flex-1 flex items-center justify-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                        formData.startupComfort === option
-                          ? "border-[#154CB3] bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="startupComfort"
-                        value={option}
-                        checked={formData.startupComfort === option}
-                        onChange={handleInputChange}
-                        required
-                        className="w-4 h-4 text-[#154CB3] focus:ring-[#154CB3]"
-                      />
-                      <span className="text-gray-700 font-medium">{option}</span>
+                  {["Yes", "No"].map((opt) => (
+                    <label key={opt} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all ${formData.startupComfort === opt ? "border-[#154CB3] bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}>
+                      <input type="radio" name="startupComfort" value={opt} checked={formData.startupComfort === opt} onChange={handleInputChange} required className="w-4 h-4" />
+                      <span className="font-medium text-gray-900">{opt}</span>
                     </label>
                   ))}
                 </div>
               </div>
             </div>
-          </section>
+          </div>
 
-          {/* Practical Check Section */}
-          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg card-hover border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-              <span className="w-9 h-9 bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-md">
-                4
-              </span>
-              <span>Practical Check</span>
-            </h2>
-
-            <div className="space-y-5">
+          {/* Section 4 - Work & Goals */}
+          <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] flex items-center justify-center text-white font-bold">4</div>
+              <h2 className="text-2xl font-bold text-gray-900">Work & Goals</h2>
+            </div>
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Share one example of your work
-                </label>
-                <p className="text-xs text-gray-500 mb-2">
-                  GitHub repo, design link, writing sample, campaign page, or anything relevant
-                </p>
-                <input
-                  type="url"
-                  name="workSample"
-                  value={formData.workSample}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#154CB3] focus:border-transparent transition-all outline-none"
-                  placeholder="https://github.com/username/project"
-                />
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Work sample / GitHub</label>
+                <input type="url" name="workSample" value={formData.workSample} onChange={handleInputChange} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all" placeholder="https://github.com/yourwork" />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  How many hours per week can you realistically commit? <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="hoursPerWeek"
-                  value={formData.hoursPerWeek}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#154CB3] focus:border-transparent transition-all outline-none bg-white"
-                >
-                  <option value="">Select hours per week</option>
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Hours per week</label>
+                <select name="hoursPerWeek" value={formData.hoursPerWeek} onChange={handleInputChange} required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none bg-white transition-all">
+                  <option value="">Select hours</option>
                   <option value="5-10">5-10 hours</option>
                   <option value="10-15">10-15 hours</option>
                   <option value="15-20">15-20 hours</option>
@@ -713,154 +326,61 @@ export default function CareersApplicationPage() {
                   <option value="30+">30+ hours</option>
                 </select>
               </div>
-            </div>
-          </section>
-
-          {/* Short Response Section */}
-          <section className="bg-white rounded-2xl p-6 md:p-8 shadow-lg card-hover border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-              <span className="w-9 h-9 bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-md">
-                5
-              </span>
-              <span>Short Response</span>
-            </h2>
-
-            <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  What do you want to gain from this internship? <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="internshipGoals"
-                  value={formData.internshipGoals}
-                  onChange={handleInputChange}
-                  required
-                  rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#154CB3] focus:border-transparent transition-all outline-none resize-none"
-                  placeholder="Share your goals and expectations from this internship..."
-                />
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">What you want to learn</label>
+                <textarea name="internshipGoals" value={formData.internshipGoals} onChange={handleInputChange} required rows={2} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none resize-none transition-all" placeholder="Your goals..." />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Your Resume <span className="text-red-500">*</span>
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#154CB3] transition-all">
-                  <input
-                    type="file"
-                    id="resume"
-                    name="resume"
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleFileChange}
-                    required
-                    className="hidden"
-                  />
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Resume</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#154CB3] hover:bg-blue-50/20 transition-all">
+                  <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" onChange={handleFileChange} required className="hidden" />
                   <label htmlFor="resume" className="cursor-pointer">
-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                      <svg
-                        className="w-6 h-6 text-[#154CB3]"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                        />
-                      </svg>
-                    </div>
-                    {formData.resume ? (
-                      <p className="text-[#154CB3] font-medium">{formData.resume.name}</p>
-                    ) : (
-                      <>
-                        <p className="text-gray-700 font-medium">Click to upload your resume</p>
-                        <p className="text-gray-500 text-sm mt-1">PDF, DOC, or DOCX (Max 5MB)</p>
-                      </>
-                    )}
+                    <svg className="w-8 h-8 text-[#154CB3] mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    {formData.resume ? <p className="text-[#154CB3] font-semibold">{formData.resume.name}</p> : <p className="text-gray-700 font-semibold">Upload Resume</p>}
                   </label>
                 </div>
               </div>
             </div>
-          </section>
+          </div>
 
-          {/* Error Message */}
           {error && (
-            <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 rounded-2xl p-4 flex items-start gap-3 shadow-lg animate-pulse">
+            <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex items-start gap-3">
               <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
-              <div>
-                <p className="font-bold text-red-800">Submission Failed</p>
-                <p className="text-red-700 text-sm mt-1">{error}</p>
-              </div>
+              <p className="text-red-800 font-medium">{error}</p>
             </div>
           )}
 
-          {/* Submit Button */}
-          <div className="pt-4">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-[#154CB3] to-[#1e6fd4] hover:from-[#0f3d8f] hover:to-[#154CB3] text-white font-bold py-5 px-8 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] text-lg"
-            >
-              {isSubmitting ? (
-                <>
-                  <svg
-                    className="animate-spin w-6 h-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Submitting Application...
-                </>
-              ) : (
-                <>
-                  Submit Application
-                  <svg className="w-6 h-6 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </>
-              )}
-            </button>
+          <button type="submit" disabled={isSubmitting} className="w-full bg-gradient-to-r from-[#154CB3] to-[#1e6fd4] hover:from-[#0f3d8f] hover:to-[#154CB3] text-white font-bold py-4 px-8 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] text-lg">
+            {isSubmitting ? <>
+              <svg className="animate-spin w-6 h-6" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Submitting...
+            </> : <>
+              Submit Application
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </>}
+          </button>
 
-            <p className="text-center text-gray-400 text-sm mt-4">
-              By submitting this form, you agree to our terms and conditions.
-            </p>
-          </div>
+          <p className="text-center text-gray-500 text-sm">Additional details will be shared after selection</p>
         </form>
       </div>
 
-      {/* Footer */}
       <div className="bg-gray-900 text-white py-8 px-4">
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-2xl mx-auto text-center">
           <div className="flex items-center justify-center mb-4">
             <div className="bg-white rounded-lg px-3 py-2">
-              <Image
-                src="/socio.svg"
-                alt="SOCIO"
-                width={100}
-                height={30}
-              />
+              <Image src="/socio.svg" alt="SOCIO" width={100} height={30} />
             </div>
           </div>
-          <p className="text-gray-400 text-sm">
-            &copy; {new Date().getFullYear()} SOCIO. All rights reserved.
-          </p>
+          <p className="text-gray-400 text-sm">&copy; {new Date().getFullYear()} SOCIO. All rights reserved.</p>
         </div>
       </div>
     </div>

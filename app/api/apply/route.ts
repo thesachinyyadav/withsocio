@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
                   </table>
 
                   <p style="margin: 0 0 20px 0; font-size: 15px; color: #666; line-height: 1.8;">
-                    Our team will carefully evaluate your application. If your profile matches our requirements, we'll reach out within 5-7 business days to schedule an interview.
+                    Our team will carefully evaluate your application this week. If your profile matches our requirements, we'll reach out for an interview this week or next week.
                   </p>
 
                   <!-- Timeline -->
@@ -164,19 +164,19 @@ export async function POST(request: NextRequest) {
                       <td style="padding: 15px; text-align: center; background-color: #f7f9fc; border-radius: 8px;">
                         <div style="font-size: 24px; color: #154CB3; font-weight: 700; margin-bottom: 5px;">1</div>
                         <div style="font-size: 13px; color: #667085; font-weight: 600;">Application Review</div>
-                        <div style="font-size: 12px; color: #999; margin-top: 4px;">5-7 days</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 4px;">This week</div>
                       </td>
                       <td style="padding: 0 10px; text-align: center; color: #ccc;">→</td>
                       <td style="padding: 15px; text-align: center; background-color: #f7f9fc; border-radius: 8px;">
                         <div style="font-size: 24px; color: #154CB3; font-weight: 700; margin-bottom: 5px;">2</div>
                         <div style="font-size: 13px; color: #667085; font-weight: 600;">Interview</div>
-                        <div style="font-size: 12px; color: #999; margin-top: 4px;">If shortlisted</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 4px;">This/Next week</div>
                       </td>
                       <td style="padding: 0 10px; text-align: center; color: #ccc;">→</td>
                       <td style="padding: 15px; text-align: center; background-color: #f7f9fc; border-radius: 8px;">
                         <div style="font-size: 24px; color: #154CB3; font-weight: 700; margin-bottom: 5px;">3</div>
-                        <div style="font-size: 13px; color: #667085; font-weight: 600;">Start</div>
-                        <div style="font-size: 12px; color: #999; margin-top: 4px;">This month</div>
+                        <div style="font-size: 13px; color: #667085; font-weight: 600;">Onboarding</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 4px;">If selected</div>
                       </td>
                     </tr>
                   </table>

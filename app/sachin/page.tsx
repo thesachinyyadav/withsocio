@@ -62,17 +62,22 @@ export default function AdminDashboard() {
     try {
       const { data, error } = await supabase
         .from("internship_applications")
-        .select("*")
+        .select("*", { count: 'exact' })
         .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching applications:", error);
-        alert("Failed to load applicants. Please try again.");
+        // Try to give user feedback
+        alert(`Error: ${error.message}. Make sure RLS policies allow reading from this table.`);
+      } else if (!data || data.length === 0) {
+        console.log("No applicants found");
+        setApplicants([]);
       } else {
-        setApplicants(data || []);
+        setApplicants(data);
       }
     } catch (err) {
       console.error("Fetch error:", err);
+      alert("Failed to load applicants. Please check console for details.");
     }
     setIsLoading(false);
   }, []);
@@ -259,9 +264,21 @@ export default function AdminDashboard() {
             <h2 className="font-semibold text-gray-700 mb-3">
               Applicants ({filteredApplicants.length})
             </h2>
-            {filteredApplicants.length === 0 ? (
+            {applicants.length === 0 && !isLoading ? (
+              <div className="bg-white rounded-xl p-6 text-center space-y-3">
+                <div className="text-gray-400">
+                  <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p className="text-gray-600 font-medium">No applicants yet</p>
+                <button onClick={fetchApplicants} disabled={isLoading} className="text-xs text-[#154CB3] hover:text-[#0f3d8f] font-semibold disabled:opacity-50">
+                  {isLoading ? "Refreshing..." : "Try refreshing"}
+                </button>
+              </div>
+            ) : filteredApplicants.length === 0 ? (
               <div className="bg-white rounded-xl p-6 text-center text-gray-500">
-                No applicants found
+                No results matching filters
               </div>
             ) : (
               filteredApplicants.map((applicant) => (
