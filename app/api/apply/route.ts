@@ -110,7 +110,13 @@ export async function POST(request: NextRequest) {
       await resend.emails.send({
         from: "SOCIO Careers <careers@withsocio.com>",
         to: email,
+        replyTo: "careers@withsocio.com",
         subject: `Application Received - ${roleInterest} Role at SOCIO`,
+        headers: {
+          "X-Priority": "3",
+          "X-MSMail-Priority": "Normal",
+          "Importance": "Normal",
+        },
         html: `
           <!DOCTYPE html>
           <html lang="en">
