@@ -71,23 +71,40 @@ export default function CareersApplicationPage() {
     setError("");
 
     try {
-      // TODO: Connect to Supabase
-      // For now, simulate submission
-      const submissionData = {
-        ...formData,
-        campusId,
-        submittedAt: new Date().toISOString(),
-        resumeFileName: formData.resume?.name || null,
-      };
+      // Create FormData for file upload
+      const submitData = new FormData();
+      submitData.append("fullName", formData.fullName);
+      submitData.append("courseYearDept", formData.courseYearDept);
+      submitData.append("phoneNumber", formData.phoneNumber);
+      submitData.append("email", formData.email);
+      submitData.append("portfolioLink", formData.portfolioLink);
+      submitData.append("roleInterest", formData.roleInterest);
+      submitData.append("existingSkills", formData.existingSkills);
+      submitData.append("whyConsider", formData.whyConsider);
+      submitData.append("projectExperience", formData.projectExperience);
+      submitData.append("startupComfort", formData.startupComfort);
+      submitData.append("workSample", formData.workSample);
+      submitData.append("hoursPerWeek", formData.hoursPerWeek);
+      submitData.append("internshipGoals", formData.internshipGoals);
+      submitData.append("campusId", campusId);
+      if (formData.resume) {
+        submitData.append("resume", formData.resume);
+      }
 
-      console.log("Form submitted:", submissionData);
+      const response = await fetch("/api/apply", {
+        method: "POST",
+        body: submitData,
+      });
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to submit application");
+      }
 
       setSubmitted(true);
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

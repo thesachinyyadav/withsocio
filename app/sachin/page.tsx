@@ -1,96 +1,34 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { createClient } from "@supabase/supabase-js";
 
-// Mock data structure - will be replaced with Supabase data
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 interface Applicant {
   id: string;
-  fullName: string;
-  courseYearDept: string;
-  phoneNumber: string;
+  full_name: string;
+  course_year_dept: string;
+  phone_number: string;
   email: string;
-  portfolioLink: string;
-  roleInterest: string;
-  existingSkills: string;
-  whyConsider: string;
-  projectExperience: string;
-  startupComfort: string;
-  workSample: string;
-  hoursPerWeek: string;
-  internshipGoals: string;
-  resumeUrl: string;
-  resumeFileName: string;
-  campusId: string;
-  submittedAt: string;
+  portfolio_link: string;
+  role_interest: string;
+  existing_skills: string;
+  why_consider: string;
+  project_experience: string;
+  startup_comfort: string;
+  work_sample: string;
+  hours_per_week: string;
+  internship_goals: string;
+  resume_url: string;
+  resume_file_name: string;
+  campus_id: string;
+  created_at: string;
   status: "pending" | "reviewed" | "shortlisted" | "rejected";
 }
-
-// Mock data for demonstration - replace with Supabase fetch
-const mockApplicants: Applicant[] = [
-  {
-    id: "1",
-    fullName: "Rahul Sharma",
-    courseYearDept: "BCA, 2nd Year, Computer Science",
-    phoneNumber: "+91 98765 43210",
-    email: "rahul.sharma@example.com",
-    portfolioLink: "https://linkedin.com/in/rahulsharma",
-    roleInterest: "Frontend Development",
-    existingSkills: "React, JavaScript, HTML/CSS, Tailwind CSS",
-    whyConsider: "I am passionate about building user interfaces and have built multiple projects using React.",
-    projectExperience: "Built a task management app with React and Firebase for my college project.",
-    startupComfort: "Yes",
-    workSample: "https://github.com/rahul/task-manager",
-    hoursPerWeek: "15-20",
-    internshipGoals: "I want to learn how real-world products are built and gain experience working in a startup environment.",
-    resumeUrl: "#",
-    resumeFileName: "rahul_sharma_resume.pdf",
-    campusId: "christid",
-    submittedAt: "2026-02-04T10:30:00Z",
-    status: "pending",
-  },
-  {
-    id: "2",
-    fullName: "Priya Menon",
-    courseYearDept: "BBA, 3rd Year, Marketing",
-    phoneNumber: "+91 87654 32109",
-    email: "priya.menon@example.com",
-    portfolioLink: "https://linkedin.com/in/priyamenon",
-    roleInterest: "Marketing",
-    existingSkills: "Social media management, Canva, Content creation, Google Analytics",
-    whyConsider: "I have managed social media for 2 college clubs and increased engagement by 40%.",
-    projectExperience: "Led the marketing campaign for our college fest, reaching 5000+ students.",
-    startupComfort: "Yes",
-    workSample: "https://instagram.com/collegefest2025",
-    hoursPerWeek: "10-15",
-    internshipGoals: "To understand startup marketing strategies and build a portfolio of real campaigns.",
-    resumeUrl: "#",
-    resumeFileName: "priya_menon_resume.pdf",
-    campusId: "christid",
-    submittedAt: "2026-02-03T14:45:00Z",
-    status: "shortlisted",
-  },
-  {
-    id: "3",
-    fullName: "Arjun Nair",
-    courseYearDept: "BSc, 2nd Year, Computer Science",
-    phoneNumber: "+91 76543 21098",
-    email: "arjun.nair@example.com",
-    portfolioLink: "https://github.com/arjunnair",
-    roleInterest: "Database Handling",
-    existingSkills: "MySQL, PostgreSQL, MongoDB, Python",
-    whyConsider: "I enjoy working with data and have completed several database design projects.",
-    projectExperience: "Designed and implemented a student management database system.",
-    startupComfort: "Yes",
-    workSample: "https://github.com/arjun/student-db",
-    hoursPerWeek: "20-30",
-    internshipGoals: "Learn best practices in database design and work on production-level databases.",
-    resumeUrl: "#",
-    resumeFileName: "arjun_nair_resume.pdf",
-    campusId: "christid",
-    submittedAt: "2026-02-02T09:15:00Z",
-    status: "reviewed",
-  },
-];
 
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -116,15 +54,31 @@ export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchApplicants = useCallback(async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from("internship_applications")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching applications:", error);
+    } else {
+      setApplicants(data || []);
+    }
+    setIsLoading(false);
+  }, []);
 
   useEffect(() => {
-    // TODO: Replace with Supabase fetch
-    setApplicants(mockApplicants);
-  }, []);
+    if (isAuthenticated) {
+      fetchApplicants();
+    }
+  }, [isAuthenticated, fetchApplicants]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simple password check - in production, use proper authentication
     if (password === "socio2026") {
       setIsAuthenticated(true);
       setAuthError("");
@@ -133,24 +87,33 @@ export default function AdminDashboard() {
     }
   };
 
-  const updateStatus = (id: string, status: Applicant["status"]) => {
+  const updateStatus = async (id: string, status: Applicant["status"]) => {
+    const { error } = await supabase
+      .from("internship_applications")
+      .update({ status })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error updating status:", error);
+      return;
+    }
+
     setApplicants((prev) =>
       prev.map((app) => (app.id === id ? { ...app, status } : app))
     );
     if (selectedApplicant?.id === id) {
       setSelectedApplicant((prev) => (prev ? { ...prev, status } : null));
     }
-    // TODO: Update in Supabase
   };
 
   const filteredApplicants = applicants.filter((app) => {
-    const matchesRole = !filterRole || app.roleInterest === filterRole;
+    const matchesRole = !filterRole || app.role_interest === filterRole;
     const matchesStatus = !filterStatus || app.status === filterStatus;
     const matchesSearch =
       !searchQuery ||
-      app.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      app.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.campusId.toLowerCase().includes(searchQuery.toLowerCase());
+      app.campus_id.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesRole && matchesStatus && matchesSearch;
   });
 
@@ -216,6 +179,13 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={fetchApplicants}
+              disabled={isLoading}
+              className="text-sm text-[#154CB3] hover:text-[#0f3d8f] font-medium disabled:opacity-50"
+            >
+              {isLoading ? "Loading..." : "Refresh"}
+            </button>
             <span className="text-sm text-gray-600">
               Total: <span className="font-semibold">{applicants.length}</span> applicants
             </span>
@@ -290,7 +260,7 @@ export default function AdminDashboard() {
                   }`}
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900">{applicant.fullName}</h3>
+                    <h3 className="font-semibold text-gray-900">{applicant.full_name}</h3>
                     <span
                       className={`text-xs px-2 py-1 rounded-full font-medium ${
                         statusColors[applicant.status]
@@ -299,17 +269,17 @@ export default function AdminDashboard() {
                       {applicant.status.charAt(0).toUpperCase() + applicant.status.slice(1)}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">{applicant.courseYearDept}</p>
+                  <p className="text-sm text-gray-600 mb-2">{applicant.course_year_dept}</p>
                   <div className="flex items-center justify-between">
                     <span
                       className={`text-xs px-2 py-1 rounded-full font-medium ${
-                        roleColors[applicant.roleInterest] || "bg-gray-100 text-gray-800"
+                        roleColors[applicant.role_interest] || "bg-gray-100 text-gray-800"
                       }`}
                     >
-                      {applicant.roleInterest}
+                      {applicant.role_interest}
                     </span>
                     <span className="text-xs text-gray-500">
-                      {applicant.campusId.toUpperCase()}
+                      {applicant.campus_id.toUpperCase()}
                     </span>
                   </div>
                 </div>
@@ -325,10 +295,10 @@ export default function AdminDashboard() {
                 <div className="bg-gradient-to-r from-[#154CB3] to-[#1e5fc9] p-6 text-white">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h2 className="text-2xl font-bold">{selectedApplicant.fullName}</h2>
-                      <p className="text-blue-100 mt-1">{selectedApplicant.courseYearDept}</p>
+                      <h2 className="text-2xl font-bold">{selectedApplicant.full_name}</h2>
+                      <p className="text-blue-100 mt-1">{selectedApplicant.course_year_dept}</p>
                       <p className="text-blue-200 text-sm mt-2">
-                        Applied: {formatDate(selectedApplicant.submittedAt)}
+                        Applied: {formatDate(selectedApplicant.created_at)}
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
@@ -341,7 +311,7 @@ export default function AdminDashboard() {
                           selectedApplicant.status.slice(1)}
                       </span>
                       <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
-                        {selectedApplicant.campusId.toUpperCase()}
+                        {selectedApplicant.campus_id.toUpperCase()}
                       </span>
                     </div>
                   </div>
@@ -372,8 +342,8 @@ export default function AdminDashboard() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Phone</p>
-                        <a href={`tel:${selectedApplicant.phoneNumber}`} className="text-gray-900 font-medium text-sm hover:underline">
-                          {selectedApplicant.phoneNumber}
+                        <a href={`tel:${selectedApplicant.phone_number}`} className="text-gray-900 font-medium text-sm hover:underline">
+                          {selectedApplicant.phone_number}
                         </a>
                       </div>
                     </div>
@@ -383,43 +353,43 @@ export default function AdminDashboard() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <h4 className="text-sm font-medium text-gray-500 mb-1">Role Interest</h4>
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${roleColors[selectedApplicant.roleInterest] || "bg-gray-100 text-gray-800"}`}>
-                        {selectedApplicant.roleInterest}
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${roleColors[selectedApplicant.role_interest] || "bg-gray-100 text-gray-800"}`}>
+                        {selectedApplicant.role_interest}
                       </span>
                     </div>
                     <div>
                       <h4 className="text-sm font-medium text-gray-500 mb-1">Hours/Week</h4>
                       <span className="inline-block px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">
-                        {selectedApplicant.hoursPerWeek} hours
+                        {selectedApplicant.hours_per_week} hours
                       </span>
                     </div>
                   </div>
 
                   {/* Links */}
                   <div className="grid md:grid-cols-2 gap-4">
-                    {selectedApplicant.portfolioLink && (
+                    {selectedApplicant.portfolio_link && (
                       <div>
                         <h4 className="text-sm font-medium text-gray-500 mb-1">Portfolio/LinkedIn</h4>
                         <a
-                          href={selectedApplicant.portfolioLink}
+                          href={selectedApplicant.portfolio_link}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[#154CB3] text-sm hover:underline break-all"
                         >
-                          {selectedApplicant.portfolioLink}
+                          {selectedApplicant.portfolio_link}
                         </a>
                       </div>
                     )}
-                    {selectedApplicant.workSample && (
+                    {selectedApplicant.work_sample && (
                       <div>
                         <h4 className="text-sm font-medium text-gray-500 mb-1">Work Sample</h4>
                         <a
-                          href={selectedApplicant.workSample}
+                          href={selectedApplicant.work_sample}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[#154CB3] text-sm hover:underline break-all"
                         >
-                          {selectedApplicant.workSample}
+                          {selectedApplicant.work_sample}
                         </a>
                       </div>
                     )}
@@ -429,7 +399,7 @@ export default function AdminDashboard() {
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-2">Skills & Tools</h4>
                     <p className="text-gray-700 bg-gray-50 p-3 rounded-lg text-sm">
-                      {selectedApplicant.existingSkills || "Not specified"}
+                      {selectedApplicant.existing_skills || "Not specified"}
                     </p>
                   </div>
 
@@ -437,7 +407,7 @@ export default function AdminDashboard() {
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-2">Why should we consider you?</h4>
                     <p className="text-gray-700 bg-gray-50 p-3 rounded-lg text-sm">
-                      {selectedApplicant.whyConsider}
+                      {selectedApplicant.why_consider}
                     </p>
                   </div>
 
@@ -445,7 +415,7 @@ export default function AdminDashboard() {
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-2">Project/Experience</h4>
                     <p className="text-gray-700 bg-gray-50 p-3 rounded-lg text-sm">
-                      {selectedApplicant.projectExperience}
+                      {selectedApplicant.project_experience}
                     </p>
                   </div>
 
@@ -453,9 +423,9 @@ export default function AdminDashboard() {
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-2">Comfortable with startup environment?</h4>
                     <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                      selectedApplicant.startupComfort === "Yes" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                      selectedApplicant.startup_comfort === "Yes" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                     }`}>
-                      {selectedApplicant.startupComfort}
+                      {selectedApplicant.startup_comfort}
                     </span>
                   </div>
 
@@ -463,7 +433,7 @@ export default function AdminDashboard() {
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-2">What do you want to gain?</h4>
                     <p className="text-gray-700 bg-gray-50 p-3 rounded-lg text-sm">
-                      {selectedApplicant.internshipGoals}
+                      {selectedApplicant.internship_goals}
                     </p>
                   </div>
 
@@ -471,7 +441,7 @@ export default function AdminDashboard() {
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-2">Resume</h4>
                     <a
-                      href={selectedApplicant.resumeUrl}
+                      href={selectedApplicant.resume_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-4 py-2 bg-[#154CB3] text-white rounded-lg hover:bg-[#0f3d8f] transition-all text-sm font-medium"
@@ -479,7 +449,7 @@ export default function AdminDashboard() {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      {selectedApplicant.resumeFileName}
+                      {selectedApplicant.resume_file_name}
                     </a>
                   </div>
 
