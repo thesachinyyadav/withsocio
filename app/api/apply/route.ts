@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
               <!-- Footer -->
               <div style="background-color: #1a1a1a; padding: 25px 30px; text-align: center;">
                 <p style="color: #888; font-size: 12px; margin: 0;">
-                  © ${new Date().getFullYear()} WSOCIO. All rights reserved.
+                  © ${new Date().getFullYear()} SOCIO. All rights reserved.
                 </p>
                 <p style="color: #666; font-size: 11px; margin: 10px 0 0 0;">
                   This email was sent to ${email} because you applied for an internship at SOCIO.

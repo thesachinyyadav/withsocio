@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 
 interface FormData {
   fullName: string;
@@ -112,11 +113,22 @@ export default function CareersApplicationPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#154CB3] to-[#0a2d6b] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl p-8 md:p-12 max-w-lg w-full text-center shadow-2xl">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+      <div className="min-h-screen bg-gradient-to-br from-[#154CB3] via-[#0f3d8f] to-[#0a2d6b] flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl p-8 md:p-12 max-w-lg w-full text-center shadow-2xl animate-fade-in">
+          {/* Logo */}
+          <div className="mb-6">
+            <Image
+              src="/socio.svg"
+              alt="SOCIO"
+              width={120}
+              height={35}
+              className="mx-auto"
+            />
+          </div>
+          
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg
-              className="w-10 h-10 text-green-600"
+              className="w-8 h-8 text-green-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -124,45 +136,61 @@ export default function CareersApplicationPage() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
+                strokeWidth={2.5}
                 d="M5 13l4 4L19 7"
               />
             </svg>
           </div>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+          
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
             Application Submitted!
           </h2>
-          <p className="text-gray-600 mb-6">
-            Thank you for applying to SOCIO. We&apos;ve received your application and will review it
-            shortly. You&apos;ll hear from us soon!
+          
+          <p className="text-gray-600 mb-8 leading-relaxed">
+            Thank you for applying to <span className="font-semibold text-[#154CB3]">SOCIO</span>. We&apos;ve received your application and will review it shortly. You&apos;ll hear from us soon!
           </p>
-          <div className="flex items-center justify-center gap-2 text-[#154CB3]">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-            </svg>
-            <span className="font-medium">Application ID: {campusId?.toUpperCase()}-{Date.now().toString(36).toUpperCase()}</span>
+          
+          <div className="bg-gray-50 rounded-xl p-4 mb-6">
+            <p className="text-xs text-gray-500 mb-1">Application Reference</p>
+            <p className="font-mono font-semibold text-[#154CB3]">
+              {campusId?.toUpperCase()}-{Date.now().toString(36).toUpperCase()}
+            </p>
           </div>
+          
+          <p className="text-sm text-gray-500">
+            A confirmation email has been sent to your inbox.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Header */}
-      <div className="bg-[#154CB3] text-white py-8 px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-              <span className="text-[#154CB3] font-bold text-xl">W</span>
+      <div className="bg-gradient-to-r from-[#154CB3] via-[#1a56c4] to-[#154CB3] text-white py-10 px-4 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-1/4 w-64 h-64 bg-white rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white rounded-full blur-3xl" />
+        </div>
+        
+        <div className="max-w-3xl mx-auto text-center relative z-10">
+          <div className="flex items-center justify-center mb-5">
+            <div className="bg-white rounded-2xl flex items-center justify-center shadow-lg px-4 py-3">
+              <Image
+                src="/socio.svg"
+                alt="SOCIO"
+                width={140}
+                height={42}
+              />
             </div>
-            <span className="text-2xl font-bold">SOCIO</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">
-            Internship Application Form
+          <h1 className="text-2xl md:text-4xl font-bold mb-3 tracking-tight">
+            Internship Application
           </h1>
-          <p className="text-blue-100 text-sm md:text-base">
-            Campus: {campusId?.replace(/id$/i, "").toUpperCase() || "General"}
+          <p className="text-blue-100 text-sm md:text-base font-medium">
+            {campusId?.replace(/id$/i, " University").replace(/^\w/, (c) => c.toUpperCase()) || "General Application"}
           </p>
         </div>
       </div>
@@ -554,8 +582,22 @@ export default function CareersApplicationPage() {
       </div>
 
       {/* Footer */}
-      <div className="bg-gray-900 text-gray-400 py-6 px-4 text-center text-sm">
-        <p>&copy; {new Date().getFullYear()} WSOCIO. All rights reserved.</p>
+      <div className="bg-gray-900 text-white py-8 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="flex items-center justify-center mb-4">
+            <div className="bg-white rounded-lg px-3 py-2">
+              <Image
+                src="/socio.svg"
+                alt="SOCIO"
+                width={100}
+                height={30}
+              />
+            </div>
+          </div>
+          <p className="text-gray-400 text-sm">
+            &copy; {new Date().getFullYear()} SOCIO. All rights reserved.
+          </p>
+        </div>
       </div>
     </div>
   );

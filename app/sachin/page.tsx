@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -132,8 +133,14 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-gradient-to-br from-[#154CB3] to-[#0a2d6b] flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl p-8 md:p-12 max-w-md w-full shadow-2xl">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-[#154CB3] rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-2xl">W</span>
+            <div className="mx-auto mb-4">
+              <Image
+                src="/socio.svg"
+                alt="SOCIO"
+                width={140}
+                height={42}
+                className="mx-auto"
+              />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
             <p className="text-gray-600 mt-2">Enter password to access applicant data</p>
@@ -170,11 +177,14 @@ export default function AdminDashboard() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#154CB3] rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-lg">W</span>
-            </div>
-            <div>
-              <h1 className="font-bold text-gray-900">SOCIO Admin</h1>
+            <Image
+              src="/socio.svg"
+              alt="SOCIO"
+              width={100}
+              height={30}
+            />
+            <div className="border-l border-gray-300 pl-3">
+              <h1 className="font-bold text-gray-900">Admin Dashboard</h1>
               <p className="text-sm text-gray-500">Internship Applications</p>
             </div>
           </div>
