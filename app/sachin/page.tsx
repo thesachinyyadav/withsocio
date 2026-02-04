@@ -2,12 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface Applicant {
   id: string;
@@ -44,6 +38,7 @@ const roleColors: Record<string, string> = {
   "Operations": "bg-cyan-100 text-cyan-800",
   "Content Writing": "bg-pink-100 text-pink-800",
   "Marketing": "bg-indigo-100 text-indigo-800",
+  "Digital Marketing": "bg-teal-100 text-teal-800",
 };
 
 export default function AdminDashboard() {
@@ -54,22 +49,33 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
+  const [adminToken, setAdminToken] = useState("");
   const [authError, setAuthError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchApplicants = useCallback(async () => {
+    if (!adminToken) {
+      return;
+    }
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("internship_applications")
-        .select("*", { count: 'exact' })
-        .order("created_at", { ascending: false });
+      const response = await fetch("/api/admin/applicants", {
+        headers: {
+          "x-admin-password": adminToken,
+        },
+      });
 
-      if (error) {
-        console.error("Error fetching applications:", error);
-        // Try to give user feedback
-        alert(`Error: ${error.message}. Make sure RLS policies allow reading from this table.`);
-      } else if (!data || data.length === 0) {
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message = payload?.error || "Failed to load applicants.";
+        alert(message);
+        return;
+      }
+
+      const payload = await response.json();
+      const data = payload?.data as Applicant[] | undefined;
+
+      if (!data || data.length === 0) {
         console.log("No applicants found");
         setApplicants([]);
       } else {
@@ -80,7 +86,7 @@ export default function AdminDashboard() {
       alert("Failed to load applicants. Please check console for details.");
     }
     setIsLoading(false);
-  }, []);
+  }, [adminToken]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -92,6 +98,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     if (password === "socio2026") {
       setIsAuthenticated(true);
+      setAdminToken(password);
       setAuthError("");
     } else {
       setAuthError("Incorrect password. Please try again.");
@@ -99,13 +106,19 @@ export default function AdminDashboard() {
   };
 
   const updateStatus = async (id: string, status: Applicant["status"]) => {
-    const { error } = await supabase
-      .from("internship_applications")
-      .update({ status })
-      .eq("id", id);
+    const response = await fetch("/api/admin/applicants", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": adminToken,
+      },
+      body: JSON.stringify({ id, status }),
+    });
 
-    if (error) {
-      console.error("Error updating status:", error);
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      const message = payload?.error || "Failed to update status.";
+      alert(message);
       return;
     }
 
@@ -243,6 +256,7 @@ export default function AdminDashboard() {
               <option value="Operations">Operations</option>
               <option value="Content Writing">Content Writing</option>
               <option value="Marketing">Marketing</option>
+              <option value="Digital Marketing">Digital Marketing</option>
             </select>
             <select
               value={filterStatus}
