@@ -59,15 +59,20 @@ export default function AdminDashboard() {
 
   const fetchApplicants = useCallback(async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from("internship_applications")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("internship_applications")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching applications:", error);
-    } else {
-      setApplicants(data || []);
+      if (error) {
+        console.error("Error fetching applications:", error);
+        alert("Failed to load applicants. Please try again.");
+      } else {
+        setApplicants(data || []);
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
     }
     setIsLoading(false);
   }, []);

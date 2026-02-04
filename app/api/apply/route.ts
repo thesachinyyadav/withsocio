@@ -108,69 +108,109 @@ export async function POST(request: NextRequest) {
       const firstName = fullName.split(" ")[0];
       
       await resend.emails.send({
-        from: "Careers <careers@withsocio.com>",
+        from: "SOCIO Careers <careers@withsocio.com>",
         to: email,
-        subject: "Thank You for Applying at SOCIO! 🎉",
+        subject: `Application Received - ${roleInterest} Role at SOCIO`,
         html: `
           <!DOCTYPE html>
-          <html>
+          <html lang="en">
           <head>
-            <meta charset="utf-8">
+            <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; line-height: 1.6; color: #333; }
+              table { border-collapse: collapse; width: 100%; }
+              img { max-width: 100%; height: auto; display: block; }
+              a { color: #154CB3; text-decoration: none; }
+              a:hover { text-decoration: underline; }
+            </style>
           </head>
-          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
-            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <body style="background-color: #f7f9fc;">
+            <table style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
               <!-- Header -->
-              <div style="background: linear-gradient(135deg, #154CB3 0%, #0a2d6b 100%); padding: 40px 30px; text-align: center;">
-                <div style="display: inline-block; background-color: white; width: 60px; height: 60px; border-radius: 12px; line-height: 60px; margin-bottom: 15px;">
-                  <span style="color: #154CB3; font-size: 28px; font-weight: bold;">W</span>
-                </div>
-                <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 600;">Application Received!</h1>
-              </div>
-              
-              <!-- Content -->
-              <div style="padding: 40px 30px;">
-                <p style="color: #333; font-size: 18px; margin: 0 0 20px 0;">
-                  Hi <strong>${firstName}</strong>,
-                </p>
-                
-                <p style="color: #555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-                  Thank you for applying at <strong>SOCIO</strong>! We're excited to have received your application for the <strong>${roleInterest}</strong> internship position.
-                </p>
-                
-                <p style="color: #555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-                  Our team will carefully review your application, and if shortlisted, we will be contacting you <strong>within this week</strong>. The next step would be a personal interview, post which we will start operations within this month.
-                </p>
-                
-                <div style="background-color: #f8f9fa; border-left: 4px solid #154CB3; padding: 20px; margin: 30px 0; border-radius: 0 8px 8px 0;">
-                  <p style="color: #333; font-size: 14px; margin: 0;">
-                    <strong>What's Next?</strong><br><br>
-                    ✅ Application Review<br>
-                    📞 Personal Interview (if shortlisted)<br>
-                    🚀 Start Operations
+              <tr>
+                <td style="background: linear-gradient(135deg, #154CB3 0%, #1a56c4 100%); padding: 40px 30px; text-align: center;">
+                  <div style="font-size: 24px; font-weight: 700; color: white; margin-bottom: 10px;">SOCIO</div>
+                  <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">Application Confirmed</h1>
+                </td>
+              </tr>
+
+              <!-- Main Content -->
+              <tr>
+                <td style="padding: 40px 30px;">
+                  <p style="margin: 0 0 20px 0; font-size: 16px; color: #555;">Hello <strong>${firstName}</strong>,</p>
+                  
+                  <p style="margin: 0 0 20px 0; font-size: 15px; color: #666; line-height: 1.8;">
+                    Thank you for submitting your application for the <strong>${roleInterest}</strong> position at SOCIO. We're impressed by your interest and excited to review your profile.
                   </p>
-                </div>
-                
-                <p style="color: #555; font-size: 16px; line-height: 1.6; margin: 0 0 10px 0;">
-                  Thank you for your interest in joining our team!
-                </p>
-                
-                <p style="color: #555; font-size: 16px; line-height: 1.6; margin: 30px 0 0 0;">
-                  With love,<br>
-                  <strong style="color: #154CB3;">Team SOCIO</strong>
-                </p>
-              </div>
-              
+
+                  <!-- Status Box -->
+                  <table style="width: 100%; margin: 30px 0; background-color: #f0f4ff; border-radius: 8px; padding: 20px; border-left: 4px solid #154CB3;">
+                    <tr>
+                      <td style="padding: 0;">
+                        <p style="margin: 0; font-size: 12px; color: #667085; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Application Status</p>
+                        <p style="margin: 8px 0 0 0; font-size: 18px; color: #154CB3; font-weight: 700;">Under Review</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <p style="margin: 0 0 20px 0; font-size: 15px; color: #666; line-height: 1.8;">
+                    Our team will carefully evaluate your application. If your profile matches our requirements, we'll reach out within 5-7 business days to schedule an interview.
+                  </p>
+
+                  <!-- Timeline -->
+                  <table style="width: 100%; margin: 30px 0;">
+                    <tr>
+                      <td style="padding: 15px; text-align: center; background-color: #f7f9fc; border-radius: 8px;">
+                        <div style="font-size: 24px; color: #154CB3; font-weight: 700; margin-bottom: 5px;">1</div>
+                        <div style="font-size: 13px; color: #667085; font-weight: 600;">Application Review</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 4px;">5-7 days</div>
+                      </td>
+                      <td style="padding: 0 10px; text-align: center; color: #ccc;">→</td>
+                      <td style="padding: 15px; text-align: center; background-color: #f7f9fc; border-radius: 8px;">
+                        <div style="font-size: 24px; color: #154CB3; font-weight: 700; margin-bottom: 5px;">2</div>
+                        <div style="font-size: 13px; color: #667085; font-weight: 600;">Interview</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 4px;">If shortlisted</div>
+                      </td>
+                      <td style="padding: 0 10px; text-align: center; color: #ccc;">→</td>
+                      <td style="padding: 15px; text-align: center; background-color: #f7f9fc; border-radius: 8px;">
+                        <div style="font-size: 24px; color: #154CB3; font-weight: 700; margin-bottom: 5px;">3</div>
+                        <div style="font-size: 13px; color: #667085; font-weight: 600;">Start</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 4px;">This month</div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <p style="margin: 30px 0 20px 0; font-size: 15px; color: #666; line-height: 1.8;">
+                    In the meantime, feel free to explore our work and learn more about SOCIO. If you have any questions, don't hesitate to reach out.
+                  </p>
+
+                  <p style="margin: 0; font-size: 15px; color: #666;">
+                    Best regards,<br>
+                    <strong style="color: #154CB3; font-size: 16px;">Team SOCIO</strong><br>
+                    <span style="font-size: 13px; color: #999;">careers@withsocio.com</span>
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Divider -->
+              <tr>
+                <td style="height: 1px; background-color: #e5e7eb;"></td>
+              </tr>
+
               <!-- Footer -->
-              <div style="background-color: #1a1a1a; padding: 25px 30px; text-align: center;">
-                <p style="color: #888; font-size: 12px; margin: 0;">
-                  © ${new Date().getFullYear()} SOCIO. All rights reserved.
-                </p>
-                <p style="color: #666; font-size: 11px; margin: 10px 0 0 0;">
-                  This email was sent to ${email} because you applied for an internship at SOCIO.
-                </p>
-              </div>
-            </div>
+              <tr>
+                <td style="padding: 25px 30px; background-color: #f7f9fc; text-align: center;">
+                  <p style="margin: 0; font-size: 12px; color: #999;">
+                    This is an automated message. Please do not reply to this email.
+                  </p>
+                  <p style="margin: 10px 0 0 0; font-size: 11px; color: #bbb;">
+                    © ${new Date().getFullYear()} SOCIO. All rights reserved. | 
+                    <a href="https://withsocio.com" style="color: #999;">Visit our website</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
           </body>
           </html>
         `,
