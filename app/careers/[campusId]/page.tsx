@@ -29,6 +29,10 @@ const roleOptions = [
   { name: "Marketing", icon: "📈", color: "from-green-500 to-emerald-500" },
 ];
 
+interface FormErrors {
+  [key: string]: string;
+}
+
 export default function CareersApplicationPage() {
   const params = useParams();
   const campusId = params.campusId as string;
@@ -53,17 +57,72 @@ export default function CareersApplicationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
+
+  // Validation functions
+  const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validatePhone = (phone: string) => /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/.test(phone);
+  const validateUrl = (url: string) => url === "" || /^https?:\/\/.+/.test(url);
+
+  const validateField = (name: string, value: string) => {
+    const errors = { ...fieldErrors };
+    
+    if (name === "fullName" && !value.trim()) {
+      errors[name] = "Full name is required";
+    } else if (name === "fullName") {
+      delete errors[name];
+    }
+
+    if (name === "email" && !value.trim()) {
+      errors[name] = "Email is required";
+    } else if (name === "email" && !validateEmail(value)) {
+      errors[name] = "Please enter a valid email";
+    } else if (name === "email") {
+      delete errors[name];
+    }
+
+    if (name === "phoneNumber" && !value.trim()) {
+      errors[name] = "Phone number is required";
+    } else if (name === "phoneNumber" && !validatePhone(value)) {
+      errors[name] = "Please enter a valid phone number";
+    } else if (name === "phoneNumber") {
+      delete errors[name];
+    }
+
+    if (name === "portfolioLink" && !validateUrl(value)) {
+      errors[name] = "Please enter a valid URL";
+    } else if (name === "portfolioLink") {
+      delete errors[name];
+    }
+
+    setFieldErrors(errors);
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (touchedFields.has(name)) {
+      validateField(name, value);
+    }
+  };
+
+  const handleFieldBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setTouchedFields((prev) => new Set([...prev, name]));
+    validateField(name, value);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, resume: file }));
+    if (file) {
+      const errors = { ...fieldErrors };
+      delete errors.resume;
+      setFieldErrors(errors);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,6 +160,21 @@ export default function CareersApplicationPage() {
 
       if (!response.ok) {
         throw new Error(result.error || "Failed to submit application");
+      }
+
+      // Trigger confetti on success
+      if (typeof window !== "undefined") {
+        try {
+          const confetti = require("canvas-confetti");
+          confetti.default({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ["#154CB3", "#1e6fd4", "#10b981", "#f59e0b"],
+          });
+        } catch (e) {
+          // Confetti not available, continue
+        }
       }
 
       setSubmitted(true);
@@ -232,15 +306,33 @@ export default function CareersApplicationPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Full Name <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#154CB3] focus:border-transparent transition-all outline-none"
-                  placeholder="Enter your full name"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                    onBlur={handleFieldBlur}
+                    required
+                    className={`w-full px-4 py-3 border-2 rounded-xl transition-all outline-none ${
+                      fieldErrors.fullName && touchedFields.has("fullName")
+                        ? "border-red-500 bg-red-50 focus:ring-2 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-2 focus:ring-[#154CB3] focus:border-[#154CB3]"
+                    }`}
+                    placeholder="Enter your full name"
+                  />
+                  {formData.fullName && !fieldErrors.fullName && (
+                    <div className="absolute right-3 top-3.5 text-green-500">✓</div>
+                  )}
+                </div>
+                {fieldErrors.fullName && touchedFields.has("fullName") && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {fieldErrors.fullName}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -252,8 +344,9 @@ export default function CareersApplicationPage() {
                   name="courseYearDept"
                   value={formData.courseYearDept}
                   onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#154CB3] focus:border-transparent transition-all outline-none"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#154CB3] focus:border-[#154CB3] transition-all outline-none"
                   placeholder="e.g., BCA, 2nd Year, Computer Science"
                 />
               </div>
@@ -263,29 +356,55 @@ export default function CareersApplicationPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Phone Number <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="tel"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#154CB3] focus:border-transparent transition-all outline-none"
-                    placeholder="+91 XXXXX XXXXX"
-                  />
+                  <div className="relative">
+                    <input
+                      type="tel"
+                      name="phoneNumber"
+                      value={formData.phoneNumber}
+                      onChange={handleInputChange}
+                      onBlur={handleFieldBlur}
+                      required
+                      className={`w-full px-4 py-3 border-2 rounded-xl transition-all outline-none ${
+                        fieldErrors.phoneNumber && touchedFields.has("phoneNumber")
+                          ? "border-red-500 bg-red-50 focus:ring-2 focus:ring-red-200"
+                          : "border-gray-300 focus:ring-2 focus:ring-[#154CB3] focus:border-[#154CB3]"
+                      }`}
+                      placeholder="+91 XXXXX XXXXX"
+                    />
+                    {formData.phoneNumber && !fieldErrors.phoneNumber && (
+                      <div className="absolute right-3 top-3.5 text-green-500">✓</div>
+                    )}
+                  </div>
+                  {fieldErrors.phoneNumber && touchedFields.has("phoneNumber") && (
+                    <p className="text-red-500 text-xs mt-1">{fieldErrors.phoneNumber}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Email Address <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#154CB3] focus:border-transparent transition-all outline-none"
-                    placeholder="your.email@example.com"
-                  />
+                  <div className="relative">
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      onBlur={handleFieldBlur}
+                      required
+                      className={`w-full px-4 py-3 border-2 rounded-xl transition-all outline-none ${
+                        fieldErrors.email && touchedFields.has("email")
+                          ? "border-red-500 bg-red-50 focus:ring-2 focus:ring-red-200"
+                          : "border-gray-300 focus:ring-2 focus:ring-[#154CB3] focus:border-[#154CB3]"
+                      }`}
+                      placeholder="your.email@example.com"
+                    />
+                    {formData.email && !fieldErrors.email && (
+                      <div className="absolute right-3 top-3.5 text-green-500">✓</div>
+                    )}
+                  </div>
+                  {fieldErrors.email && touchedFields.has("email") && (
+                    <p className="text-red-500 text-xs mt-1">{fieldErrors.email}</p>
+                  )}
                 </div>
               </div>
 
@@ -559,8 +678,14 @@ export default function CareersApplicationPage() {
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
-              {error}
+            <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 rounded-2xl p-4 flex items-start gap-3 shadow-lg animate-pulse">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <p className="font-bold text-red-800">Submission Failed</p>
+                <p className="text-red-700 text-sm mt-1">{error}</p>
+              </div>
             </div>
           )}
 

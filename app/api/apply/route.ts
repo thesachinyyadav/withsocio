@@ -2,9 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 
+// Client for storage operations (uses anon key)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+// Client for database operations (uses service role key for elevated privileges)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -63,8 +70,8 @@ export async function POST(request: NextRequest) {
       .from("internship-resumes")
       .getPublicUrl(filePath);
 
-    // Insert application data into Supabase
-    const { data, error: insertError } = await supabase
+    // Insert application data into Supabase using admin client
+    const { data, error: insertError } = await supabaseAdmin
       .from("internship_applications")
       .insert({
         full_name: fullName,
