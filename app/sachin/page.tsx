@@ -411,18 +411,6 @@ export default function AdminDashboard() {
             >
               {isLoading ? "Loading..." : "Refresh"}
             </button>
-            <button
-              onClick={() => downloadByPreference("SOCIO")}
-              className="text-sm text-gray-700 hover:text-gray-900 font-medium"
-            >
-              Download SOCIO
-            </button>
-            <button
-              onClick={() => downloadByPreference("MedBro")}
-              className="text-sm text-gray-700 hover:text-gray-900 font-medium"
-            >
-              Download MedBro
-            </button>
             <span className="text-sm text-gray-600">
               Total: <span className="font-semibold">{totalApplicants}</span> applicants
             </span>
@@ -473,6 +461,20 @@ export default function AdminDashboard() {
               <option value="shortlisted">Shortlisted</option>
               <option value="rejected">Rejected</option>
             </select>
+          </div>
+          <div className="flex flex-wrap gap-3 mt-4">
+            <button
+              onClick={() => downloadByPreference("SOCIO")}
+              className="text-sm text-gray-700 hover:text-gray-900 font-medium px-3 py-2 rounded-lg border border-gray-200 bg-gray-50"
+            >
+              Download SOCIO Applicants
+            </button>
+            <button
+              onClick={() => downloadByPreference("MedBro")}
+              className="text-sm text-gray-700 hover:text-gray-900 font-medium px-3 py-2 rounded-lg border border-gray-200 bg-gray-50"
+            >
+              Download MedBro Applicants
+            </button>
           </div>
         </div>
 
