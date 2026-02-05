@@ -16,3 +16,25 @@ Or you can add them manually in the Table Editor:
 3. Add column: `preference2` (type: text)
 
 These columns will store the startup preferences (SOCIO or MedBro) selected by applicants.
+
+## Interview Scores Table (Required)
+
+Create a new table to store interviewer scores per applicant:
+
+```sql
+CREATE TABLE IF NOT EXISTS interview_scores (
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	applicant_id UUID NOT NULL REFERENCES internship_applications(id) ON DELETE CASCADE,
+	interviewer TEXT NOT NULL,
+	communication INT NOT NULL DEFAULT 0,
+	technical_depth INT NOT NULL DEFAULT 0,
+	problem_solving INT NOT NULL DEFAULT 0,
+	culture_fit INT NOT NULL DEFAULT 0,
+	ownership INT NOT NULL DEFAULT 0,
+	total INT NOT NULL DEFAULT 0,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS interview_scores_unique
+ON interview_scores (applicant_id, interviewer);
+```

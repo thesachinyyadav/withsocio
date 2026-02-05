@@ -27,6 +27,19 @@ interface Applicant {
   status: "pending" | "reviewed" | "shortlisted" | "rejected";
 }
 
+interface InterviewScore {
+  id: string;
+  applicant_id: string;
+  interviewer: string;
+  communication: number;
+  technical_depth: number;
+  problem_solving: number;
+  culture_fit: number;
+  ownership: number;
+  total: number;
+  created_at: string;
+}
+
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800",
   reviewed: "bg-blue-100 text-blue-800",
@@ -58,6 +71,34 @@ export default function AdminDashboard() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [totalApplicants, setTotalApplicants] = useState(0);
+  const [interviewer, setInterviewer] = useState("Sachin");
+  const [rubricScores, setRubricScores] = useState<number[]>([0, 0, 0, 0, 0]);
+  const [interviewScores, setInterviewScores] = useState<InterviewScore[]>([]);
+  const [isSavingScore, setIsSavingScore] = useState(false);
+
+  const rubricLabels = [
+    "Communication",
+    "Technical Depth",
+    "Problem Solving",
+    "Culture Fit",
+    "Ownership",
+  ];
+
+  const interviewerOptions = [
+    "Sachin",
+    "Surya",
+    "Smitha",
+    "Guest 1",
+    "Guest 2",
+  ];
+
+  const totalScore = rubricScores.reduce((sum, value) => sum + value, 0);
+  const averageScore = interviewScores.length
+    ? Math.round(
+        interviewScores.reduce((sum, score) => sum + (score.total || 0), 0) /
+          interviewScores.length
+      )
+    : 0;
 
   const fetchApplicants = useCallback(async () => {
     if (!adminToken) {
@@ -172,6 +213,109 @@ export default function AdminDashboard() {
     }
   };
 
+  const downloadByPreference = async (preference: "SOCIO" | "MedBro") => {
+    try {
+      const response = await fetch(`/api/admin/export?preference=${preference}`, {
+        headers: {
+          "x-admin-password": adminToken,
+        },
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message = payload?.error || "Failed to download.";
+        alert(message);
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `applicants_${preference.toLowerCase()}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert("Failed to download.");
+    }
+  };
+
+  const fetchInterviewScores = useCallback(
+    async (applicantId: string) => {
+      if (!adminToken) return;
+      try {
+        const response = await fetch(`/api/admin/scores?applicantId=${applicantId}`, {
+          headers: {
+            "x-admin-password": adminToken,
+          },
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          const message = payload?.error || "Failed to load interview scores.";
+          alert(message);
+          return;
+        }
+
+        const payload = await response.json();
+        setInterviewScores(payload?.data || []);
+      } catch (error) {
+        alert("Failed to load interview scores.");
+      }
+    },
+    [adminToken]
+  );
+
+  const saveInterviewScore = async () => {
+    if (!selectedApplicant) return;
+    if (!interviewer) return;
+    setIsSavingScore(true);
+
+    try {
+      const response = await fetch("/api/admin/scores", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": adminToken,
+        },
+        body: JSON.stringify({
+          applicantId: selectedApplicant.id,
+          interviewer,
+          scores: {
+            communication: rubricScores[0],
+            technicalDepth: rubricScores[1],
+            problemSolving: rubricScores[2],
+            cultureFit: rubricScores[3],
+            ownership: rubricScores[4],
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message = payload?.error || "Failed to save score.";
+        alert(message);
+        return;
+      }
+
+      await fetchInterviewScores(selectedApplicant.id);
+    } catch (error) {
+      alert("Failed to save score.");
+    } finally {
+      setIsSavingScore(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedApplicant) {
+      fetchInterviewScores(selectedApplicant.id);
+    } else {
+      setInterviewScores([]);
+    }
+  }, [selectedApplicant, fetchInterviewScores]);
+
   const filteredApplicants = applicants.filter((app) => {
     const matchesRole = !filterRole || app.role_interest === filterRole;
     const matchesStatus = !filterStatus || app.status === filterStatus;
@@ -266,6 +410,18 @@ export default function AdminDashboard() {
               className="text-sm text-[#154CB3] hover:text-[#0f3d8f] font-medium disabled:opacity-50"
             >
               {isLoading ? "Loading..." : "Refresh"}
+            </button>
+            <button
+              onClick={() => downloadByPreference("SOCIO")}
+              className="text-sm text-gray-700 hover:text-gray-900 font-medium"
+            >
+              Download SOCIO
+            </button>
+            <button
+              onClick={() => downloadByPreference("MedBro")}
+              className="text-sm text-gray-700 hover:text-gray-900 font-medium"
+            >
+              Download MedBro
             </button>
             <span className="text-sm text-gray-600">
               Total: <span className="font-semibold">{totalApplicants}</span> applicants
@@ -428,6 +584,11 @@ export default function AdminDashboard() {
                       <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
                         {selectedApplicant.campus_id.toUpperCase()}
                       </span>
+                      {interviewScores.length > 0 && (
+                        <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
+                          Avg Score: {averageScore}/50
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -447,6 +608,74 @@ export default function AdminDashboard() {
                         <p className="font-semibold text-gray-900">{selectedApplicant.preference2}</p>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Interview Scores */}
+                  <div>
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                      <h4 className="text-sm font-medium text-gray-500">Interview Scorecard</h4>
+                      <span className="text-sm text-gray-700 font-medium">Total: {totalScore}/50</span>
+                    </div>
+                    <div className="grid md:grid-cols-6 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-600 mb-2">Interviewer</label>
+                        <select
+                          value={interviewer}
+                          onChange={(e) => setInterviewer(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#154CB3] focus:border-transparent outline-none bg-white"
+                        >
+                          {interviewerOptions.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {rubricLabels.map((label, index) => (
+                        <div key={label}>
+                          <label className="block text-xs font-semibold text-gray-600 mb-2">{label}</label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={10}
+                            value={rubricScores[index]}
+                            onChange={(e) => {
+                              const value = Number(e.target.value || 0);
+                              setRubricScores((prev) =>
+                                prev.map((score, idx) =>
+                                  idx === index ? Math.min(10, Math.max(0, value)) : score
+                                )
+                              );
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#154CB3] focus:border-transparent outline-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-3 mt-4">
+                      <button
+                        onClick={saveInterviewScore}
+                        disabled={isSavingScore}
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-[#154CB3] text-white hover:bg-[#0f3d8f] disabled:opacity-60"
+                      >
+                        {isSavingScore ? "Saving..." : "Save Score"}
+                      </button>
+                      {interviewScores.length > 0 && (
+                        <span className="text-sm text-gray-600">
+                          Average: <span className="font-semibold">{averageScore}/50</span>
+                        </span>
+                      )}
+                    </div>
+                    {interviewScores.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        {interviewScores.map((score) => (
+                          <div key={score.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm">
+                            <span className="font-medium text-gray-700">{score.interviewer}</span>
+                            <span className="text-gray-600">{score.total}/50</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Contact Info */}
