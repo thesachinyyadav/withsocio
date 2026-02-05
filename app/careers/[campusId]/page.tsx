@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 
 interface FormData {
+  preference1: string;
+  preference2: string;
   fullName: string;
   courseYearDept: string;
   phoneNumber: string;
@@ -30,6 +32,8 @@ export default function CareersApplicationPage() {
   const campusId = params.campusId as string;
 
   const [formData, setFormData] = useState<FormData>({
+    preference1: "",
+    preference2: "",
     fullName: "",
     courseYearDept: "",
     phoneNumber: "",
@@ -205,23 +209,44 @@ export default function CareersApplicationPage() {
           <div className="absolute -bottom-20 -left-40 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl" />
         </div>
         <div className="max-w-4xl mx-auto px-4 py-16 relative z-10">
-          <div className="flex items-center justify-center mb-8">
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl px-6 py-4 hover:shadow-3xl transition-shadow">
-              <Image src="/socio.svg" alt="SOCIO" width={160} height={48} />
-            </div>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-black text-center mb-3 tracking-tight">Join SOCIO</h1>
-          <p className="text-center text-blue-50 text-lg md:text-xl font-light max-w-2xl mx-auto">Apply for an exciting internship opportunity and grow with our team</p>
+          <h1 className="text-4xl md:text-5xl font-black text-center mb-3 tracking-tight">Christ Incubation Centre</h1>
+          <p className="text-center text-blue-50 text-lg md:text-xl font-light max-w-2xl mx-auto">Internship Application - Join Our Startups</p>
         </div>
       </div>
 
       {/* Premium Form */}
       <div className="max-w-2xl mx-auto px-4 py-12">
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Section 1 */}
+          {/* Section 0 - Preferences */}
           <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center gap-4 mb-8">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] flex items-center justify-center text-white font-bold">1</div>
+              <h2 className="text-2xl font-bold text-gray-900">Startup Preference</h2>
+            </div>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">First Preference <span className="text-red-500">*</span></label>
+                <select name="preference1" value={formData.preference1} onChange={handleInputChange} required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none bg-white transition-all">
+                  <option value="">Select your first choice</option>
+                  <option value="SOCIO">SOCIO</option>
+                  <option value="MedBro">MedBro</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Second Preference <span className="text-red-500">*</span></label>
+                <select name="preference2" value={formData.preference2} onChange={handleInputChange} required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none bg-white transition-all">
+                  <option value="">Select your second choice</option>
+                  <option value="SOCIO">SOCIO</option>
+                  <option value="MedBro">MedBro</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 1 */}
+          <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] flex items-center justify-center text-white font-bold">2</div>
               <h2 className="text-2xl font-bold text-gray-900">Your Details</h2>
             </div>
             <div className="space-y-6">
@@ -264,7 +289,7 @@ export default function CareersApplicationPage() {
           {/* Section 2 - Role Selection */}
           <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] flex items-center justify-center text-white font-bold">2</div>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] flex items-center justify-center text-white font-bold">3</div>
               <h2 className="text-2xl font-bold text-gray-900">Role Interest</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -305,12 +330,12 @@ export default function CareersApplicationPage() {
           {/* Section 3 - About You */}
           <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] flex items-center justify-center text-white font-bold">3</div>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] flex items-center justify-center text-white font-bold">4</div>
               <h2 className="text-2xl font-bold text-gray-900">About You</h2>
             </div>
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Why SOCIO?</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Why this internship?</label>
                 <textarea name="whyConsider" value={formData.whyConsider} onChange={handleInputChange} required rows={2} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none resize-none transition-all" placeholder="What attracts you..." />
               </div>
               <div>
@@ -334,7 +359,7 @@ export default function CareersApplicationPage() {
           {/* Section 4 - Work & Goals */}
           <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] flex items-center justify-center text-white font-bold">4</div>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] flex items-center justify-center text-white font-bold">5</div>
               <h2 className="text-2xl font-bold text-gray-900">Work & Goals</h2>
             </div>
             <div className="space-y-6">

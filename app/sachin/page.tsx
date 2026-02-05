@@ -5,6 +5,8 @@ import Image from "next/image";
 
 interface Applicant {
   id: string;
+  preference1: string;
+  preference2: string;
   full_name: string;
   course_year_dept: string;
   phone_number: string;
@@ -432,6 +434,21 @@ export default function AdminDashboard() {
 
                 {/* Content */}
                 <div className="p-6 space-y-6">
+                  {/* Preferences */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500 mb-3">Startup Preferences</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="p-3 bg-blue-50 rounded-lg">
+                        <p className="text-xs text-gray-600 mb-1">First Preference</p>
+                        <p className="font-semibold text-gray-900">{selectedApplicant.preference1}</p>
+                      </div>
+                      <div className="p-3 bg-purple-50 rounded-lg">
+                        <p className="text-xs text-gray-600 mb-1">Second Preference</p>
+                        <p className="font-semibold text-gray-900">{selectedApplicant.preference2}</p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Contact Info */}
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
