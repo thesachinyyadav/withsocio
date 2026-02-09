@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const campusId = formData.get("campusId") as string;
     const resumeFile = formData.get("resume") as File;
 
-    if (!resumeFile || !fullName || !email || !preference1 || !preference2) {
+    if (!resumeFile || !fullName || !email) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -76,8 +76,8 @@ export async function POST(request: NextRequest) {
     const { data, error: insertError } = await supabaseAdmin
       .from("internship_applications")
       .insert({
-        preference1: preference1,
-        preference2: preference2,
+        preference1: preference1 || null,
+        preference2: preference2 || null,
         full_name: fullName,
         course_year_dept: courseYearDept,
         phone_number: phoneNumber,
