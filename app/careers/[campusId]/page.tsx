@@ -204,12 +204,10 @@ export default function CareersApplicationPage() {
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute -bottom-20 -left-40 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl" />
         </div>
+        <div className="absolute top-4 left-4 z-20 bg-white rounded-lg px-4 py-2 shadow-lg">
+          <Image src="/socio.svg" alt="SOCIO" width={120} height={36} />
+        </div>
         <div className="max-w-4xl mx-auto px-4 py-16 relative z-10">
-          <div className="flex justify-start mb-8">
-            <div className="bg-white rounded-lg px-4 py-2 shadow-lg">
-              <Image src="/socio.svg" alt="SOCIO" width={120} height={36} />
-            </div>
-          </div>
           <h1 className="text-4xl md:text-5xl font-black text-center mb-3 tracking-tight">SOCIO Internship Application</h1>
           <p className="text-center text-blue-50 text-lg md:text-xl font-light max-w-2xl mx-auto">Join Our Team - Apply Now</p>
         </div>
