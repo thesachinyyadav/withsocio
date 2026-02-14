@@ -19,7 +19,9 @@ const templates = {
     text: `Hello ${firstName},
 
 Great news! You've been shortlisted for the ${role} internship at SOCIO.
-Our team will reach out shortly with the next steps.
+
+** YOUR INTERVIEWS WILL BE SCHEDULED IN THE UPCOMING WEEK **
+Please stay active - the schedule and venue will be sent via email.
 
 Please keep an eye on your email and phone for updates.
 
@@ -53,8 +55,13 @@ To unsubscribe from career emails, reply to careers@withsocio.com with subject "
               <p style="margin:0 0 16px 0;font-size:16px;color:#555;">Hello <strong>${firstName}</strong>,</p>
               <p style="margin:0 0 16px 0;font-size:15px;color:#666;line-height:1.7;">
                 Great news! You’ve been shortlisted for the <strong>${role}</strong> internship at SOCIO.
-                Our team will reach out shortly with the next steps.
               </p>
+              <div style="background-color:#e8f4f8;border-left:4px solid #154CB3;padding:16px;border-radius:4px;margin:16px 0;">
+                <p style="margin:0;font-size:15px;color:#154CB3;line-height:1.6;">
+                  <strong style="font-size:16px;">YOUR INTERVIEWS WILL BE SCHEDULED IN THE UPCOMING WEEK.</strong><br><br>
+                  Please stay active - the schedule and venue will be sent via email.
+                </p>
+              </div>
               <p style="margin:0 0 20px 0;font-size:15px;color:#666;line-height:1.7;">
                 Please keep an eye on your email and phone for updates.
               </p>
