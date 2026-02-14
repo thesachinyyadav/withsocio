@@ -130,6 +130,90 @@ To unsubscribe from career emails, reply to careers@withsocio.com with subject "
       </html>
     `,
   }),
+  rejected: ({ firstName, role }: { firstName: string; role: string }) => ({
+    subject: `Application Update - ${role} Internship at SOCIO`,
+    text: `Hello ${firstName},
+
+Thank you for your interest in the ${role} internship position at SOCIO.
+
+After careful consideration of your application and qualifications, we regret to inform you that we will not be moving forward at this time. This decision was not easy, as we received many strong applications.
+
+We truly appreciate the time and effort you invested in applying. Your profile was impressive, and we encourage you to apply again in the future when there may be a better fit for your skills and experience.
+
+If you have any questions or would like feedback on your application, please feel free to reach out to us at careers@withsocio.com. We'd be happy to connect and discuss how you can strengthen your profile for future opportunities.
+
+We wish you all the best in your future endeavors!
+
+Best regards,
+Team SOCIO
+careers@withsocio.com
+
+---
+© ${new Date().getFullYear()} SOCIO. All rights reserved.
+To unsubscribe from career emails, reply to careers@withsocio.com with subject "UNSUBSCRIBE".`,
+    html: `
+      <!DOCTYPE html>
+      <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Application Update</title>
+      </head>
+      <body style="margin:0;padding:0;background-color:#f7f9fc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;color:#333;">
+        <table style="max-width:600px;margin:20px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);width:100%;">
+          <tr>
+            <td style="background:linear-gradient(135deg,#154CB3 0%,#1a56c4 100%);padding:32px;text-align:center;">
+              <div style="font-size:24px;font-weight:700;color:#fff;">SOCIO</div>
+              <h1 style="margin:8px 0 0 0;color:#fff;font-size:26px;">Application Update</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;">
+              <p style="margin:0 0 16px 0;font-size:16px;color:#555;">Hello <strong>${firstName}</strong>,</p>
+              
+              <p style="margin:0 0 16px 0;font-size:15px;color:#666;line-height:1.7;">
+                Thank you for your interest in the <strong>${role}</strong> internship position at SOCIO.
+              </p>
+
+              <div style="background-color:#fff3cd;border-left:4px solid #ffc107;padding:16px;border-radius:4px;margin:20px 0;">
+                <p style="margin:0;font-size:15px;color:#856404;line-height:1.6;">
+                  After careful consideration of your application and qualifications, we regret to inform you that we will not be moving forward at this time. This decision was not easy, as we received many strong applications.
+                </p>
+              </div>
+
+              <p style="margin:20px 0 16px 0;font-size:15px;color:#666;line-height:1.7;">
+                We truly appreciate the time and effort you invested in applying. Your profile was impressive, and we encourage you to apply again in the future when there may be a better fit for your skills and experience.
+              </p>
+
+              <p style="margin:0 0 16px 0;font-size:15px;color:#666;line-height:1.7;">
+                If you have any questions or would like feedback on your application, please feel free to reach out to us at 
+                <a href="mailto:careers@withsocio.com" style="color:#154CB3;text-decoration:none;font-weight:600;">careers@withsocio.com</a>. 
+                We'd be happy to connect and discuss how you can strengthen your profile for future opportunities.
+              </p>
+
+              <p style="margin:20px 0 0 0;font-size:15px;color:#666;line-height:1.7;">
+                We wish you all the best in your future endeavors!
+              </p>
+
+              <p style="margin:24px 0 0 0;font-size:15px;color:#666;">
+                Best regards,<br>
+                <strong style="color:#154CB3;font-size:16px;">Team SOCIO</strong><br>
+                <a href="mailto:careers@withsocio.com" style="color:#154CB3;text-decoration:none;font-size:13px;">careers@withsocio.com</a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px;background:#f7f9fc;text-align:center;font-size:11px;color:#999;">
+              © ${new Date().getFullYear()} SOCIO. All rights reserved. | 
+              <a href="mailto:careers@withsocio.com?subject=UNSUBSCRIBE" style="color:#999;">Unsubscribe</a>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `,
+  }),
 };
 
 export async function POST(request: Request) {
@@ -149,7 +233,7 @@ export async function POST(request: Request) {
   }
 
   const firstName = String(fullName).split(" ")[0];
-  const { subject, html, text } = templates[type as "shortlisted" | "selected"]({
+  const { subject, html, text } = templates[type as "shortlisted" | "selected" | "rejected"]({
     firstName,
     role: roleInterest,
   });

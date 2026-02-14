@@ -180,7 +180,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const sendCandidateMail = async (type: "shortlisted" | "selected") => {
+  const sendCandidateMail = async (type: "shortlisted" | "selected" | "rejected") => {
     if (!selectedApplicant) return;
     setIsSendingMail(true);
     try {
@@ -205,7 +205,12 @@ export default function AdminDashboard() {
         return;
       }
 
-      alert(type === "shortlisted" ? "Shortlist email sent." : "Selection email sent.");
+      const messages = {
+        shortlisted: "Shortlist email sent.",
+        selected: "Selection email sent.",
+        rejected: "Rejection email sent respectfully."
+      };
+      alert(messages[type]);
     } catch (error) {
       alert("Failed to send email.");
     } finally {
@@ -847,6 +852,13 @@ export default function AdminDashboard() {
                         className="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-green-100 text-green-800 hover:bg-green-200 disabled:opacity-60"
                       >
                         {isSendingMail ? "Sending..." : "Send Selection Email"}
+                      </button>
+                      <button
+                        onClick={() => sendCandidateMail("rejected")}
+                        disabled={isSendingMail}
+                        className="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-red-100 text-red-800 hover:bg-red-200 disabled:opacity-60"
+                      >
+                        {isSendingMail ? "Sending..." : "Send Rejection Email"}
                       </button>
                     </div>
                   </div>
