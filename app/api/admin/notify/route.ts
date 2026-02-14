@@ -131,18 +131,18 @@ To unsubscribe from career emails, reply to careers@withsocio.com with subject "
     `,
   }),
   rejected: ({ firstName, role }: { firstName: string; role: string }) => ({
-    subject: `Application Update - ${role} Internship at SOCIO`,
+    subject: `Application Status - ${role} Internship at SOCIO`,
     text: `Hello ${firstName},
 
 Thank you for your interest in the ${role} internship position at SOCIO.
 
-After careful consideration of your application and qualifications, we regret to inform you that we will not be moving forward at this time. This decision was not easy, as we received many strong applications.
+NOT SHORTLISTED
 
-We truly appreciate the time and effort you invested in applying. Your profile was impressive, and we encourage you to apply again in the future when there may be a better fit for your skills and experience.
+We are sorry that we will not be going ahead with your application at this time. We truly appreciate the time and effort you took to apply.
 
-If you have any questions or would like feedback on your application, please feel free to reach out to us at careers@withsocio.com. We'd be happy to connect and discuss how you can strengthen your profile for future opportunities.
+However, please don't lose hope! We will keep your profile in mind for any future openings at SOCIO that suit your skills and background. If an opportunity aligns with your profile, we will definitely get in touch with you.
 
-We wish you all the best in your future endeavors!
+Thank you once again for considering SOCIO!
 
 Best regards,
 Team SOCIO
@@ -158,42 +158,43 @@ To unsubscribe from career emails, reply to careers@withsocio.com with subject "
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>Application Update</title>
+        <title>Application Status</title>
       </head>
       <body style="margin:0;padding:0;background-color:#f7f9fc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;color:#333;">
         <table style="max-width:600px;margin:20px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);width:100%;">
           <tr>
             <td style="background:linear-gradient(135deg,#154CB3 0%,#1a56c4 100%);padding:32px;text-align:center;">
               <div style="font-size:24px;font-weight:700;color:#fff;">SOCIO</div>
-              <h1 style="margin:8px 0 0 0;color:#fff;font-size:26px;">Application Update</h1>
+              <h1 style="margin:8px 0 0 0;color:#fff;font-size:26px;">Application Status</h1>
             </td>
           </tr>
           <tr>
             <td style="padding:32px;">
               <p style="margin:0 0 16px 0;font-size:16px;color:#555;">Hello <strong>${firstName}</strong>,</p>
               
-              <p style="margin:0 0 16px 0;font-size:15px;color:#666;line-height:1.7;">
+              <p style="margin:0 0 20px 0;font-size:15px;color:#666;line-height:1.7;">
                 Thank you for your interest in the <strong>${role}</strong> internship position at SOCIO.
               </p>
 
-              <div style="background-color:#fff3cd;border-left:4px solid #ffc107;padding:16px;border-radius:4px;margin:20px 0;">
-                <p style="margin:0;font-size:15px;color:#856404;line-height:1.6;">
-                  After careful consideration of your application and qualifications, we regret to inform you that we will not be moving forward at this time. This decision was not easy, as we received many strong applications.
+              <div style="background-color:#ffe6e6;border:2px solid #ff6b6b;border-radius:8px;padding:20px;margin:24px 0;">
+                <p style="margin:0 0 12px 0;font-size:12px;color:#c92a2a;font-weight:700;text-transform:uppercase;letter-spacing:1px;text-align:center;">Not Shortlisted</p>
+                <p style="margin:0;font-size:15px;color:#c92a2a;line-height:1.6;text-align:center;font-weight:600;">
+                  We are sorry that we will not be going ahead with your application at this time.
                 </p>
               </div>
 
               <p style="margin:20px 0 16px 0;font-size:15px;color:#666;line-height:1.7;">
-                We truly appreciate the time and effort you invested in applying. Your profile was impressive, and we encourage you to apply again in the future when there may be a better fit for your skills and experience.
+                We truly appreciate the <strong>time and effort</strong> you took to apply.
               </p>
 
-              <p style="margin:0 0 16px 0;font-size:15px;color:#666;line-height:1.7;">
-                If you have any questions or would like feedback on your application, please feel free to reach out to us at 
-                <a href="mailto:careers@withsocio.com" style="color:#154CB3;text-decoration:none;font-weight:600;">careers@withsocio.com</a>. 
-                We'd be happy to connect and discuss how you can strengthen your profile for future opportunities.
-              </p>
+              <div style="background-color:#e8f4f8;border-left:4px solid #154CB3;padding:16px;border-radius:4px;margin:20px 0;">
+                <p style="margin:0;font-size:15px;color:#154CB3;line-height:1.6;">
+                  <strong>However, please don't lose hope!</strong> We will keep your profile in mind for any future openings at SOCIO that suit your skills and background. If an opportunity aligns with your profile, we will definitely get in touch with you.
+                </p>
+              </div>
 
-              <p style="margin:20px 0 0 0;font-size:15px;color:#666;line-height:1.7;">
-                We wish you all the best in your future endeavors!
+              <p style="margin:20px 0 0 0;font-size:15px;color:#666;">
+                <strong>Thank you once again for considering SOCIO!</strong>
               </p>
 
               <p style="margin:24px 0 0 0;font-size:15px;color:#666;">
