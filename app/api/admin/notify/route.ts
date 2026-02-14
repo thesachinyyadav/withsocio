@@ -140,7 +140,7 @@ NOT SHORTLISTED
 
 We are sorry that we will not be going ahead with your application at this time. We truly appreciate the time and effort you took to apply.
 
-However, please don't lose hope! We will keep your profile in mind for any future openings at SOCIO that suit your skills and background. If an opportunity aligns with your profile, we will definitely get in touch with you.
+We encourage you to remain connected with us. We will retain your profile and consider you for future opportunities at SOCIO that align with your skills and experience. Should a suitable position become available, we will reach out to you directly.
 
 Thank you once again for considering SOCIO!
 
@@ -189,7 +189,7 @@ To unsubscribe from career emails, reply to careers@withsocio.com with subject "
 
               <div style="background-color:#e8f4f8;border-left:4px solid #154CB3;padding:16px;border-radius:4px;margin:20px 0;">
                 <p style="margin:0;font-size:15px;color:#154CB3;line-height:1.6;">
-                  <strong>However, please don't lose hope!</strong> We will keep your profile in mind for any future openings at SOCIO that suit your skills and background. If an opportunity aligns with your profile, we will definitely get in touch with you.
+                  We encourage you to remain connected with us. We will retain your profile and consider you for future opportunities at SOCIO that align with your skills and experience. Should a suitable position become available, we will reach out to you directly.
                 </p>
               </div>
 
