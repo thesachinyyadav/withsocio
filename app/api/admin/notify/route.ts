@@ -16,6 +16,21 @@ const baseUrl = "https://socio.christuniversity.in";
 const templates = {
   shortlisted: ({ firstName, role }: { firstName: string; role: string }) => ({
     subject: `Shortlisted - ${role} Internship at SOCIO`,
+    text: `Hello ${firstName},
+
+Great news! You've been shortlisted for the ${role} internship at SOCIO.
+Our team will reach out shortly with the next steps.
+
+Please keep an eye on your email and phone for updates.
+
+Visit: ${baseUrl}
+
+Best regards,
+Team SOCIO
+
+---
+© ${new Date().getFullYear()} SOCIO. All rights reserved.
+To unsubscribe from career emails, reply to careers@withsocio.com with subject "UNSUBSCRIBE".`,
     html: `
       <!DOCTYPE html>
       <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -48,7 +63,8 @@ const templates = {
           </tr>
           <tr>
             <td style="padding:20px 32px;background:#f7f9fc;text-align:center;font-size:11px;color:#999;">
-              © ${new Date().getFullYear()} SOCIO. All rights reserved.
+              © ${new Date().getFullYear()} SOCIO. All rights reserved. | 
+              <a href="mailto:careers@withsocio.com?subject=UNSUBSCRIBE" style="color:#999;">Unsubscribe</a>
             </td>
           </tr>
         </table>
@@ -58,6 +74,21 @@ const templates = {
   }),
   selected: ({ firstName, role }: { firstName: string; role: string }) => ({
     subject: `Selected - ${role} Internship at SOCIO`,
+    text: `Hello ${firstName},
+
+Congratulations! You've been selected for the ${role} internship at SOCIO.
+We'll share onboarding details shortly.
+
+Please keep an eye on your email and phone for the onboarding schedule.
+
+Visit: ${baseUrl}
+
+Best regards,
+Team SOCIO
+
+---
+© ${new Date().getFullYear()} SOCIO. All rights reserved.
+To unsubscribe from career emails, reply to careers@withsocio.com with subject "UNSUBSCRIBE".`,
     html: `
       <!DOCTYPE html>
       <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -90,7 +121,8 @@ const templates = {
           </tr>
           <tr>
             <td style="padding:20px 32px;background:#f7f9fc;text-align:center;font-size:11px;color:#999;">
-              © ${new Date().getFullYear()} SOCIO. All rights reserved.
+              © ${new Date().getFullYear()} SOCIO. All rights reserved. | 
+              <a href="mailto:careers@withsocio.com?subject=UNSUBSCRIBE" style="color:#999;">Unsubscribe</a>
             </td>
           </tr>
         </table>
@@ -117,7 +149,7 @@ export async function POST(request: Request) {
   }
 
   const firstName = String(fullName).split(" ")[0];
-  const { subject, html } = templates[type as "shortlisted" | "selected"]({
+  const { subject, html, text } = templates[type as "shortlisted" | "selected"]({
     firstName,
     role: roleInterest,
   });
@@ -127,7 +159,11 @@ export async function POST(request: Request) {
     to: email,
     replyTo: "careers@withsocio.com",
     subject,
+    text,
     html,
+    headers: {
+      "List-Unsubscribe": "<mailto:careers@withsocio.com?subject=UNSUBSCRIBE>",
+    },
   });
 
   return NextResponse.json({ success: true });

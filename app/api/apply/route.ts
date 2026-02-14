@@ -111,16 +111,41 @@ export async function POST(request: NextRequest) {
     try {
       const firstName = fullName.split(" ")[0];
       
+      const plainTextContent = `
+Hello ${firstName},
+
+Thank you for submitting your application for the ${roleInterest} position at SOCIO. We're impressed by your interest and excited to review your profile.
+
+APPLICATION STATUS: Under Review
+
+Our team will carefully evaluate your application this week. If your profile matches our requirements, we'll reach out for an interview this week or next week.
+
+TIMELINE:
+1. Application Review - This week
+2. Interview - This/Next week  
+3. Onboarding - If selected
+
+In the meantime, feel free to explore our work and learn more about SOCIO. If you have any questions, don't hesitate to reach out at careers@withsocio.com.
+
+Best regards,
+Team SOCIO
+careers@withsocio.com
+
+---
+This is an automated message. Please do not reply to this email.
+© ${new Date().getFullYear()} SOCIO. All rights reserved.
+To unsubscribe from career emails, reply to this email with "UNSUBSCRIBE".
+      `.trim();
+      
       await resend.emails.send({
         from: "SOCIO Careers <careers@withsocio.com>",
         to: email,
         replyTo: "careers@withsocio.com",
         subject: `Application Received - ${roleInterest} Role at SOCIO`,
         headers: {
-          "X-Priority": "3",
-          "X-MSMail-Priority": "Normal",
-          "Importance": "Normal",
+          "List-Unsubscribe": "<mailto:careers@withsocio.com?subject=UNSUBSCRIBE>",
         },
+        text: plainTextContent,
         html: `
           <!DOCTYPE html>
           <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -219,6 +244,9 @@ export async function POST(request: NextRequest) {
                   <p style="margin: 10px 0 0 0; font-size: 11px; color: #bbb;">
                     © ${new Date().getFullYear()} SOCIO. All rights reserved. | 
                     <a href="https://socio.christuniversity.in" style="color: #999;">Visit our website</a>
+                  </p>
+                  <p style="margin: 10px 0 0 0; font-size: 11px;">
+                    <a href="mailto:careers@withsocio.com?subject=UNSUBSCRIBE" style="color: #999;">Unsubscribe from career emails</a>
                   </p>
                 </td>
               </tr>
