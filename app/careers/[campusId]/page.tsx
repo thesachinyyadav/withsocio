@@ -66,7 +66,7 @@ export default function CareersApplicationPage() {
   }, []);
 
   const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const validatePhone = (phone: string) => /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/.test(phone);
+  const validatePhone = (phone: string) => /^[0-9]{10}$/.test(phone);
   const validateUrl = (url: string) => url === "" || /^https?:\/\/.+/.test(url);
 
   const roleSkillOptions: Record<string, string[]> = {
@@ -108,7 +108,7 @@ export default function CareersApplicationPage() {
         break;
       case "phoneNumber":
         if (!value.trim()) errors[name] = "Phone number is required";
-        else if (!validatePhone(value)) errors[name] = "Please enter a valid phone number (e.g. +91 98765 43210)";
+        else if (!validatePhone(value)) errors[name] = "Please enter exactly 10 digits (e.g. 8861330665)";
         else delete errors[name];
         break;
       case "courseYearDept":
@@ -281,11 +281,11 @@ export default function CareersApplicationPage() {
             <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide font-medium">Reference ID</p>
             <p className="font-mono font-bold text-xl text-[#154CB3]">{campusId?.toUpperCase()}-{Date.now().toString(36).toUpperCase()}</p>
           </div>
-          <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
-            <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex items-start gap-3">
+            <svg className="w-6 h-6 text-orange-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
-            <span>Check your INBOX for confirmation</span>
+            <p className="text-orange-800 font-semibold text-sm leading-relaxed">PLEASE CHECK YOUR MAILS OR SPAM FOLDER AFTER YOU CLOSE THIS WINDOW</p>
           </div>
         </div>
       </div>
@@ -378,7 +378,7 @@ export default function CareersApplicationPage() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2.5">Phone</label>
-                  <input type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} onBlur={handleFieldBlur} required className={`w-full px-4 py-3 border-2 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all ${fieldErrors.phoneNumber && touchedFields.has("phoneNumber") ? "border-red-400 bg-red-50/30" : "border-gray-200"}`} placeholder="+91 98765 43210" />
+                  <input type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} onBlur={handleFieldBlur} required maxLength={10} className={`w-full px-4 py-3 border-2 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all ${fieldErrors.phoneNumber && touchedFields.has("phoneNumber") ? "border-red-400 bg-red-50/30" : "border-gray-200"}`} placeholder="8861330665" />
                   {fieldErrors.phoneNumber && touchedFields.has("phoneNumber") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.phoneNumber}</p>}
                 </div>
                 <div>
@@ -399,6 +399,14 @@ export default function CareersApplicationPage() {
             <div className="flex items-center gap-4 mb-8">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#154CB3] to-[#1e6fd4] flex items-center justify-center text-white font-bold">2</div>
               <h2 className="text-2xl font-bold text-gray-900">Role Interest</h2>
+            </div>
+            <div className="mb-4">
+              <a href="/SOCIOJobDescription.pdf" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#154CB3] to-[#1e6fd4] text-white font-semibold rounded-xl hover:from-[#0f3d8f] hover:to-[#154CB3] transition-all shadow-md hover:shadow-lg text-sm">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                View Job Description (JD)
+              </a>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
               {["Database Handling", "Frontend Development", "Operations", "Content Writing", "Digital Marketing", "Video Editing Intern/Videographer"].map((role) => (
