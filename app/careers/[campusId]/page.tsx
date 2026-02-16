@@ -75,11 +75,11 @@ export default function CareersApplicationPage() {
     "Operations": ["Excel/Sheets", "Process Ops", "Project Management", "Documentation", "Other"],
     "Content Writing": ["Blog Writing", "Copywriting", "SEO Writing", "Social Media Content", "Other"],
     "Digital Marketing": ["SEO", "SEM", "Social Media", "Email Marketing", "Analytics", "Other"],
-    "Video Editing Intern/Videographer": ["Adobe Premiere Pro", "After Effects", "DaVinci Resolve", "Final Cut Pro", "CapCut", "Other"],
+    "Video Editing / Videographer": ["Adobe Premiere Pro", "After Effects", "DaVinci Resolve", "Final Cut Pro", "CapCut", "Other"],
   };
 
   const techRoles = ["Frontend Development", "Database Handling"];
-  const videoRoles = ["Video Editing Intern/Videographer"];
+  const videoRoles = ["Video Editing / Videographer"];
 
   const getWorkSampleLabel = () => {
     if (techRoles.includes(formData.roleInterest)) return "GitHub Repo Link";
@@ -409,7 +409,7 @@ export default function CareersApplicationPage() {
               </a>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-              {["Database Handling", "Frontend Development", "Operations", "Content Writing", "Digital Marketing", "Video Editing Intern/Videographer"].map((role) => (
+              {["Database Handling", "Frontend Development", "Operations", "Content Writing", "Digital Marketing", "Video Editing / Videographer"].map((role) => (
                 <label key={role} className="cursor-pointer">
                   <input type="radio" name="roleInterest" value={role} checked={formData.roleInterest === role} onChange={handleInputChange} required className="sr-only" />
                   <div className={`p-4 rounded-2xl border-2 transition-all ${formData.roleInterest === role ? "border-[#154CB3] bg-blue-50 shadow-lg" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"}`}>

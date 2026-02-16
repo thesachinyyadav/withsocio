@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS internship_applications (
         'Content Writing',
         'Marketing',
         'Digital Marketing',
-        'Video Editing Intern/Videographer'
+        'Video Editing / Videographer'
     )),
     existing_skills TEXT,
     why_consider TEXT NOT NULL,
