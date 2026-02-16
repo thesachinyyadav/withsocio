@@ -352,7 +352,7 @@ export default function CareersApplicationPage() {
     `w-full px-4 py-3.5 bg-white/60 backdrop-blur-sm border-2 rounded-2xl outline-none transition-all duration-300 placeholder:text-gray-400 ${
       fieldErrors[field] && touchedFields.has(field)
         ? "border-red-400 bg-red-50/40 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
-        : "border-gray-200/80 hover:border-indigo-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+        : "border-gray-200/80 hover:border-blue-300 focus:border-[#154CB3] focus:ring-4 focus:ring-[#154CB3]/15"
     }`;
 
   const ErrorMsg = ({ field }: { field: string }) =>
@@ -367,11 +367,11 @@ export default function CareersApplicationPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-purple-900 to-violet-950 flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-[#0a2d6b] via-[#154CB3] to-[#0f3d8f] flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-[20%] w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-[100px] animate-pulse" />
-          <div className="absolute bottom-1/4 right-[20%] w-[400px] h-[400px] bg-purple-500/20 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: "1s" }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-violet-500/15 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: "2s" }} />
+          <div className="absolute top-1/4 left-[20%] w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute bottom-1/4 right-[20%] w-[400px] h-[400px] bg-[#154CB3]/20 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: "1s" }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-sky-500/15 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: "2s" }} />
         </div>
 
         <div className="relative z-10 max-w-lg w-full">
@@ -390,20 +390,20 @@ export default function CareersApplicationPage() {
             </div>
 
             <h2 className="text-3xl md:text-4xl font-black text-white mb-3 tracking-tight">You&apos;re In!</h2>
-            <p className="text-white/70 mb-8 leading-relaxed text-lg">Application submitted successfully. <span className="text-indigo-300 font-semibold">We&apos;ll be in touch soon.</span></p>
+            <p className="text-white/70 mb-8 leading-relaxed text-lg">Application submitted successfully. <span className="text-blue-200 font-semibold">We&apos;ll be in touch soon.</span></p>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 mb-6 border border-white/10">
               <p className="text-[10px] text-white/50 mb-1.5 uppercase tracking-[0.2em] font-semibold">Reference ID</p>
               <p className="font-mono font-bold text-xl text-white">{campusId?.toUpperCase()}-{Date.now().toString(36).toUpperCase()}</p>
             </div>
 
-            <div className="bg-amber-500/20 backdrop-blur-sm border border-amber-400/30 rounded-2xl p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-400/20 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-amber-300" fill="currentColor" viewBox="0 0 20 20">
+            <div className="bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-400/20 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-blue-300" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
               </div>
-              <p className="text-amber-200 font-semibold text-sm text-left leading-snug">CHECK YOUR EMAIL AND SPAM FOLDER AFTER CLOSING THIS PAGE</p>
+              <p className="text-blue-200 font-semibold text-sm text-left leading-snug">CHECK YOUR EMAIL AND SPAM FOLDER AFTER CLOSING THIS PAGE</p>
             </div>
           </div>
         </div>
@@ -424,13 +424,13 @@ export default function CareersApplicationPage() {
       `}</style>
 
       {isSubmitting && (
-        <div className="fixed inset-0 z-50 bg-indigo-950/60 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-[#0a2d6b]/60 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center animate-slideUp">
             <div className="w-20 h-20 mx-auto mb-6 relative">
-              <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
-              <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin" />
-              <div className="absolute inset-3 rounded-full bg-indigo-50 flex items-center justify-center">
-                <svg className="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="absolute inset-0 rounded-full border-4 border-blue-100" />
+              <div className="absolute inset-0 rounded-full border-4 border-t-[#154CB3] animate-spin" />
+              <div className="absolute inset-3 rounded-full bg-blue-50 flex items-center justify-center">
+                <svg className="w-7 h-7 text-[#154CB3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
@@ -444,8 +444,8 @@ export default function CareersApplicationPage() {
       {isMobile && showMobileWarning && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-slideUp">
-            <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-              <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <svg className="w-8 h-8 text-[#154CB3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
@@ -453,16 +453,16 @@ export default function CareersApplicationPage() {
             <p className="text-gray-500 text-center mb-6 text-sm">This form works best on a laptop or desktop.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowMobileWarning(false)} className="flex-1 px-4 py-3 border-2 border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-all text-sm">Continue Anyway</button>
-              <a href="https://withsocio.com/careers/christid" className="flex-1 px-4 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all text-center text-sm">Open on Desktop</a>
+              <a href="https://withsocio.com/careers/christid" className="flex-1 px-4 py-3 bg-[#154CB3] text-white font-bold rounded-xl hover:bg-[#0f3d8f] transition-all text-center text-sm">Open on Desktop</a>
             </div>
           </div>
         </div>
       )}
 
-      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-violet-700">
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#154CB3] via-[#1e5fc9] to-[#0f3d8f]">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-float-slow" />
-          <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-purple-400/10 rounded-full blur-3xl animate-float-slow-d" />
+          <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-blue-400/10 rounded-full blur-3xl animate-float-slow-d" />
           <svg className="absolute top-0 left-0 w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
             <defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" /></pattern></defs>
             <rect width="100%" height="100%" fill="url(#grid)" />
@@ -476,7 +476,7 @@ export default function CareersApplicationPage() {
             </div>
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-center text-white mb-4 tracking-tight leading-tight">
-            Join the <span className="bg-gradient-to-r from-amber-300 to-orange-300 bg-clip-text text-transparent">SOCIO</span> Team
+            Join the <span className="bg-gradient-to-r from-sky-200 to-blue-200 bg-clip-text text-transparent">SOCIO</span> Team
           </h1>
           <p className="text-center text-white/60 text-lg md:text-xl max-w-xl mx-auto font-light">Apply for our internship programme and build something extraordinary with us.</p>
           <div className="flex justify-center mt-6">
@@ -495,7 +495,7 @@ export default function CareersApplicationPage() {
               <button key={i} onClick={() => { if (i < currentStep) setCurrentStep(i); }} className={`flex items-center gap-2 transition-all duration-300 ${i <= currentStep ? "opacity-100" : "opacity-40"}`}>
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 ${
                   i < currentStep ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30" :
-                  i === currentStep ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/30" :
+                  i === currentStep ? "bg-[#154CB3] text-white shadow-md shadow-blue-500/30" :
                   "bg-gray-100 text-gray-400"
                 }`}>
                   {i < currentStep ? (
@@ -504,7 +504,7 @@ export default function CareersApplicationPage() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={step.icon} /></svg>
                   )}
                 </div>
-                <span className={`text-sm font-semibold hidden sm:block ${i === currentStep ? "text-indigo-600" : i < currentStep ? "text-emerald-600" : "text-gray-400"}`}>{step.label}</span>
+                <span className={`text-sm font-semibold hidden sm:block ${i === currentStep ? "text-[#154CB3]" : i < currentStep ? "text-emerald-600" : "text-gray-400"}`}>{step.label}</span>
                 {i < 3 && <div className={`hidden sm:block w-12 h-0.5 mx-1 rounded-full transition-all duration-500 ${i < currentStep ? "bg-emerald-400" : "bg-gray-200"}`} />}
               </button>
             ))}
@@ -531,7 +531,7 @@ export default function CareersApplicationPage() {
                     <label className="block text-sm font-bold text-gray-700 mb-2">Email <span className="text-red-400">*</span></label>
                     <input type="email" name="email" value={formData.email} onChange={handleInputChange} onBlur={handleFieldBlur} required className={inputClasses("email")} placeholder="john@example.com" />
                     <ErrorMsg field="email" />
-                    <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1 font-medium">
+                    <p className="text-xs text-[#154CB3] mt-1.5 flex items-center gap-1 font-medium">
                       <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                       All communication will be through this email
                     </p>
@@ -570,17 +570,17 @@ export default function CareersApplicationPage() {
                     <input type="radio" name="roleInterest" value={role} checked={formData.roleInterest === role} onChange={handleInputChange} required className="sr-only" />
                     <div className={`relative p-5 rounded-2xl border-2 transition-all duration-300 ${
                       formData.roleInterest === role
-                        ? "border-indigo-500 bg-indigo-50 shadow-lg shadow-indigo-500/10 scale-[1.02]"
-                        : "border-gray-200/80 bg-white hover:border-indigo-300 hover:shadow-md hover:scale-[1.01]"
+                        ? "border-[#154CB3] bg-blue-50 shadow-lg shadow-blue-500/10 scale-[1.02]"
+                        : "border-gray-200/80 bg-white hover:border-blue-300 hover:shadow-md hover:scale-[1.01]"
                     }`}>
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-all ${
-                        formData.roleInterest === role ? "bg-indigo-500 text-white" : "bg-gray-100 text-gray-400 group-hover:bg-indigo-100 group-hover:text-indigo-500"
+                        formData.roleInterest === role ? "bg-[#154CB3] text-white" : "bg-gray-100 text-gray-400 group-hover:bg-blue-100 group-hover:text-[#154CB3]"
                       }`}>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={roleIcons[role] || roleIcons["Operations"]} /></svg>
                       </div>
                       <span className="font-bold text-gray-900 text-sm">{role}</span>
                       {formData.roleInterest === role && (
-                        <div className="absolute top-3 right-3 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
+                        <div className="absolute top-3 right-3 w-6 h-6 bg-[#154CB3] rounded-full flex items-center justify-center">
                           <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                         </div>
                       )}
@@ -625,11 +625,11 @@ export default function CareersApplicationPage() {
                   <div className="grid grid-cols-2 gap-3">
                     {["Yes", "No"].map((opt) => (
                       <label key={opt} className={`flex items-center justify-center gap-2 p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${
-                        formData.startupComfort === opt ? "border-indigo-500 bg-indigo-50 shadow-md" : "border-gray-200/80 bg-white hover:border-indigo-300"
+                        formData.startupComfort === opt ? "border-[#154CB3] bg-blue-50 shadow-md" : "border-gray-200/80 bg-white hover:border-blue-300"
                       }`}>
                         <input type="radio" name="startupComfort" value={opt} checked={formData.startupComfort === opt} onChange={handleInputChange} required className="sr-only" />
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${formData.startupComfort === opt ? "border-indigo-500" : "border-gray-300"}`}>
-                          {formData.startupComfort === opt && <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />}
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${formData.startupComfort === opt ? "border-[#154CB3]" : "border-gray-300"}`}>
+                          {formData.startupComfort === opt && <div className="w-2.5 h-2.5 rounded-full bg-[#154CB3]" />}
                         </div>
                         <span className="font-bold text-gray-800">{opt}</span>
                       </label>
@@ -680,9 +680,9 @@ export default function CareersApplicationPage() {
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Resume <span className="text-red-400">*</span></label>
                   <div onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${
-                    dragActive ? "border-indigo-500 bg-indigo-50 scale-[1.01]" :
+                    dragActive ? "border-[#154CB3] bg-blue-50 scale-[1.01]" :
                     formData.resume ? "border-emerald-400 bg-emerald-50/50" :
-                    "border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/30"
+                    "border-gray-300 hover:border-blue-400 hover:bg-blue-50/30"
                   }`}>
                     <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" onChange={handleFileChange} required={!formData.resume} className="hidden" />
                     <label htmlFor="resume" className="cursor-pointer block">
@@ -698,10 +698,10 @@ export default function CareersApplicationPage() {
                         </div>
                       ) : (
                         <>
-                          <div className="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                            <svg className="w-7 h-7 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                          <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <svg className="w-7 h-7 text-[#154CB3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                           </div>
-                          <p className="font-bold text-gray-700 mb-1">Drop your resume here or <span className="text-indigo-600">browse</span></p>
+                          <p className="font-bold text-gray-700 mb-1">Drop your resume here or <span className="text-[#154CB3]">browse</span></p>
                           <p className="text-xs text-gray-400">PDF, DOC, or DOCX</p>
                         </>
                       )}
@@ -732,14 +732,14 @@ export default function CareersApplicationPage() {
               </button>
             ) : <div />}
             {currentStep < 3 ? (
-              <button type="button" onClick={handleNext} className="px-8 py-3.5 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-[1.02] active:scale-[0.98] text-sm">
+              <button type="button" onClick={handleNext} className="px-8 py-3.5 bg-[#154CB3] text-white font-bold rounded-2xl hover:bg-[#0f3d8f] transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-[1.02] active:scale-[0.98] text-sm">
                 <span className="flex items-center gap-2">
                   Continue
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
                 </span>
               </button>
             ) : (
-              <button type="submit" disabled={isSubmitting} className="px-10 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black rounded-2xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed text-sm tracking-wide">
+              <button type="submit" disabled={isSubmitting} className="px-10 py-4 bg-gradient-to-r from-[#154CB3] to-[#0f3d8f] text-white font-black rounded-2xl hover:from-[#0f3d8f] hover:to-[#0a2d6b] transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed text-sm tracking-wide">
                 <span className="flex items-center gap-2">
                   {isSubmitting ? (
                     <>

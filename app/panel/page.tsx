@@ -41,7 +41,7 @@ interface InterviewScore {
 }
 
 const statusColors = {
-  pending: "bg-amber-500/15 text-amber-200 border border-amber-500/30",
+  pending: "bg-blue-500/15 text-blue-200 border border-blue-500/30",
   reviewed: "bg-sky-500/15 text-sky-200 border border-sky-500/30",
   shortlisted: "bg-emerald-500/15 text-emerald-200 border border-emerald-500/30",
   rejected: "bg-rose-500/15 text-rose-200 border border-rose-500/30",
@@ -362,7 +362,7 @@ export default function AdminDashboard() {
 
         <div className="absolute inset-0">
           <div className="absolute -top-32 -left-20 w-[420px] h-[420px] bg-teal-500/20 rounded-full blur-[90px] animate-floaty" />
-          <div className="absolute bottom-0 -right-20 w-[520px] h-[520px] bg-amber-400/10 rounded-full blur-[110px] animate-floaty" style={{ animationDelay: "1.5s" }} />
+          <div className="absolute bottom-0 -right-20 w-[520px] h-[520px] bg-[#154CB3]/10 rounded-full blur-[110px] animate-floaty" style={{ animationDelay: "1.5s" }} />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_60%)]" />
         </div>
 
@@ -383,7 +383,7 @@ export default function AdminDashboard() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter admin password"
-                  className="mt-2 w-full px-4 py-3 bg-white/10 border border-white/10 rounded-2xl focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all outline-none text-white placeholder:text-white/40 font-ui"
+                  className="mt-2 w-full px-4 py-3 bg-white/10 border border-white/10 rounded-2xl focus:ring-2 focus:ring-[#154CB3] focus:border-transparent transition-all outline-none text-white placeholder:text-white/40 font-ui"
                 />
               </div>
               {authError && (
@@ -391,7 +391,7 @@ export default function AdminDashboard() {
               )}
               <button
                 type="submit"
-                className="w-full bg-amber-400 hover:bg-amber-300 text-[#0b1118] font-semibold py-3 px-6 rounded-2xl transition-all shadow-lg shadow-amber-400/20"
+                className="w-full bg-[#154CB3] hover:bg-[#0f3d8f] text-white font-semibold py-3 px-6 rounded-2xl transition-all shadow-lg shadow-blue-500/20"
               >
                 Access Dashboard
               </button>
@@ -414,7 +414,7 @@ export default function AdminDashboard() {
 
       <div className="absolute inset-0">
         <div className="absolute -top-24 -left-24 w-[420px] h-[420px] bg-cyan-500/20 rounded-full blur-[110px] animate-glow" />
-        <div className="absolute top-1/2 -right-32 w-[520px] h-[520px] bg-amber-400/10 rounded-full blur-[120px] animate-glow" style={{ animationDelay: "2s" }} />
+        <div className="absolute top-1/2 -right-32 w-[520px] h-[520px] bg-[#154CB3]/10 rounded-full blur-[120px] animate-glow" style={{ animationDelay: "2s" }} />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_60%)]" />
       </div>
 
@@ -474,12 +474,12 @@ export default function AdminDashboard() {
               placeholder="Search name, email, campus..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/10 focus:ring-2 focus:ring-amber-400 focus:border-transparent outline-none text-white placeholder:text-white/40"
+              className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/10 focus:ring-2 focus:ring-[#154CB3] focus:border-transparent outline-none text-white placeholder:text-white/40"
             />
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/10 focus:ring-2 focus:ring-amber-400 focus:border-transparent outline-none text-white"
+              className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/10 focus:ring-2 focus:ring-[#154CB3] focus:border-transparent outline-none text-white"
             >
               <option value="">All Roles</option>
               <option value="Frontend Development">Frontend Development</option>
@@ -493,7 +493,7 @@ export default function AdminDashboard() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/10 focus:ring-2 focus:ring-amber-400 focus:border-transparent outline-none text-white"
+              className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/10 focus:ring-2 focus:ring-[#154CB3] focus:border-transparent outline-none text-white"
             >
               <option value="">All Status</option>
               <option value="pending">Pending</option>
@@ -546,7 +546,7 @@ export default function AdminDashboard() {
               {applicants.length === 0 && !isLoading ? (
                 <div className="bg-white/5 border border-white/10 rounded-3xl p-6 text-center">
                   <p className="text-white/60">No applicants yet</p>
-                  <button onClick={fetchApplicants} disabled={isLoading} className="text-xs text-amber-300 mt-2">
+                  <button onClick={fetchApplicants} disabled={isLoading} className="text-xs text-blue-300 mt-2">
                     {isLoading ? "Refreshing..." : "Try refreshing"}
                   </button>
                 </div>
@@ -561,7 +561,7 @@ export default function AdminDashboard() {
                     onClick={() => setSelectedApplicant(applicant)}
                     className={`w-full text-left bg-white/5 border rounded-3xl p-4 transition-all hover:bg-white/10 ${
                       selectedApplicant?.id === applicant.id
-                        ? "border-amber-400/50 shadow-lg shadow-amber-400/10"
+                        ? "border-[#154CB3]/50 shadow-lg shadow-blue-500/10"
                         : "border-white/10"
                     }`}
                   >
@@ -602,7 +602,7 @@ export default function AdminDashboard() {
                         {selectedApplicant.campus_id.toUpperCase()}
                       </span>
                       {interviewScores.length > 0 && (
-                        <span className="px-3 py-1 rounded-full text-sm bg-amber-400/20 border border-amber-400/30 text-amber-200">
+                        <span className="px-3 py-1 rounded-full text-sm bg-[#154CB3]/20 border border-[#154CB3]/30 text-blue-200">
                           Avg Score: {averageScore}/50
                         </span>
                       )}
@@ -633,7 +633,7 @@ export default function AdminDashboard() {
                         <select
                           value={interviewer}
                           onChange={(e) => setInterviewer(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/10 focus:ring-2 focus:ring-amber-400 focus:border-transparent outline-none text-white"
+                          className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/10 focus:ring-2 focus:ring-[#154CB3] focus:border-transparent outline-none text-white"
                         >
                           {interviewerOptions.map((option) => (
                             <option key={option} value={option}>
@@ -658,7 +658,7 @@ export default function AdminDashboard() {
                                 )
                               );
                             }}
-                            className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/10 focus:ring-2 focus:ring-amber-400 focus:border-transparent outline-none text-white"
+                            className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/10 focus:ring-2 focus:ring-[#154CB3] focus:border-transparent outline-none text-white"
                           />
                         </div>
                       ))}
@@ -667,7 +667,7 @@ export default function AdminDashboard() {
                       <button
                         onClick={saveInterviewScore}
                         disabled={isSavingScore}
-                        className="px-4 py-2 rounded-xl text-sm font-semibold bg-amber-400 text-[#0b1118] hover:bg-amber-300 disabled:opacity-60"
+                        className="px-4 py-2 rounded-xl text-sm font-semibold bg-[#154CB3] text-white hover:bg-[#0f3d8f] disabled:opacity-60"
                       >
                         {isSavingScore ? "Saving..." : "Save Score"}
                       </button>
@@ -692,7 +692,7 @@ export default function AdminDashboard() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
                       <p className="text-xs text-white/50">Email</p>
-                      <a href={`mailto:${selectedApplicant.email}`} className="text-amber-200 font-medium text-sm break-all hover:underline">
+                      <a href={`mailto:${selectedApplicant.email}`} className="text-blue-200 font-medium text-sm break-all hover:underline">
                         {selectedApplicant.email}
                       </a>
                     </div>
@@ -727,7 +727,7 @@ export default function AdminDashboard() {
                           href={selectedApplicant.portfolio_link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-amber-200 text-sm hover:underline break-all"
+                          className="text-blue-200 text-sm hover:underline break-all"
                         >
                           {selectedApplicant.portfolio_link}
                         </a>
@@ -740,7 +740,7 @@ export default function AdminDashboard() {
                           href={selectedApplicant.work_sample}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-amber-200 text-sm hover:underline break-all"
+                          className="text-blue-200 text-sm hover:underline break-all"
                         >
                           {selectedApplicant.work_sample}
                         </a>
@@ -793,7 +793,7 @@ export default function AdminDashboard() {
                       href={selectedApplicant.resume_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-amber-400 text-[#0b1118] rounded-xl hover:bg-amber-300 transition-all text-sm font-semibold"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-[#154CB3] text-white rounded-xl hover:bg-[#0f3d8f] transition-all text-sm font-semibold"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -811,7 +811,7 @@ export default function AdminDashboard() {
                           onClick={() => updateStatus(selectedApplicant.id, status)}
                           className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                             selectedApplicant.status === status
-                              ? "ring-2 ring-offset-2 ring-amber-400"
+                              ? "ring-2 ring-offset-2 ring-[#154CB3]"
                               : ""
                           } ${statusColors[status]}`}
                         >
