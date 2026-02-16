@@ -75,26 +75,99 @@ export default function CareersApplicationPage() {
     "Operations": ["Excel/Sheets", "Process Ops", "Project Management", "Documentation", "Other"],
     "Content Writing": ["Blog Writing", "Copywriting", "SEO Writing", "Social Media Content", "Other"],
     "Digital Marketing": ["SEO", "SEM", "Social Media", "Email Marketing", "Analytics", "Other"],
+    "Video Editing Intern/Videographer": ["Adobe Premiere Pro", "After Effects", "DaVinci Resolve", "Final Cut Pro", "CapCut", "Other"],
+  };
+
+  const techRoles = ["Frontend Development", "Database Handling"];
+  const videoRoles = ["Video Editing Intern/Videographer"];
+
+  const getWorkSampleLabel = () => {
+    if (techRoles.includes(formData.roleInterest)) return "GitHub Repo Link";
+    if (videoRoles.includes(formData.roleInterest)) return "Work Sample (Google Drive Link)";
+    return "Work Sample / Portfolio Link";
+  };
+
+  const getWorkSamplePlaceholder = () => {
+    if (techRoles.includes(formData.roleInterest)) return "https://github.com/yourusername/project";
+    if (videoRoles.includes(formData.roleInterest)) return "https://drive.google.com/...";
+    return "https://your-work-sample-link.com";
   };
 
   const validateField = (name: string, value: string) => {
     const errors = { ...fieldErrors };
-    if (name === "fullName" && !value.trim()) errors[name] = "Required";
-    else if (name === "fullName") delete errors[name];
-    if (name === "email" && !value.trim()) errors[name] = "Required";
-    else if (name === "email" && !validateEmail(value)) errors[name] = "Invalid email";
-    else if (name === "email") delete errors[name];
-    if (name === "phoneNumber" && !value.trim()) errors[name] = "Required";
-    else if (name === "phoneNumber" && !validatePhone(value)) errors[name] = "Invalid phone";
-    else if (name === "phoneNumber") delete errors[name];
-    if (name === "portfolioLink" && !validateUrl(value)) errors[name] = "Invalid URL";
-    else if (name === "portfolioLink") delete errors[name];
+    switch (name) {
+      case "fullName":
+        if (!value.trim()) errors[name] = "Full name is required";
+        else if (value.trim().length < 2) errors[name] = "Name must be at least 2 characters";
+        else delete errors[name];
+        break;
+      case "email":
+        if (!value.trim()) errors[name] = "Email address is required";
+        else if (!validateEmail(value)) errors[name] = "Please enter a valid email address (e.g. name@example.com)";
+        else delete errors[name];
+        break;
+      case "phoneNumber":
+        if (!value.trim()) errors[name] = "Phone number is required";
+        else if (!validatePhone(value)) errors[name] = "Please enter a valid phone number (e.g. +91 98765 43210)";
+        else delete errors[name];
+        break;
+      case "courseYearDept":
+        if (!value.trim()) errors[name] = "Course and year is required (e.g. BCA, 2nd Year)";
+        else delete errors[name];
+        break;
+      case "portfolioLink":
+        if (value && !validateUrl(value)) errors[name] = "Please enter a valid URL starting with http:// or https://";
+        else delete errors[name];
+        break;
+      case "roleInterest":
+        if (!value) errors[name] = "Please select a role you're interested in";
+        else delete errors[name];
+        break;
+      case "whyConsider":
+        if (!value.trim()) errors[name] = "Please tell us why you're interested in this internship";
+        else if (value.trim().length < 10) errors[name] = "Please write at least 10 characters";
+        else delete errors[name];
+        break;
+      case "projectExperience":
+        if (!value.trim()) errors[name] = "Please describe your past experience or projects";
+        else if (value.trim().length < 10) errors[name] = "Please write at least 10 characters";
+        else delete errors[name];
+        break;
+      case "startupComfort":
+        if (!value) errors[name] = "Please select whether you're comfortable in a startup environment";
+        else delete errors[name];
+        break;
+      case "workSample":
+        if (value && !validateUrl(value)) errors[name] = "Please enter a valid URL starting with http:// or https://";
+        else delete errors[name];
+        break;
+      case "hoursPerWeek":
+        if (!value) errors[name] = "Please select how many hours per week you can commit";
+        else delete errors[name];
+        break;
+      case "internshipGoals":
+        if (!value.trim()) errors[name] = "Please share what you hope to learn from this internship";
+        else if (value.trim().length < 10) errors[name] = "Please write at least 10 characters";
+        else delete errors[name];
+        break;
+      default:
+        break;
+    }
     setFieldErrors(errors);
+    return errors;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      // Reset work sample when role changes
+      if (name === "roleInterest" && prev.roleInterest !== value) {
+        updated.workSample = "";
+        updated.existingSkills = "";
+      }
+      return updated;
+    });
     if (touchedFields.has(name)) validateField(name, value);
   };
 
@@ -109,10 +182,52 @@ export default function CareersApplicationPage() {
     setFormData((prev) => ({ ...prev, resume: file }));
   };
 
+  const validateAllFields = (): boolean => {
+    const allFields = [
+      "fullName", "email", "phoneNumber", "courseYearDept",
+      "roleInterest", "whyConsider", "projectExperience",
+      "startupComfort", "hoursPerWeek", "internshipGoals"
+    ];
+    let allErrors: FormErrors = {};
+    allFields.forEach((field) => {
+      const value = formData[field as keyof FormData] as string;
+      const errors = validateField(field, value || "");
+      allErrors = { ...allErrors, ...errors };
+    });
+    // Validate optional URL fields if they have values
+    if (formData.portfolioLink) {
+      const errors = validateField("portfolioLink", formData.portfolioLink);
+      allErrors = { ...allErrors, ...errors };
+    }
+    if (formData.workSample) {
+      const errors = validateField("workSample", formData.workSample);
+      allErrors = { ...allErrors, ...errors };
+    }
+    // Validate resume
+    if (!formData.resume) {
+      allErrors.resume = "Please upload your resume (PDF, DOC, or DOCX)";
+    }
+    setFieldErrors(allErrors);
+    // Mark all fields as touched
+    setTouchedFields(new Set([...allFields, "portfolioLink", "workSample", "resume"]));
+    return Object.keys(allErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError("");
+
+    if (!validateAllFields()) {
+      setError("Please fix the errors highlighted above before submitting.");
+      // Scroll to the first error
+      setTimeout(() => {
+        const firstError = document.querySelector(".text-red-500");
+        if (firstError) firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const submitData = new FormData();
@@ -244,13 +359,13 @@ export default function CareersApplicationPage() {
             <div className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2.5">Full Name</label>
-                  <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} onBlur={handleFieldBlur} required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all" placeholder="Your name" />
+                  <label className="block text-sm font-semibold text-gray-800 mb-2.5">Full Name <span className="text-red-500">*</span></label>
+                  <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} onBlur={handleFieldBlur} required className={`w-full px-4 py-3 border-2 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all ${fieldErrors.fullName && touchedFields.has("fullName") ? "border-red-400 bg-red-50/30" : "border-gray-200"}`} placeholder="Your name" />
                   {fieldErrors.fullName && touchedFields.has("fullName") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.fullName}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2.5">Email <span className="text-red-500">*</span></label>
-                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} onBlur={handleFieldBlur} required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all" placeholder="your@email.com" />
+                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} onBlur={handleFieldBlur} required className={`w-full px-4 py-3 border-2 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all ${fieldErrors.email && touchedFields.has("email") ? "border-red-400 bg-red-50/30" : "border-gray-200"}`} placeholder="your@email.com" />
                   {fieldErrors.email && touchedFields.has("email") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.email}</p>}
                   <p className="text-xs text-orange-600 mt-2 font-semibold flex items-center gap-1">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -263,12 +378,13 @@ export default function CareersApplicationPage() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2.5">Phone</label>
-                  <input type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} onBlur={handleFieldBlur} required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all" placeholder="+91 98765 43210" />
+                  <input type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} onBlur={handleFieldBlur} required className={`w-full px-4 py-3 border-2 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all ${fieldErrors.phoneNumber && touchedFields.has("phoneNumber") ? "border-red-400 bg-red-50/30" : "border-gray-200"}`} placeholder="+91 98765 43210" />
                   {fieldErrors.phoneNumber && touchedFields.has("phoneNumber") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.phoneNumber}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2.5">Course, Year</label>
-                  <input type="text" name="courseYearDept" value={formData.courseYearDept} onChange={handleInputChange} required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all" placeholder="BCA, 2nd Year" />
+                  <input type="text" name="courseYearDept" value={formData.courseYearDept} onChange={handleInputChange} onBlur={handleFieldBlur} required className={`w-full px-4 py-3 border-2 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all ${fieldErrors.courseYearDept && touchedFields.has("courseYearDept") ? "border-red-400 bg-red-50/30" : "border-gray-200"}`} placeholder="BCA, 2nd Year" />
+                  {fieldErrors.courseYearDept && touchedFields.has("courseYearDept") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.courseYearDept}</p>}
                 </div>
               </div>
               <div>
@@ -285,7 +401,7 @@ export default function CareersApplicationPage() {
               <h2 className="text-2xl font-bold text-gray-900">Role Interest</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-              {["Database Handling", "Frontend Development", "Operations", "Content Writing", "Digital Marketing"].map((role) => (
+              {["Database Handling", "Frontend Development", "Operations", "Content Writing", "Digital Marketing", "Video Editing Intern/Videographer"].map((role) => (
                 <label key={role} className="cursor-pointer">
                   <input type="radio" name="roleInterest" value={role} checked={formData.roleInterest === role} onChange={handleInputChange} required className="sr-only" />
                   <div className={`p-4 rounded-2xl border-2 transition-all ${formData.roleInterest === role ? "border-[#154CB3] bg-blue-50 shadow-lg" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"}`}>
@@ -294,6 +410,7 @@ export default function CareersApplicationPage() {
                 </label>
               ))}
             </div>
+            {fieldErrors.roleInterest && touchedFields.has("roleInterest") && <p className="text-red-500 text-xs mt-2 font-medium">{fieldErrors.roleInterest}</p>}
             <div>
               <label className="block text-sm font-semibold text-gray-800 mb-2.5">Primary skill</label>
               <select
@@ -327,15 +444,17 @@ export default function CareersApplicationPage() {
             </div>
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Why this internship?</label>
-                <textarea name="whyConsider" value={formData.whyConsider} onChange={handleInputChange} required rows={2} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none resize-none transition-all" placeholder="What attracts you..." />
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Why this internship? <span className="text-red-500">*</span></label>
+                <textarea name="whyConsider" value={formData.whyConsider} onChange={handleInputChange} onBlur={handleFieldBlur} required rows={2} className={`w-full px-4 py-3 border-2 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none resize-none transition-all ${fieldErrors.whyConsider && touchedFields.has("whyConsider") ? "border-red-400 bg-red-50/30" : "border-gray-200"}`} placeholder="What attracts you..." />
+                {fieldErrors.whyConsider && touchedFields.has("whyConsider") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.whyConsider}</p>}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Past experience</label>
-                <textarea name="projectExperience" value={formData.projectExperience} onChange={handleInputChange} required rows={2} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none resize-none transition-all" placeholder="Project or responsibility..." />
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Past experience <span className="text-red-500">*</span></label>
+                <textarea name="projectExperience" value={formData.projectExperience} onChange={handleInputChange} onBlur={handleFieldBlur} required rows={2} className={`w-full px-4 py-3 border-2 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none resize-none transition-all ${fieldErrors.projectExperience && touchedFields.has("projectExperience") ? "border-red-400 bg-red-50/30" : "border-gray-200"}`} placeholder="Project or responsibility..." />
+                {fieldErrors.projectExperience && touchedFields.has("projectExperience") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.projectExperience}</p>}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-3">Startup environment comfort</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-3">Startup environment comfort <span className="text-red-500">*</span></label>
                 <div className="flex gap-4">
                   {["Yes", "No"].map((opt) => (
                     <label key={opt} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all ${formData.startupComfort === opt ? "border-[#154CB3] bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}>
@@ -344,6 +463,7 @@ export default function CareersApplicationPage() {
                     </label>
                   ))}
                 </div>
+                {fieldErrors.startupComfort && touchedFields.has("startupComfort") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.startupComfort}</p>}
               </div>
             </div>
           </div>
@@ -356,12 +476,20 @@ export default function CareersApplicationPage() {
             </div>
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Work sample / GitHub</label>
-                <input type="url" name="workSample" value={formData.workSample} onChange={handleInputChange} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all" placeholder="https://github.com/yourwork" />
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">{getWorkSampleLabel()}</label>
+                <input type="url" name="workSample" value={formData.workSample} onChange={handleInputChange} onBlur={handleFieldBlur} className={`w-full px-4 py-3 border-2 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none transition-all ${fieldErrors.workSample && touchedFields.has("workSample") ? "border-red-400 bg-red-50/30" : "border-gray-200"}`} placeholder={getWorkSamplePlaceholder()} />
+                {fieldErrors.workSample && touchedFields.has("workSample") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.workSample}</p>}
+                {formData.roleInterest && (
+                  <p className="text-xs text-gray-500 mt-1.5">
+                    {techRoles.includes(formData.roleInterest) && "Paste your GitHub repository link showcasing your code/projects."}
+                    {videoRoles.includes(formData.roleInterest) && "Paste a Google Drive link to your video editing work samples."}
+                    {!techRoles.includes(formData.roleInterest) && !videoRoles.includes(formData.roleInterest) && "Share a link to your relevant work or portfolio."}
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Hours per week</label>
-                <select name="hoursPerWeek" value={formData.hoursPerWeek} onChange={handleInputChange} required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none bg-white transition-all">
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">Hours per week <span className="text-red-500">*</span></label>
+                <select name="hoursPerWeek" value={formData.hoursPerWeek} onChange={handleInputChange} onBlur={handleFieldBlur} required className={`w-full px-4 py-3 border-2 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none bg-white transition-all ${fieldErrors.hoursPerWeek && touchedFields.has("hoursPerWeek") ? "border-red-400 bg-red-50/30" : "border-gray-200"}`}>
                   <option value="">Select hours</option>
                   <option value="5-10">5-10 hours</option>
                   <option value="10-15">10-15 hours</option>
@@ -369,10 +497,12 @@ export default function CareersApplicationPage() {
                   <option value="20-30">20-30 hours</option>
                   <option value="30+">30+ hours</option>
                 </select>
+                {fieldErrors.hoursPerWeek && touchedFields.has("hoursPerWeek") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.hoursPerWeek}</p>}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2.5">What you want to learn</label>
-                <textarea name="internshipGoals" value={formData.internshipGoals} onChange={handleInputChange} required rows={2} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none resize-none transition-all" placeholder="Your goals..." />
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5">What you want to learn <span className="text-red-500">*</span></label>
+                <textarea name="internshipGoals" value={formData.internshipGoals} onChange={handleInputChange} onBlur={handleFieldBlur} required rows={2} className={`w-full px-4 py-3 border-2 rounded-xl focus:border-[#154CB3] focus:ring-2 focus:ring-[#154CB3]/10 outline-none resize-none transition-all ${fieldErrors.internshipGoals && touchedFields.has("internshipGoals") ? "border-red-400 bg-red-50/30" : "border-gray-200"}`} placeholder="Your goals..." />
+                {fieldErrors.internshipGoals && touchedFields.has("internshipGoals") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.internshipGoals}</p>}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2.5">Resume</label>
@@ -382,9 +512,10 @@ export default function CareersApplicationPage() {
                     <svg className="w-8 h-8 text-[#154CB3] mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    {formData.resume ? <p className="text-[#154CB3] font-semibold">{formData.resume.name}</p> : <p className="text-gray-700 font-semibold">Upload Resume</p>}
+                    {formData.resume ? <p className="text-[#154CB3] font-semibold">{formData.resume.name}</p> : <p className="text-gray-700 font-semibold">Upload Resume <span className="text-red-500">*</span></p>}
                   </label>
                 </div>
+                {fieldErrors.resume && touchedFields.has("resume") && <p className="text-red-500 text-xs mt-1.5">{fieldErrors.resume}</p>}
               </div>
             </div>
           </div>

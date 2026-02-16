@@ -54,6 +54,7 @@ const roleColors: Record<string, string> = {
   "Content Writing": "bg-pink-100 text-pink-800",
   "Marketing": "bg-indigo-100 text-indigo-800",
   "Digital Marketing": "bg-teal-100 text-teal-800",
+  "Video Editing Intern/Videographer": "bg-rose-100 text-rose-800",
 };
 
 export default function AdminDashboard() {
@@ -454,6 +455,7 @@ export default function AdminDashboard() {
               <option value="Content Writing">Content Writing</option>
               <option value="Marketing">Marketing</option>
               <option value="Digital Marketing">Digital Marketing</option>
+              <option value="Video Editing Intern/Videographer">Video Editing Intern/Videographer</option>
             </select>
             <select
               value={filterStatus}
