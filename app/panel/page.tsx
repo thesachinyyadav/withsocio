@@ -217,9 +217,9 @@ export default function AdminDashboard() {
     }
   };
 
-  const downloadByPreference = async (preference: "SOCIO") => {
+  const downloadByPreference = async () => {
     try {
-      const response = await fetch(`/api/admin/export?preference=${preference}`, {
+      const response = await fetch(`/api/admin/export?format=xlsx`, {
         headers: {
           "x-admin-password": adminToken,
         },
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `applicants_${preference.toLowerCase()}.csv`;
+      link.download = `applicants_export.xlsx`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -489,7 +489,7 @@ export default function AdminDashboard() {
           <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-sm">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Exports</p>
             <button
-              onClick={() => downloadByPreference("SOCIO")}
+              onClick={downloadByPreference}
               className="w-full px-4 py-3 rounded-2xl bg-[#154CB3] text-white hover:bg-[#0f3d8f] text-sm font-semibold"
             >
               Download Applicants Details
