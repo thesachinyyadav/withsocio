@@ -224,26 +224,28 @@ To unsubscribe from career emails, reply to careers@withsocio.com with subject "
   }),
   interview: ({ firstName, role, venue, date, time }: { firstName: string; role: string; venue: string; date: string; time: string }) => ({
     subject: `Interview Invitation - ${role} Internship at SOCIO`,
-    text: `Hello ${firstName},
+    text: `Dear ${firstName},
 
-You are invited to attend an interview for the ${role} internship at SOCIO as per the following details:
+We would like to invite you to an interview for the ${role} internship position at SOCIO.
 
+Interview Schedule:
 Date: ${date}
 Time: ${time}
 Venue: ${venue}
 
-Please be present at the venue on time. If you have any questions or are unable to attend, reply to this email as soon as possible.
+Please arrive 10 minutes early and bring a copy of your resume. If you have any questions or need to reschedule, please reply to this email.
 
-Also, please join our WhatsApp group for further updates:
-https://chat.whatsapp.com/KFWFO0vjuGu61upbDD4gH7?mode=gi_t
+For further updates and communication, please join our WhatsApp group:
+https://chat.whatsapp.com/KFWFO0vjuGu61upbDD4gH7
+
+We look forward to meeting you.
 
 Best regards,
 Team SOCIO
 careers@withsocio.com
 
 ---
-© ${new Date().getFullYear()} SOCIO. All rights reserved.
-To unsubscribe from career emails, reply to careers@withsocio.com with subject "UNSUBSCRIBE".`,
+© ${new Date().getFullYear()} SOCIO. All rights reserved.`,
     html: `
       <!DOCTYPE html>
       <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -253,45 +255,59 @@ To unsubscribe from career emails, reply to careers@withsocio.com with subject "
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <title>Interview Invitation</title>
       </head>
-      <body style="margin:0;padding:0;background-color:#f7f9fc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;color:#333;">
-        <table style="max-width:600px;margin:20px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);width:100%;">
+      <body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+        <table style="max-width:600px;margin:40px auto;background:#ffffff;border:1px solid #e0e0e0;width:100%;">
           <tr>
-            <td style="background:linear-gradient(135deg,#154CB3 0%,#1a56c4 100%);padding:32px;text-align:center;">
-              <div style="font-size:24px;font-weight:700;color:#fff;">SOCIO</div>
-              <h1 style="margin:8px 0 0 0;color:#fff;font-size:26px;">Interview Invitation</h1>
+            <td style="background:#154CB3;padding:24px;text-align:center;">
+              <div style="font-size:28px;font-weight:600;color:#ffffff;letter-spacing:1px;">SOCIO</div>
             </td>
           </tr>
           <tr>
-            <td style="padding:32px;">
-              <p style="margin:0 0 16px 0;font-size:16px;color:#555;">Hello <strong>${firstName}</strong>,</p>
-              <p style="margin:0 0 16px 0;font-size:15px;color:#666;line-height:1.7;">
-                You are invited to attend an interview for the <strong>${role}</strong> internship at SOCIO as per the following details:
+            <td style="padding:40px 32px;">
+              <p style="margin:0 0 24px 0;font-size:16px;color:#333333;line-height:1.5;">Dear <strong>${firstName}</strong>,</p>
+              
+              <p style="margin:0 0 24px 0;font-size:15px;color:#333333;line-height:1.6;">
+                We would like to invite you to an interview for the <strong>${role}</strong> internship position at SOCIO.
               </p>
-              <div style="background-color:#e8f4f8;border-left:4px solid #154CB3;padding:16px;border-radius:4px;margin:16px 0;">
-                <p style="margin:0;font-size:15px;color:#154CB3;line-height:1.6;">
-                  <strong style="font-size:16px;">Interview Details:</strong><br><br>
-                  <b>Date:</b> ${date}<br>
-                  <b>Time:</b> ${time}<br>
-                  <b>Venue:</b> ${venue}
-                </p>
-              </div>
-              <p style="margin:0 0 16px 0;font-size:15px;color:#666;line-height:1.7;">
-                Please be present at the venue on time. If you have any questions or are unable to attend, reply to this email as soon as possible.
+
+              <table style="width:100%;border-collapse:collapse;margin:24px 0;">
+                <tr>
+                  <td style="padding:12px;background:#f8f9fa;border:1px solid #e0e0e0;font-weight:600;color:#333333;width:30%;">Date</td>
+                  <td style="padding:12px;background:#ffffff;border:1px solid #e0e0e0;color:#333333;">${date}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px;background:#f8f9fa;border:1px solid #e0e0e0;font-weight:600;color:#333333;">Time</td>
+                  <td style="padding:12px;background:#ffffff;border:1px solid #e0e0e0;color:#333333;">${time}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px;background:#f8f9fa;border:1px solid #e0e0e0;font-weight:600;color:#333333;">Venue</td>
+                  <td style="padding:12px;background:#ffffff;border:1px solid #e0e0e0;color:#333333;">${venue}</td>
+                </tr>
+              </table>
+
+              <p style="margin:24px 0;font-size:15px;color:#333333;line-height:1.6;">
+                Please arrive 10 minutes early and bring a copy of your resume. If you have any questions or need to reschedule, please reply to this email.
               </p>
-              <div style="background-color:#e8f4e8;border-left:4px solid #25D366;padding:16px;border-radius:4px;margin:16px 0;">
-                <p style="margin:0;font-size:15px;color:#128C7E;line-height:1.6;">
-                  <strong style="font-size:16px;">📱 Join our WhatsApp Group</strong><br><br>
-                  Please join our WhatsApp group for further updates and communication:
-                </p>
-                <a href="https://chat.whatsapp.com/KFWFO0vjuGu61upbDD4gH7?mode=gi_t" style="display:inline-block;margin-top:12px;padding:10px 16px;background:#25D366;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;">Join WhatsApp Group</a>
-              </div>
-              <a href="https://socio.christuniversity.in" style="display:inline-block;padding:10px 16px;background:#154CB3;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;">Visit SOCIO</a>
+
+              <p style="margin:24px 0;font-size:15px;color:#333333;line-height:1.6;">
+                For further updates and communication, please join our WhatsApp group:<br>
+                <a href="https://chat.whatsapp.com/KFWFO0vjuGu61upbDD4gH7" style="color:#154CB3;text-decoration:none;font-weight:500;">Join WhatsApp Group</a>
+              </p>
+
+              <p style="margin:24px 0 0 0;font-size:15px;color:#333333;line-height:1.6;">
+                We look forward to meeting you.
+              </p>
+
+              <p style="margin:32px 0 0 0;font-size:15px;color:#333333;line-height:1.6;">
+                Best regards,<br>
+                <strong>Team SOCIO</strong><br>
+                <a href="mailto:careers@withsocio.com" style="color:#154CB3;text-decoration:none;">careers@withsocio.com</a>
+              </p>
             </td>
           </tr>
           <tr>
-            <td style="padding:20px 32px;background:#f7f9fc;text-align:center;font-size:11px;color:#999;">
-              © ${new Date().getFullYear()} SOCIO. All rights reserved. | 
-              <a href="mailto:careers@withsocio.com?subject=UNSUBSCRIBE" style="color:#999;">Unsubscribe</a>
+            <td style="padding:20px 32px;background:#f8f9fa;text-align:center;font-size:12px;color:#666666;border-top:1px solid #e0e0e0;">
+              © ${new Date().getFullYear()} SOCIO. All rights reserved.
             </td>
           </tr>
         </table>
