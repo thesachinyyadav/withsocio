@@ -314,10 +314,7 @@ export async function POST(request: Request) {
   if (type === "interview") {
     templateArgs = { ...templateArgs, venue, date, time };
   }
-  const { subject, html, text } = templates[type as "shortlisted" | "selected" | "rejected" | "interview"]({
-    firstName,
-    role: roleInterest,
-  });
+  const { subject, html, text } = templates[type as "shortlisted" | "selected" | "rejected" | "interview"](templateArgs);
 
   await resend.emails.send({
     from: "SOCIO Careers <careers@withsocio.com>",
