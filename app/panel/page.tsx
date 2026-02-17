@@ -1,52 +1,54 @@
-  // Interview call email modal state
-  const [showInterviewModal, setShowInterviewModal] = useState(false);
-  const [interviewVenue, setInterviewVenue] = useState("");
-  const [interviewDate, setInterviewDate] = useState("");
-  const [interviewTime, setInterviewTime] = useState("");
-  const [isSendingInterviewMail, setIsSendingInterviewMail] = useState(false);
 
-  const sendInterviewMail = async () => {
-    if (!selectedApplicant) return;
-    if (!interviewVenue || !interviewDate || !interviewTime) {
-      alert("Please enter venue, date, and time.");
+"use client";
+
+// Interview call email modal state
+const [showInterviewModal, setShowInterviewModal] = useState(false);
+const [interviewVenue, setInterviewVenue] = useState("");
+const [interviewDate, setInterviewDate] = useState("");
+const [interviewTime, setInterviewTime] = useState("");
+const [isSendingInterviewMail, setIsSendingInterviewMail] = useState(false);
+
+const sendInterviewMail = async () => {
+  if (!selectedApplicant) return;
+  if (!interviewVenue || !interviewDate || !interviewTime) {
+    alert("Please enter venue, date, and time.");
+    return;
+  }
+  setIsSendingInterviewMail(true);
+  try {
+    const response = await fetch("/api/admin/notify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": adminToken,
+      },
+      body: JSON.stringify({
+        type: "interview",
+        email: selectedApplicant.email,
+        fullName: selectedApplicant.full_name,
+        roleInterest: selectedApplicant.role_interest,
+        venue: interviewVenue,
+        date: interviewDate,
+        time: interviewTime,
+      }),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      const message = payload?.error || "Failed to send interview email.";
+      alert(message);
       return;
     }
-    setIsSendingInterviewMail(true);
-    try {
-      const response = await fetch("/api/admin/notify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-password": adminToken,
-        },
-        body: JSON.stringify({
-          type: "interview",
-          email: selectedApplicant.email,
-          fullName: selectedApplicant.full_name,
-          roleInterest: selectedApplicant.role_interest,
-          venue: interviewVenue,
-          date: interviewDate,
-          time: interviewTime,
-        }),
-      });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        const message = payload?.error || "Failed to send interview email.";
-        alert(message);
-        return;
-      }
-      alert("Interview call email sent.");
-      setShowInterviewModal(false);
-      setInterviewVenue("");
-      setInterviewDate("");
-      setInterviewTime("");
-    } catch (error) {
-      alert("Failed to send interview email.");
-    } finally {
-      setIsSendingInterviewMail(false);
-    }
-  };
-"use client";
+    alert("Interview call email sent.");
+    setShowInterviewModal(false);
+    setInterviewVenue("");
+    setInterviewDate("");
+    setInterviewTime("");
+  } catch (error) {
+    alert("Failed to send interview email.");
+  } finally {
+    setIsSendingInterviewMail(false);
+  }
+};
 
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
