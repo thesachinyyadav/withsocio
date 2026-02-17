@@ -1,3 +1,51 @@
+  // Interview call email modal state
+  const [showInterviewModal, setShowInterviewModal] = useState(false);
+  const [interviewVenue, setInterviewVenue] = useState("");
+  const [interviewDate, setInterviewDate] = useState("");
+  const [interviewTime, setInterviewTime] = useState("");
+  const [isSendingInterviewMail, setIsSendingInterviewMail] = useState(false);
+
+  const sendInterviewMail = async () => {
+    if (!selectedApplicant) return;
+    if (!interviewVenue || !interviewDate || !interviewTime) {
+      alert("Please enter venue, date, and time.");
+      return;
+    }
+    setIsSendingInterviewMail(true);
+    try {
+      const response = await fetch("/api/admin/notify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": adminToken,
+        },
+        body: JSON.stringify({
+          type: "interview",
+          email: selectedApplicant.email,
+          fullName: selectedApplicant.full_name,
+          roleInterest: selectedApplicant.role_interest,
+          venue: interviewVenue,
+          date: interviewDate,
+          time: interviewTime,
+        }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message = payload?.error || "Failed to send interview email.";
+        alert(message);
+        return;
+      }
+      alert("Interview call email sent.");
+      setShowInterviewModal(false);
+      setInterviewVenue("");
+      setInterviewDate("");
+      setInterviewTime("");
+    } catch (error) {
+      alert("Failed to send interview email.");
+    } finally {
+      setIsSendingInterviewMail(false);
+    }
+  };
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -808,7 +856,66 @@ export default function AdminDashboard() {
                       >
                         {isSendingMail ? "Sending..." : "Send Rejection Email"}
                       </button>
+                      <button
+                        onClick={() => setShowInterviewModal(true)}
+                        disabled={isSendingInterviewMail}
+                        className="px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
+                      >
+                        {isSendingInterviewMail ? "Sending..." : "Send Interview Call Email"}
+                      </button>
                     </div>
+
+                    {showInterviewModal && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+                        <div className="bg-white rounded-2xl p-8 shadow-xl w-full max-w-md">
+                          <h3 className="text-lg font-semibold mb-4">Send Interview Call Email</h3>
+                          <div className="mb-3">
+                            <label className="block text-xs font-semibold mb-1">Venue</label>
+                            <input
+                              type="text"
+                              value={interviewVenue}
+                              onChange={e => setInterviewVenue(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                              placeholder="Enter venue"
+                            />
+                          </div>
+                          <div className="mb-3">
+                            <label className="block text-xs font-semibold mb-1">Date</label>
+                            <input
+                              type="date"
+                              value={interviewDate}
+                              onChange={e => setInterviewDate(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                            />
+                          </div>
+                          <div className="mb-4">
+                            <label className="block text-xs font-semibold mb-1">Time</label>
+                            <input
+                              type="time"
+                              value={interviewTime}
+                              onChange={e => setInterviewTime(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                            />
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={() => setShowInterviewModal(false)}
+                              className="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200"
+                              disabled={isSendingInterviewMail}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={sendInterviewMail}
+                              className="px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700"
+                              disabled={isSendingInterviewMail}
+                            >
+                              {isSendingInterviewMail ? "Sending..." : "Send Email"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
