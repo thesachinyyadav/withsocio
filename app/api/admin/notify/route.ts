@@ -233,6 +233,99 @@ To unsubscribe from career emails, reply to careers@withsocio.com with subject "
       </html>
     `,
   }),
+  interview: ({ firstName, role, venue, date, time }: { firstName: string; role: string; venue: string; date: string; time: string }) => ({
+    subject: `Interview Invitation - ${role} Internship at SOCIO`,
+    text: `Dear ${firstName},
+
+We would like to invite you to an interview for the ${role} internship position at SOCIO.
+
+Interview Schedule:
+Date: ${date}
+Time: ${time}
+Venue: ${venue}
+
+Please arrive 10 minutes early and bring a copy of your resume. If you have any questions or need to reschedule, please reply to this email.
+
+For further updates and communication, please join our WhatsApp group:
+https://chat.whatsapp.com/KFWFO0vjuGu61upbDD4gH7
+
+We look forward to meeting you.
+
+Best regards,
+Team SOCIO
+careers@withsocio.com
+
+---
+© ${new Date().getFullYear()} SOCIO. All rights reserved.`,
+    html: `
+      <!DOCTYPE html>
+      <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Interview Invitation</title>
+      </head>
+      <body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+        <table style="max-width:600px;margin:40px auto;background:#ffffff;border:1px solid #e0e0e0;width:100%;">
+          <tr>
+            <td style="background:#154CB3;padding:24px;text-align:center;">
+              <div style="font-size:28px;font-weight:600;color:#ffffff;letter-spacing:1px;">SOCIO</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px 32px;">
+              <p style="margin:0 0 24px 0;font-size:16px;color:#333333;line-height:1.5;">Dear <strong>${firstName}</strong>,</p>
+              
+              <p style="margin:0 0 24px 0;font-size:15px;color:#333333;line-height:1.6;">
+                We would like to invite you to an interview for the <strong>${role}</strong> internship position at SOCIO.
+              </p>
+
+              <table style="width:100%;border-collapse:collapse;margin:24px 0;">
+                <tr>
+                  <td style="padding:12px;background:#f8f9fa;border:1px solid #e0e0e0;font-weight:600;color:#333333;width:30%;">Date</td>
+                  <td style="padding:12px;background:#ffffff;border:1px solid #e0e0e0;color:#333333;">${date}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px;background:#f8f9fa;border:1px solid #e0e0e0;font-weight:600;color:#333333;">Time</td>
+                  <td style="padding:12px;background:#ffffff;border:1px solid #e0e0e0;color:#333333;">${time}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px;background:#f8f9fa;border:1px solid #e0e0e0;font-weight:600;color:#333333;">Venue</td>
+                  <td style="padding:12px;background:#ffffff;border:1px solid #e0e0e0;color:#333333;">${venue}</td>
+                </tr>
+              </table>
+
+              <p style="margin:24px 0;font-size:15px;color:#333333;line-height:1.6;">
+                Please arrive 10 minutes early and bring a copy of your resume. If you have any questions or need to reschedule, please reply to this email.
+              </p>
+
+              <p style="margin:24px 0;font-size:15px;color:#333333;line-height:1.6;">
+                For further updates and communication, please join our WhatsApp group:<br>
+                <a href="https://chat.whatsapp.com/KFWFO0vjuGu61upbDD4gH7" style="color:#154CB3;text-decoration:none;font-weight:500;">Join WhatsApp Group</a>
+              </p>
+
+              <p style="margin:24px 0 0 0;font-size:15px;color:#333333;line-height:1.6;">
+                We look forward to meeting you.
+              </p>
+
+              <p style="margin:32px 0 0 0;font-size:15px;color:#333333;line-height:1.6;">
+                Best regards,<br>
+                <strong>Team SOCIO</strong><br>
+                <a href="mailto:careers@withsocio.com" style="color:#154CB3;text-decoration:none;">careers@withsocio.com</a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px;background:#f8f9fa;text-align:center;font-size:12px;color:#666666;border-top:1px solid #e0e0e0;">
+              © ${new Date().getFullYear()} SOCIO. All rights reserved.
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `,
+  }),
 };
 
 export async function POST(request: Request) {
@@ -241,9 +334,9 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { type, email, fullName, roleInterest } = body || {};
+  const { type, email, fullName, roleInterest, venue, date, time } = body || {};
 
-  if (!type || !email || !fullName || !roleInterest) {
+  if (!type || !email || !fullName || !roleInterest || (type === "interview" && (!venue || !date || !time))) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
@@ -252,10 +345,11 @@ export async function POST(request: Request) {
   }
 
   const firstName = String(fullName).split(" ")[0];
-  const { subject, html, text } = templates[type as "shortlisted" | "selected" | "rejected"]({
-    firstName,
-    role: roleInterest,
-  });
+  let templateArgs: any = { firstName, role: roleInterest };
+  if (type === "interview") {
+    templateArgs = { ...templateArgs, venue, date, time };
+  }
+  const { subject, html, text } = templates[type as "shortlisted" | "selected" | "rejected" | "interview"](templateArgs);
 
   await resend.emails.send({
     from: "SOCIO Careers <careers@withsocio.com>",
