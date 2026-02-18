@@ -88,6 +88,11 @@ We'll share onboarding details shortly.
 
 Please keep an eye on your email and phone for the onboarding schedule.
 
+To confirm your acceptance of the internship offer, please reply with the following details:
+- Name
+- Register Number
+- Class
+
 Visit: ${baseUrl}
 
 Best regards,
@@ -123,6 +128,12 @@ To unsubscribe from career emails, reply to careers@withsocio.com with subject "
               <p style="margin:0 0 20px 0;font-size:15px;color:#666;line-height:1.7;">
                 Please keep an eye on your email and phone for the onboarding schedule.
               </p>
+              <div style="background-color:#f0f6ff;border-left:4px solid #154CB3;padding:16px;border-radius:4px;margin:16px 0;">
+                <p style="margin:0;font-size:15px;color:#154CB3;line-height:1.6;">
+                  To confirm your acceptance of the internship offer, please reply with the following details:<br>
+                  <strong>Name</strong>, <strong>Register Number</strong>, and <strong>Class</strong>.
+                </p>
+              </div>
               <a href="${baseUrl}" style="display:inline-block;padding:10px 16px;background:#154CB3;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;">Visit SOCIO</a>
             </td>
           </tr>
@@ -249,6 +260,7 @@ export async function POST(request: Request) {
   await resend.emails.send({
     from: "SOCIO Careers <careers@withsocio.com>",
     to: email,
+    cc: "thesocio.blr@gmail.com",
     replyTo: "careers@withsocio.com",
     subject,
     text,
