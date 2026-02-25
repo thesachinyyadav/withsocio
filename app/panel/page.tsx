@@ -519,7 +519,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 relative font-ui">
+    <div className="min-h-screen bg-slate-50 text-slate-900 relative font-ui overflow-x-hidden">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:wght@700;800&display=swap');
         .font-display { font-family: "Fraunces", serif; }
@@ -557,9 +557,9 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-6 grid xl:grid-cols-[320px_1fr] gap-6">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-3 md:px-4 py-4 md:py-5 grid xl:grid-cols-[280px_minmax(0,1fr)] gap-4">
         <aside className="space-y-5">
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Metrics</p>
             <div className="mt-4 space-y-3">
               <div className="flex items-center justify-between">
@@ -577,7 +577,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Filters</p>
             <input
               type="text"
@@ -613,7 +613,7 @@ export default function AdminDashboard() {
             </select>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Exports</p>
             <button
               onClick={downloadByPreference}
@@ -624,8 +624,8 @@ export default function AdminDashboard() {
           </div>
         </aside>
 
-        <div className="grid lg:grid-cols-[360px_1fr] gap-6">
-          <div className="space-y-4">
+        <div className="grid xl:grid-cols-[340px_minmax(0,1fr)] gap-4 min-w-0">
+          <div className="space-y-3 min-w-0">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl">Applicants</h2>
               <div className="flex items-center gap-2">
@@ -647,7 +647,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="space-y-3 max-h-[calc(100vh-240px)] overflow-y-auto pr-2">
+            <div className="space-y-2.5 max-h-[calc(100vh-210px)] overflow-y-auto pr-1">
               {applicants.length === 0 && !isLoading ? (
                 <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
                   <p className="text-slate-600">No applicants yet</p>
@@ -660,7 +660,7 @@ export default function AdminDashboard() {
                   <button
                     key={applicant.id}
                     onClick={() => setSelectedApplicant(applicant)}
-                    className={`w-full text-left bg-white border rounded-2xl p-4 transition-all hover:border-[#154CB3]/40 hover:shadow-sm ${
+                    className={`w-full text-left bg-white border rounded-2xl p-3.5 transition-all hover:border-[#154CB3]/40 hover:shadow-sm ${
                       selectedApplicant?.id === applicant.id
                         ? "border-[#154CB3]/50 shadow-md"
                         : "border-slate-200"
@@ -685,10 +685,10 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div>
+          <div className="min-w-0">
             {selectedApplicant ? (
-              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                <div className="p-6 border-b border-slate-200 bg-slate-50">
+              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm min-w-0">
+                <div className="p-4 md:p-5 border-b border-slate-200 bg-slate-50">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                       <h2 className="font-display text-3xl">{selectedApplicant.full_name}</h2>
@@ -711,14 +711,14 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="p-6 space-y-6">
-                  <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
+                <div className="p-4 md:p-5 space-y-4">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 min-w-0">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <h4 className="text-sm text-slate-600">Interview Scorecard</h4>
                       <span className="text-sm text-slate-700 font-semibold">Total: {totalScore}/50</span>
                     </div>
-                    <div className="grid md:grid-cols-6 gap-4">
-                      <div className="md:col-span-2">
+                    <div className="grid grid-cols-1 gap-3">
+                      <div className="max-w-xs">
                         <label className="block text-xs font-semibold text-slate-600 mb-2">Interviewer</label>
                         <select
                           value={interviewer}
@@ -732,26 +732,28 @@ export default function AdminDashboard() {
                           ))}
                         </select>
                       </div>
-                      {rubricLabels.map((label, index) => (
-                        <div key={label}>
-                          <label className="block text-xs font-semibold text-slate-600 mb-2">{label}</label>
-                          <input
-                            type="number"
-                            min={0}
-                            max={10}
-                            value={rubricScores[index]}
-                            onChange={(e) => {
-                              const value = Number(e.target.value || 0);
-                              setRubricScores((prev) =>
-                                prev.map((score, idx) =>
-                                  idx === index ? Math.min(10, Math.max(0, value)) : score
-                                )
-                              );
-                            }}
-                            className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] outline-none text-slate-900"
-                          />
-                        </div>
-                      ))}
+                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5">
+                        {rubricLabels.map((label, index) => (
+                          <div key={label} className="min-w-0">
+                            <label className="block text-[11px] leading-tight font-semibold text-slate-600 mb-1.5">{label}</label>
+                            <input
+                              type="number"
+                              min={0}
+                              max={10}
+                              value={rubricScores[index]}
+                              onChange={(e) => {
+                                const value = Number(e.target.value || 0);
+                                setRubricScores((prev) =>
+                                  prev.map((score, idx) =>
+                                    idx === index ? Math.min(10, Math.max(0, value)) : score
+                                  )
+                                );
+                              }}
+                              className="w-full px-2.5 py-2 rounded-xl bg-white border border-slate-200 focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] outline-none text-slate-900"
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <button
@@ -779,7 +781,7 @@ export default function AdminDashboard() {
                     )}
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
                       <p className="text-xs text-slate-500">Email</p>
                       <a href={`mailto:${selectedApplicant.email}`} className="text-[#154CB3] font-medium text-sm break-all hover:underline">
@@ -794,7 +796,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-2 gap-3">
                     <div>
                       <p className="text-xs text-slate-500 mb-2">Role Interest</p>
                       <span className={`inline-block px-3 py-1 rounded-full text-sm ${roleColors[selectedApplicant.role_interest] || "bg-slate-100 text-slate-700 border border-slate-200"}`}>
@@ -809,7 +811,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-2 gap-3">
                     {selectedApplicant.portfolio_link && (
                       <div>
                         <p className="text-xs text-slate-500 mb-1">Portfolio/LinkedIn</p>
@@ -894,7 +896,7 @@ export default function AdminDashboard() {
 
                   <div className="border-t border-slate-200 pt-6">
                     <p className="text-xs text-slate-500 mb-3">Update Status</p>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                       {(["pending", "reviewed", "shortlisted", "rejected"] as const).map((status) => (
                         <button
                           key={status}
@@ -910,7 +912,7 @@ export default function AdminDashboard() {
                       ))}
                     </div>
                     <p className="text-xs text-slate-500 mt-6 mb-3">Send Email</p>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
                       <button
                         onClick={() => sendCandidateMail("shortlisted")}
                         disabled={sendingMailType !== null}
@@ -963,7 +965,7 @@ export default function AdminDashboard() {
 
                     {showInterviewModal && (
                       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-                        <div className="bg-white rounded-2xl p-8 shadow-xl w-full max-w-md">
+                        <div className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-lg mx-3">
                           <h3 className="text-lg font-semibold mb-4">Send Interview Call Email</h3>
                           <div className="mb-3">
                             <label className="block text-xs font-semibold mb-1">Venue</label>
