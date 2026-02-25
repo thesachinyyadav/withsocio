@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS internship_applications (
         'pending',
         'reviewed',
         'shortlisted',
+        'hired',
         'rejected'
     )),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

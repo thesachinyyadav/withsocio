@@ -334,13 +334,24 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { type, email, fullName, roleInterest, venue, date, time, ccEmails } = body || {};
+  const {
+    type,
+    email,
+    fullName,
+    roleInterest,
+    venue,
+    date,
+    time,
+    ccEmails,
+    customSubject,
+    customBody,
+  } = body || {};
 
-  if (!type || !email || !fullName || !roleInterest || (type === "interview" && (!venue || !date || !time))) {
+  if (!type || !email || !fullName || (type !== "custom" && !roleInterest) || (type === "interview" && (!venue || !date || !time))) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
-  if (!(type in templates)) {
+  if (type !== "custom" && !(type in templates)) {
     return NextResponse.json({ error: "Invalid type" }, { status: 400 });
   }
 
@@ -356,6 +367,62 @@ export async function POST(request: Request) {
   const ccRecipients = Array.from(
     new Set(["thesocio.blr@gmail.com", ...optionalCc])
   ).filter((entry) => entry !== String(email).trim().toLowerCase());
+
+  if (type === "custom") {
+    const subject = String(customSubject || "").trim();
+    const messageBody = String(customBody || "").trim();
+
+    if (!subject || !messageBody) {
+      return NextResponse.json({ error: "Missing custom subject or body" }, { status: 400 });
+    }
+
+    const escapedBody = messageBody
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
+    const htmlBody = escapedBody.replace(/\r?\n/g, "<br>");
+
+    await resend.emails.send({
+      from: "SOCIO Careers <careers@withsocio.com>",
+      to: email,
+      cc: ccRecipients,
+      replyTo: "careers@withsocio.com",
+      subject,
+      text: messageBody,
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>${subject}</title>
+        </head>
+        <body style="margin:0;padding:0;background:#f7f9fc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;color:#333;">
+          <table style="max-width:600px;margin:20px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);width:100%;">
+            <tr>
+              <td style="background:linear-gradient(135deg,#154CB3 0%,#1a56c4 100%);padding:24px;text-align:center;">
+                <div style="font-size:22px;font-weight:700;color:#fff;">SOCIO</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px;line-height:1.7;font-size:15px;color:#555;">
+                ${htmlBody}
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+      headers: {
+        "List-Unsubscribe": "<mailto:careers@withsocio.com?subject=UNSUBSCRIBE>",
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  }
 
   const firstName = String(fullName).split(" ")[0];
   let templateArgs: any = { firstName, role: roleInterest };

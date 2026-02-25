@@ -22,7 +22,7 @@ interface Applicant {
   resume_file_name: string;
   campus_id: string;
   created_at: string;
-  status: "pending" | "reviewed" | "shortlisted" | "rejected";
+  status: "pending" | "reviewed" | "shortlisted" | "hired" | "rejected";
 }
 
 interface InterviewScore {
@@ -38,12 +38,13 @@ interface InterviewScore {
   created_at: string;
 }
 
-type MailType = "shortlisted" | "selected" | "rejected" | "interview";
+type MailType = "shortlisted" | "selected" | "rejected" | "interview" | "custom";
 
 const statusColors = {
   pending: "bg-blue-50 text-blue-700 border border-blue-200",
   reviewed: "bg-sky-50 text-sky-700 border border-sky-200",
   shortlisted: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  hired: "bg-violet-50 text-violet-700 border border-violet-200",
   rejected: "bg-rose-50 text-rose-700 border border-rose-200",
 };
 
@@ -82,6 +83,11 @@ export default function AdminDashboard() {
   const [interviewDate, setInterviewDate] = useState("");
   const [interviewTime, setInterviewTime] = useState("");
   const [isSendingInterviewMail, setIsSendingInterviewMail] = useState(false);
+  const [showCustomMailModal, setShowCustomMailModal] = useState(false);
+  const [customSubject, setCustomSubject] = useState("");
+  const [customCc, setCustomCc] = useState("");
+  const [customBody, setCustomBody] = useState("");
+  const [isSendingCustomMail, setIsSendingCustomMail] = useState(false);
   const [sentMailMap, setSentMailMap] = useState<Record<string, Partial<Record<MailType, string>>>>({});
 
   const rubricLabels = [
@@ -351,6 +357,85 @@ export default function AdminDashboard() {
     }
   };
 
+  const sendCustomMail = async () => {
+    if (!selectedApplicant) return;
+
+    const subject = customSubject.trim();
+    const body = customBody.trim();
+
+    if (!subject || !body) {
+      alert("Please enter both subject and body.");
+      return;
+    }
+
+    const ccEmails = customCc
+      .split(",")
+      .map((entry) => entry.trim().toLowerCase())
+      .filter(Boolean);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalid = ccEmails.find((entry) => !emailRegex.test(entry));
+    if (invalid) {
+      alert(`Invalid CC email: ${invalid}`);
+      return;
+    }
+
+    const sentAt = sentMailMap[selectedApplicant.id]?.custom;
+    if (sentAt) {
+      const shouldResend = window.confirm(
+        `Custom email was already sent on ${formatDate(sentAt)}. Do you want to send it again?`
+      );
+      if (!shouldResend) return;
+    }
+
+    setIsSendingCustomMail(true);
+    setSendingMailType("custom");
+    try {
+      const response = await fetch("/api/admin/notify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": adminToken,
+        },
+        body: JSON.stringify({
+          type: "custom",
+          email: selectedApplicant.email,
+          fullName: selectedApplicant.full_name,
+          roleInterest: selectedApplicant.role_interest,
+          customSubject: subject,
+          customBody: body,
+          ccEmails: Array.from(new Set(ccEmails)),
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message = payload?.error || "Failed to send custom email.";
+        alert(message);
+        return;
+      }
+
+      setSentMailMap((prev) => ({
+        ...prev,
+        [selectedApplicant.id]: {
+          ...(prev[selectedApplicant.id] || {}),
+          custom: new Date().toISOString(),
+        },
+      }));
+
+      alert("Custom email sent.");
+      setShowCustomMailModal(false);
+      setCustomSubject("");
+      setCustomCc("");
+      setCustomBody("");
+    } catch (error) {
+      alert("Failed to send custom email.");
+    } finally {
+      setIsSendingCustomMail(false);
+      setSendingMailType(null);
+    }
+  };
+
   const downloadByPreference = async () => {
     try {
       const response = await fetch(`/api/admin/export?format=xlsx`, {
@@ -609,6 +694,7 @@ export default function AdminDashboard() {
               <option value="pending">Pending</option>
               <option value="reviewed">Reviewed</option>
               <option value="shortlisted">Shortlisted</option>
+              <option value="hired">Hired</option>
               <option value="rejected">Rejected</option>
             </select>
           </div>
@@ -897,22 +983,28 @@ export default function AdminDashboard() {
                   <div className="border-t border-slate-200 pt-6">
                     <p className="text-xs text-slate-500 mb-3">Update Status</p>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                      {(["pending", "reviewed", "shortlisted", "rejected"] as const).map((status) => (
+                      {([
+                        { value: "pending", label: "Pending" },
+                        { value: "reviewed", label: "Reviewed" },
+                        { value: "shortlisted", label: "Shortlisted" },
+                        { value: "hired", label: "Hired" },
+                        { value: "rejected", label: "Rejected" },
+                      ] as const).map(({ value, label }) => (
                         <button
-                          key={status}
-                          onClick={() => updateStatus(selectedApplicant.id, status)}
+                          key={value}
+                          onClick={() => updateStatus(selectedApplicant.id, value)}
                           className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                            selectedApplicant.status === status
+                            selectedApplicant.status === value
                               ? "ring-2 ring-offset-2 ring-[#154CB3]"
                               : ""
-                          } ${statusColors[status]}`}
+                          } ${statusColors[value]}`}
                         >
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                          {label}
                         </button>
                       ))}
                     </div>
                     <p className="text-xs text-slate-500 mt-6 mb-3">Send Email</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2">
                       <button
                         onClick={() => sendCandidateMail("shortlisted")}
                         disabled={sendingMailType !== null}
@@ -960,6 +1052,18 @@ export default function AdminDashboard() {
                           : selectedMailState.interview
                             ? "Sent • Interview Call Email"
                             : "Send Interview Call Email"}
+                      </button>
+                      <button
+                        onClick={() => setShowCustomMailModal(true)}
+                        disabled={isSendingCustomMail || sendingMailType !== null}
+                        className="px-4 py-2 rounded-xl text-sm font-semibold bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 disabled:opacity-60"
+                        title={selectedMailState.custom ? `Sent on ${formatDate(selectedMailState.custom)}` : ""}
+                      >
+                        {isSendingCustomMail
+                          ? "Sending..."
+                          : selectedMailState.custom
+                            ? "Sent • Custom Email"
+                            : "Send Custom Email"}
                       </button>
                     </div>
 
@@ -1009,6 +1113,60 @@ export default function AdminDashboard() {
                               disabled={isSendingInterviewMail}
                             >
                               {isSendingInterviewMail ? "Sending..." : "Send Email"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {showCustomMailModal && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+                        <div className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-xl mx-3">
+                          <h3 className="text-lg font-semibold mb-4">Send Custom Email</h3>
+                          <div className="mb-3">
+                            <label className="block text-xs font-semibold mb-1">Subject</label>
+                            <input
+                              type="text"
+                              value={customSubject}
+                              onChange={(e) => setCustomSubject(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                              placeholder="Enter subject"
+                            />
+                          </div>
+                          <div className="mb-3">
+                            <label className="block text-xs font-semibold mb-1">CC (comma-separated, optional)</label>
+                            <input
+                              type="text"
+                              value={customCc}
+                              onChange={(e) => setCustomCc(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                              placeholder="example1@mail.com, example2@mail.com"
+                            />
+                          </div>
+                          <div className="mb-4">
+                            <label className="block text-xs font-semibold mb-1">Body</label>
+                            <textarea
+                              value={customBody}
+                              onChange={(e) => setCustomBody(e.target.value)}
+                              rows={7}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none resize-y"
+                              placeholder="Write your email body here"
+                            />
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={() => setShowCustomMailModal(false)}
+                              className="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200"
+                              disabled={isSendingCustomMail}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={sendCustomMail}
+                              className="px-4 py-2 rounded-xl text-sm font-semibold bg-amber-600 text-white hover:bg-amber-700"
+                              disabled={isSendingCustomMail}
+                            >
+                              {isSendingCustomMail ? "Sending..." : "Send Custom Email"}
                             </button>
                           </div>
                         </div>

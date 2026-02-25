@@ -25,7 +25,7 @@ export interface InternshipApplication {
   resume_url: string;
   resume_file_name: string;
   campus_id: string;
-  status: "pending" | "reviewed" | "shortlisted" | "rejected";
+  status: "pending" | "reviewed" | "shortlisted" | "hired" | "rejected";
   created_at: string;
   updated_at: string;
 }
