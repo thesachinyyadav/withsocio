@@ -334,7 +334,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { type, email, fullName, roleInterest, venue, date, time } = body || {};
+  const { type, email, fullName, roleInterest, venue, date, time, ccEmails } = body || {};
 
   if (!type || !email || !fullName || !roleInterest || (type === "interview" && (!venue || !date || !time))) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
@@ -343,6 +343,19 @@ export async function POST(request: Request) {
   if (!(type in templates)) {
     return NextResponse.json({ error: "Invalid type" }, { status: 400 });
   }
+
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+  const optionalCc = Array.isArray(ccEmails)
+    ? ccEmails
+        .map((entry: unknown) => String(entry || "").trim().toLowerCase())
+        .filter((entry: string) => entry.length > 0)
+        .filter((entry: string) => isValidEmail(entry))
+    : [];
+
+  const ccRecipients = Array.from(
+    new Set(["thesocio.blr@gmail.com", ...optionalCc])
+  ).filter((entry) => entry !== String(email).trim().toLowerCase());
 
   const firstName = String(fullName).split(" ")[0];
   let templateArgs: any = { firstName, role: roleInterest };
@@ -354,7 +367,7 @@ export async function POST(request: Request) {
   await resend.emails.send({
     from: "SOCIO Careers <careers@withsocio.com>",
     to: email,
-    cc: "thesocio.blr@gmail.com",
+    cc: ccRecipients,
     replyTo: "careers@withsocio.com",
     subject,
     text,

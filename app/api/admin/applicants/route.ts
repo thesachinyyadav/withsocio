@@ -22,14 +22,34 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const page = Number(searchParams.get("page") || "1");
   const limit = Number(searchParams.get("limit") || "20");
+  const role = (searchParams.get("role") || "").trim();
+  const status = (searchParams.get("status") || "").trim();
+  const search = (searchParams.get("search") || "").trim();
   const safePage = Number.isFinite(page) && page > 0 ? page : 1;
   const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 100) : 20;
   const from = (safePage - 1) * safeLimit;
   const to = from + safeLimit - 1;
 
-  const { data, error, count } = await supabaseAdmin
+  let query = supabaseAdmin
     .from("internship_applications")
-    .select("*", { count: "exact" })
+    .select("*", { count: "exact" });
+
+  if (role) {
+    query = query.eq("role_interest", role);
+  }
+
+  if (status) {
+    query = query.eq("status", status);
+  }
+
+  if (search) {
+    const safeSearch = search.replace(/[%_]/g, "");
+    query = query.or(
+      `full_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%,campus_id.ilike.%${safeSearch}%`
+    );
+  }
+
+  const { data, error, count } = await query
     .order("created_at", { ascending: false })
     .range(from, to);
 

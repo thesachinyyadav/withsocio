@@ -38,6 +38,8 @@ interface InterviewScore {
   created_at: string;
 }
 
+type MailType = "shortlisted" | "selected" | "rejected" | "interview";
+
 const statusColors = {
   pending: "bg-blue-50 text-blue-700 border border-blue-200",
   reviewed: "bg-sky-50 text-sky-700 border border-sky-200",
@@ -60,13 +62,14 @@ export default function AdminDashboard() {
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const [filterRole, setFilterRole] = useState<string>("");
   const [filterStatus, setFilterStatus] = useState<string>("");
+  const [searchDraft, setSearchDraft] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [adminToken, setAdminToken] = useState("");
   const [authError, setAuthError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isSendingMail, setIsSendingMail] = useState(false);
+  const [sendingMailType, setSendingMailType] = useState<MailType | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [totalApplicants, setTotalApplicants] = useState(0);
@@ -79,6 +82,7 @@ export default function AdminDashboard() {
   const [interviewDate, setInterviewDate] = useState("");
   const [interviewTime, setInterviewTime] = useState("");
   const [isSendingInterviewMail, setIsSendingInterviewMail] = useState(false);
+  const [sentMailMap, setSentMailMap] = useState<Record<string, Partial<Record<MailType, string>>>>({});
 
   const rubricLabels = [
     "Communication",
@@ -110,7 +114,16 @@ export default function AdminDashboard() {
     }
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/admin/applicants?page=${page}&limit=${pageSize}`, {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(pageSize),
+      });
+
+      if (filterRole) params.set("role", filterRole);
+      if (filterStatus) params.set("status", filterStatus);
+      if (searchQuery.trim()) params.set("search", searchQuery.trim());
+
+      const response = await fetch(`/api/admin/applicants?${params.toString()}`, {
         headers: {
           "x-admin-password": adminToken,
         },
@@ -140,13 +153,21 @@ export default function AdminDashboard() {
       alert("Failed to load applicants. Please check console for details.");
     }
     setIsLoading(false);
-  }, [adminToken, page, pageSize]);
+  }, [adminToken, page, pageSize, filterRole, filterStatus, searchQuery]);
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchApplicants();
     }
   }, [isAuthenticated, fetchApplicants]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setSearchQuery(searchDraft.trim());
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [searchDraft]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,9 +205,46 @@ export default function AdminDashboard() {
     }
   };
 
+  const getCcFromPrompt = (): string[] | null => {
+    if (typeof window === "undefined") return [];
+
+    const wantsCc = window.confirm("Do you want to add any CC recipients for this email?");
+    if (!wantsCc) return [];
+
+    const input = window.prompt("Enter CC email(s), comma-separated:", "");
+    if (!input) return [];
+
+    const emails = input
+      .split(",")
+      .map((entry) => entry.trim().toLowerCase())
+      .filter(Boolean);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalid = emails.find((entry) => !emailRegex.test(entry));
+
+    if (invalid) {
+      alert(`Invalid CC email: ${invalid}`);
+      return null;
+    }
+
+    return Array.from(new Set(emails));
+  };
+
   const sendCandidateMail = async (type: "shortlisted" | "selected" | "rejected") => {
     if (!selectedApplicant) return;
-    setIsSendingMail(true);
+
+    const sentAt = sentMailMap[selectedApplicant.id]?.[type];
+    if (sentAt) {
+      const shouldResend = window.confirm(
+        `This ${type} email was already sent on ${formatDate(sentAt)}. Do you want to send it again?`
+      );
+      if (!shouldResend) return;
+    }
+
+    const ccEmails = getCcFromPrompt();
+    if (ccEmails === null) return;
+
+    setSendingMailType(type);
     try {
       const response = await fetch("/api/admin/notify", {
         method: "POST",
@@ -199,6 +257,7 @@ export default function AdminDashboard() {
           email: selectedApplicant.email,
           fullName: selectedApplicant.full_name,
           roleInterest: selectedApplicant.role_interest,
+          ccEmails,
         }),
       });
 
@@ -214,11 +273,20 @@ export default function AdminDashboard() {
         selected: "Selection email sent.",
         rejected: "Rejection email sent respectfully."
       };
+
+      setSentMailMap((prev) => ({
+        ...prev,
+        [selectedApplicant.id]: {
+          ...(prev[selectedApplicant.id] || {}),
+          [type]: new Date().toISOString(),
+        },
+      }));
+
       alert(messages[type]);
     } catch (error) {
       alert("Failed to send email.");
     } finally {
-      setIsSendingMail(false);
+      setSendingMailType(null);
     }
   };
 
@@ -228,6 +296,17 @@ export default function AdminDashboard() {
       alert("Please enter venue, date, and time.");
       return;
     }
+    const sentAt = sentMailMap[selectedApplicant.id]?.interview;
+    if (sentAt) {
+      const shouldResend = window.confirm(
+        `Interview call email was already sent on ${formatDate(sentAt)}. Do you want to send it again?`
+      );
+      if (!shouldResend) return;
+    }
+
+    const ccEmails = getCcFromPrompt();
+    if (ccEmails === null) return;
+
     setIsSendingInterviewMail(true);
     try {
       const response = await fetch("/api/admin/notify", {
@@ -244,6 +323,7 @@ export default function AdminDashboard() {
           venue: interviewVenue,
           date: interviewDate,
           time: interviewTime,
+          ccEmails,
         }),
       });
       if (!response.ok) {
@@ -253,6 +333,13 @@ export default function AdminDashboard() {
         return;
       }
       alert("Interview call email sent.");
+      setSentMailMap((prev) => ({
+        ...prev,
+        [selectedApplicant.id]: {
+          ...(prev[selectedApplicant.id] || {}),
+          interview: new Date().toISOString(),
+        },
+      }));
       setShowInterviewModal(false);
       setInterviewVenue("");
       setInterviewDate("");
@@ -362,21 +449,12 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (selectedApplicant) {
       fetchInterviewScores(selectedApplicant.id);
+      setRubricScores([0, 0, 0, 0, 0]);
+      setInterviewer("Sachin");
     } else {
       setInterviewScores([]);
     }
   }, [selectedApplicant, fetchInterviewScores]);
-
-  const filteredApplicants = applicants.filter((app) => {
-    const matchesRole = !filterRole || app.role_interest === filterRole;
-    const matchesStatus = !filterStatus || app.status === filterStatus;
-    const matchesSearch =
-      !searchQuery ||
-      app.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.campus_id.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesRole && matchesStatus && matchesSearch;
-  });
 
   const totalPages = Math.max(1, Math.ceil(totalApplicants / pageSize));
 
@@ -393,6 +471,8 @@ export default function AdminDashboard() {
       minute: "2-digit",
     });
   };
+
+  const selectedMailState = selectedApplicant ? (sentMailMap[selectedApplicant.id] || {}) : {};
 
   if (!isAuthenticated) {
     return (
@@ -487,8 +567,8 @@ export default function AdminDashboard() {
                 <span className="text-lg font-semibold text-slate-900">{totalApplicants}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Filtered</span>
-                <span className="text-lg font-semibold text-slate-900">{filteredApplicants.length}</span>
+                <span className="text-sm text-slate-600">Results</span>
+                <span className="text-lg font-semibold text-slate-900">{totalApplicants}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600">Page</span>
@@ -502,8 +582,8 @@ export default function AdminDashboard() {
             <input
               type="text"
               placeholder="Search name, email, campus..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchDraft}
+              onChange={(e) => setSearchDraft(e.target.value)}
               className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] outline-none text-slate-900 placeholder:text-slate-400"
             />
             <select
@@ -548,7 +628,7 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl">Applicants</h2>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                   disabled={page <= 1 || isLoading}
@@ -556,6 +636,7 @@ export default function AdminDashboard() {
                 >
                   Prev
                 </button>
+                <span className="text-xs text-slate-500 min-w-16 text-center">{page}/{totalPages}</span>
                 <button
                   onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
                   disabled={page >= totalPages || isLoading}
@@ -574,12 +655,8 @@ export default function AdminDashboard() {
                     {isLoading ? "Refreshing..." : "Try refreshing"}
                   </button>
                 </div>
-              ) : filteredApplicants.length === 0 ? (
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center text-slate-600">
-                  No results matching filters
-                </div>
               ) : (
-                filteredApplicants.map((applicant) => (
+                applicants.map((applicant) => (
                   <button
                     key={applicant.id}
                     onClick={() => setSelectedApplicant(applicant)}
@@ -836,31 +913,51 @@ export default function AdminDashboard() {
                     <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => sendCandidateMail("shortlisted")}
-                        disabled={isSendingMail}
+                        disabled={sendingMailType !== null}
                         className="px-4 py-2 rounded-xl text-sm font-semibold bg-sky-50 border border-sky-200 text-sky-700 hover:bg-sky-100 disabled:opacity-60"
+                        title={selectedMailState.shortlisted ? `Sent on ${formatDate(selectedMailState.shortlisted)}` : ""}
                       >
-                        {isSendingMail ? "Sending..." : "Send Shortlist Email"}
+                        {sendingMailType === "shortlisted"
+                          ? "Sending..."
+                          : selectedMailState.shortlisted
+                            ? "Sent • Shortlist Email"
+                            : "Send Shortlist Email"}
                       </button>
                       <button
                         onClick={() => sendCandidateMail("selected")}
-                        disabled={isSendingMail}
+                        disabled={sendingMailType !== null}
                         className="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
+                        title={selectedMailState.selected ? `Sent on ${formatDate(selectedMailState.selected)}` : ""}
                       >
-                        {isSendingMail ? "Sending..." : "Send Selection Email"}
+                        {sendingMailType === "selected"
+                          ? "Sending..."
+                          : selectedMailState.selected
+                            ? "Sent • Selection Email"
+                            : "Send Selection Email"}
                       </button>
                       <button
                         onClick={() => sendCandidateMail("rejected")}
-                        disabled={isSendingMail}
+                        disabled={sendingMailType !== null}
                         className="px-4 py-2 rounded-xl text-sm font-semibold bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 disabled:opacity-60"
+                        title={selectedMailState.rejected ? `Sent on ${formatDate(selectedMailState.rejected)}` : ""}
                       >
-                        {isSendingMail ? "Sending..." : "Send Rejection Email"}
+                        {sendingMailType === "rejected"
+                          ? "Sending..."
+                          : selectedMailState.rejected
+                            ? "Sent • Rejection Email"
+                            : "Send Rejection Email"}
                       </button>
                       <button
                         onClick={() => setShowInterviewModal(true)}
                         disabled={isSendingInterviewMail}
                         className="px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
+                        title={selectedMailState.interview ? `Sent on ${formatDate(selectedMailState.interview)}` : ""}
                       >
-                        {isSendingInterviewMail ? "Sending..." : "Send Interview Call Email"}
+                        {isSendingInterviewMail
+                          ? "Sending..."
+                          : selectedMailState.interview
+                            ? "Sent • Interview Call Email"
+                            : "Send Interview Call Email"}
                       </button>
                     </div>
 

@@ -140,6 +140,7 @@ To unsubscribe from career emails, reply to this email with "UNSUBSCRIBE".
       await resend.emails.send({
         from: "SOCIO Careers <careers@withsocio.com>",
         to: email,
+        cc: "thesocio.blr@gmail.com",
         replyTo: "careers@withsocio.com",
         subject: `Application Received - ${roleInterest} Role at SOCIO`,
         headers: {
