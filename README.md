@@ -21,6 +21,22 @@ npm run build
 npm start
 ```
 
+## Maintenance Mode
+
+Use this to put the site on hold while keeping `careers` and `panel` available.
+
+1. Set environment variable `MAINTENANCE_MODE=true`.
+2. Restart the app.
+
+When enabled, all routes return `Site Unavailable` except:
+
+- `/careers/*`
+- `/panel/*`
+- `/api/apply/*`
+- `/api/admin/*`
+
+To switch the full site back on, set `MAINTENANCE_MODE=false` (or remove it) and restart.
+
 ## Tech Stack
 
 - **Next.js 15** - React Framework
