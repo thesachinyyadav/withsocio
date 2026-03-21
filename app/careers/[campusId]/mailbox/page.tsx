@@ -241,8 +241,15 @@ export default function MailboxPage() {
         },
       });
 
+      const payload = (await probe.json().catch(() => ({}))) as { error?: string };
+
+      if (probe.status === 401) {
+        setAuthError("Invalid password.");
+        return;
+      }
+
       if (!probe.ok) {
-        setAuthError("Invalid password or mailbox access failed.");
+        setAuthError(payload?.error || "Mailbox API unavailable. Check Resend receiving setup.");
         return;
       }
 

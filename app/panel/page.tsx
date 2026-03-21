@@ -592,6 +592,12 @@ export default function AdminDashboard() {
               >
                 Access Dashboard
               </button>
+              <a
+                href="/careers/christid/mailbox"
+                className="block w-full text-center bg-white border border-slate-300 hover:border-[#154CB3]/40 text-slate-700 font-semibold py-2.5 px-6 rounded-xl transition-colors"
+              >
+                Open SOCIO Mail
+              </a>
             </form>
           </div>
         </div>
