@@ -13,6 +13,62 @@ const isAuthorized = (request: Request) => {
 
 const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 const isValidPrefix = (value: string) => /^[a-z0-9._-]{1,32}$/i.test(value);
+const DEFAULT_MAILBOX_PATH = "/careers/christid/mailbox";
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const getMailboxUrl = (request: Request) => {
+  const configuredUrl = (process.env.MAILBOX_APP_URL || "").trim();
+  if (configuredUrl) return configuredUrl;
+
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const host = request.headers.get("host");
+
+  const protocol = forwardedProto || (host?.includes("localhost") ? "http" : "https");
+  const resolvedHost = forwardedHost || host;
+
+  if (resolvedHost) {
+    return `${protocol}://${resolvedHost}${DEFAULT_MAILBOX_PATH}`;
+  }
+
+  return `https://withsocio.com${DEFAULT_MAILBOX_PATH}`;
+};
+
+const sendTelegram = async (message: string) => {
+  const token = process.env.TELEGRAM_BOT_TOKEN || "";
+  const chatId = process.env.TELEGRAM_CHAT_ID || "";
+
+  if (!token || !chatId) {
+    return { ok: false, error: "Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID" };
+  }
+
+  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: message,
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.ok === false) {
+    return { ok: false, error: payload?.description || "Telegram send failed" };
+  }
+
+  return { ok: true };
+};
 
 const parseEmailList = (value: unknown): string[] => {
   if (Array.isArray(value)) {
@@ -94,7 +150,31 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true, data: (result as any)?.data || null });
+    const appUrl = getMailboxUrl(request);
+    const textSummary = text || html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const preview = textSummary ? `${textSummary.slice(0, 120)}${textSummary.length > 120 ? "…" : ""}` : "(no preview)";
+
+    const message = [
+      "📤 <b>SOCIO Mail Sent</b>",
+      `From: <b>${escapeHtml(senderAddress)}</b>`,
+      `To: ${escapeHtml(to.join(", "))}`,
+      `Subject: ${escapeHtml(subject)}`,
+      `Preview: ${escapeHtml(preview)}`,
+      `<a href=\"${appUrl}\">Open Mailbox</a>`,
+    ].join("\n");
+
+    const telegramResult = await sendTelegram(message);
+
+    if (!telegramResult.ok) {
+      console.error("Telegram send alert error:", telegramResult.error);
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: (result as any)?.data || null,
+      telegramNotified: telegramResult.ok,
+      telegramError: telegramResult.ok ? null : telegramResult.error,
+    });
   } catch (error) {
     console.error("Mailbox send error:", error);
     return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
