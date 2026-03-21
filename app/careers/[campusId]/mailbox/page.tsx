@@ -83,7 +83,6 @@ export default function MailboxPage() {
   const [composeSubject, setComposeSubject] = useState("");
   const [composeBody, setComposeBody] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [isSendingTelegramTest, setIsSendingTelegramTest] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -477,29 +476,6 @@ export default function MailboxPage() {
     }
   };
 
-  const sendTelegramTest = async () => {
-    setIsSendingTelegramTest(true);
-    try {
-      const response = await fetch("/api/admin/mailbox/telegram-test", {
-        method: "POST",
-        headers: {
-          "x-admin-password": adminToken,
-        },
-      });
-
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to send Telegram test");
-      }
-
-      alert("Telegram test sent.");
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to send Telegram test");
-    } finally {
-      setIsSendingTelegramTest(false);
-    }
-  };
-
   if (!isAuthenticated) {
     return (
       <main className="min-h-screen bg-[#f8faff] px-4 py-10">
@@ -546,13 +522,6 @@ export default function MailboxPage() {
             <p className="text-xs text-gray-500">Inbox, Sent, and Compose</p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={sendTelegramTest}
-              disabled={isSendingTelegramTest}
-              className="px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              {isSendingTelegramTest ? "Sending Test..." : "Telegram Test"}
-            </button>
             <button
               onClick={() => fetchMailList(activeTab, adminToken)}
               className="px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50"
