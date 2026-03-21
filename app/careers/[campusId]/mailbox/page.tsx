@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -75,11 +75,19 @@ export default function MailboxPage() {
   const [previousCursors, setPreviousCursors] = useState<string[]>([]);
 
   const [showCompose, setShowCompose] = useState(false);
+  const [senderPrefix, setSenderPrefix] = useState("");
   const [composeTo, setComposeTo] = useState("");
   const [composeCc, setComposeCc] = useState("");
+  const [composeBcc, setComposeBcc] = useState("");
   const [composeSubject, setComposeSubject] = useState("");
   const [composeBody, setComposeBody] = useState("");
   const [isSending, setIsSending] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const savedPrefix = window.localStorage.getItem("socio_mail_sender_prefix") || "";
+    if (savedPrefix) setSenderPrefix(savedPrefix);
+  }, []);
 
   const formatDate = useCallback((value?: string) => {
     if (!value) return "";
@@ -277,6 +285,43 @@ export default function MailboxPage() {
     }
   };
 
+  const resetComposeForm = () => {
+    setComposeTo("");
+    setComposeCc("");
+    setComposeBcc("");
+    setComposeSubject("");
+    setComposeBody("");
+  };
+
+  const openCompose = () => {
+    resetComposeForm();
+    setShowCompose(true);
+  };
+
+  const extractEmailAddress = (raw: string): string => {
+    const match = raw.match(/<([^>]+)>/);
+    if (match?.[1]) return match[1].trim();
+    return raw.trim();
+  };
+
+  const handleReply = () => {
+    if (!selectedMail) return;
+    const toEmail = extractEmailAddress(String(selectedMail.from || ""));
+    const safeSubject = String(selectedMail.subject || "").trim();
+    const replySubject = /^re:/i.test(safeSubject) ? safeSubject : `Re: ${safeSubject || "(No subject)"}`;
+    const originalText = String(selectedDetail?.text || "").trim();
+    const quoted = originalText
+      ? `\n\n--- Original message ---\n${originalText}`
+      : "";
+
+    setComposeTo(toEmail);
+    setComposeCc("");
+    setComposeBcc("");
+    setComposeSubject(replySubject);
+    setComposeBody(quoted ? `${quoted}` : "");
+    setShowCompose(true);
+  };
+
   const updateMailState = useCallback(
     async (
       emailId: string,
@@ -353,7 +398,35 @@ export default function MailboxPage() {
       return;
     }
 
+    let normalizedPrefix = senderPrefix.trim().toLowerCase();
+    if (!normalizedPrefix) {
+      const prompted = typeof window !== "undefined"
+        ? window.prompt("Enter sender prefix before @withsocio.com", "careers")
+        : "";
+
+      normalizedPrefix = String(prompted || "").trim().toLowerCase();
+      if (!normalizedPrefix) {
+        alert("Sender prefix is required.");
+        return;
+      }
+      setSenderPrefix(normalizedPrefix);
+    }
+
+    if (!/^[a-z0-9._-]{1,32}$/i.test(normalizedPrefix)) {
+      alert("Invalid sender prefix. Use letters, numbers, dot, underscore, or dash.");
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("socio_mail_sender_prefix", normalizedPrefix);
+    }
+
     const cc = composeCc
+      .split(",")
+      .map((entry: string) => entry.trim())
+      .filter(Boolean);
+
+    const bcc = composeBcc
       .split(",")
       .map((entry: string) => entry.trim())
       .filter(Boolean);
@@ -367,8 +440,10 @@ export default function MailboxPage() {
           "x-admin-password": adminToken,
         },
         body: JSON.stringify({
+          senderPrefix: normalizedPrefix,
           to: composeTo,
           cc,
+          bcc,
           subject: composeSubject,
           text: composeBody,
         }),
@@ -383,10 +458,7 @@ export default function MailboxPage() {
 
       alert("Email sent.");
       setShowCompose(false);
-      setComposeTo("");
-      setComposeCc("");
-      setComposeSubject("");
-      setComposeBody("");
+      resetComposeForm();
       await fetchMailList(activeTab, adminToken, { resetHistory: true });
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to send email");
@@ -448,7 +520,7 @@ export default function MailboxPage() {
               Refresh
             </button>
             <button
-              onClick={() => setShowCompose(true)}
+              onClick={openCompose}
               className="px-3 py-2 rounded-lg bg-[#154CB3] text-white text-sm font-semibold hover:bg-[#0f3d8f]"
             >
               Compose
@@ -571,6 +643,13 @@ export default function MailboxPage() {
                 <div className="flex items-center gap-2 mb-4">
                   <button
                     type="button"
+                    onClick={handleReply}
+                    className="px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-700"
+                  >
+                    Reply
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => void updateMailState(selectedMail.id, { isRead: !selectedMail.is_read })}
                     className="px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-700"
                   >
@@ -626,6 +705,18 @@ export default function MailboxPage() {
               <button onClick={() => setShowCompose(false)} className="text-gray-500 hover:text-gray-700">✕</button>
             </div>
             <form onSubmit={sendMail} className="p-4 space-y-3">
+              <div>
+                <label className="text-xs text-gray-500 font-semibold">From Prefix</label>
+                <div className="mt-1 flex items-center gap-2">
+                  <input
+                    value={senderPrefix}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSenderPrefix(e.target.value)}
+                    placeholder="careers"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#154CB3]"
+                  />
+                  <span className="text-xs text-gray-500 whitespace-nowrap">@withsocio.com</span>
+                </div>
+              </div>
               <input
                 value={composeTo}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeTo(e.target.value)}
@@ -636,6 +727,12 @@ export default function MailboxPage() {
                 value={composeCc}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeCc(e.target.value)}
                 placeholder="CC (optional, comma-separated)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#154CB3]"
+              />
+              <input
+                value={composeBcc}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeBcc(e.target.value)}
+                placeholder="BCC (optional, comma-separated)"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#154CB3]"
               />
               <input

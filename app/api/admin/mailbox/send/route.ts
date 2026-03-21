@@ -12,6 +12,23 @@ const isAuthorized = (request: Request) => {
 };
 
 const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+const isValidPrefix = (value: string) => /^[a-z0-9._-]{1,32}$/i.test(value);
+
+const parseEmailList = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => String(entry || "").trim().toLowerCase())
+      .filter(Boolean);
+  }
+
+  const raw = String(value || "").trim();
+  if (!raw) return [];
+
+  return raw
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+};
 
 export async function POST(request: Request) {
   if (!isAuthorized(request)) {
@@ -23,7 +40,9 @@ export async function POST(request: Request) {
   const subject = String(body?.subject || "").trim();
   const text = String(body?.text || "").trim();
   const html = String(body?.html || "").trim();
-  const ccInput = Array.isArray(body?.cc) ? body.cc : [];
+  const senderPrefix = String(body?.senderPrefix || "").trim().toLowerCase();
+  const ccInput = body?.cc;
+  const bccInput = body?.bcc;
 
   if (!toRaw || !subject || (!text && !html)) {
     return NextResponse.json(
@@ -32,32 +51,37 @@ export async function POST(request: Request) {
     );
   }
 
-  const to = toRaw
-    .split(",")
-    .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean);
+  if (!senderPrefix || !isValidPrefix(senderPrefix)) {
+    return NextResponse.json(
+      { error: "Invalid sender prefix. Use letters, numbers, dot, underscore, or dash." },
+      { status: 400 }
+    );
+  }
+
+  const to = parseEmailList(toRaw);
 
   if (!to.length || to.some((entry) => !isValidEmail(entry))) {
     return NextResponse.json({ error: "Invalid recipient email(s)" }, { status: 400 });
   }
 
-  const cc = ccInput
-    .map((entry: unknown) => String(entry || "").trim().toLowerCase())
-    .filter(Boolean)
-    .filter((entry: string) => isValidEmail(entry));
+  const cc = parseEmailList(ccInput).filter((entry: string) => isValidEmail(entry));
+  const bcc = parseEmailList(bccInput).filter((entry: string) => isValidEmail(entry));
+
+  const senderAddress = `${senderPrefix}@withsocio.com`;
 
   try {
     const payload: Record<string, unknown> = {
-      from: "SOCIO Careers <careers@withsocio.com>",
+      from: `SOCIO Mail <${senderAddress}>`,
       to,
       subject,
-      replyTo: "careers@withsocio.com",
+      replyTo: senderAddress,
       headers: {
-        "List-Unsubscribe": "<mailto:careers@withsocio.com?subject=UNSUBSCRIBE>",
+        "List-Unsubscribe": `<mailto:${senderAddress}?subject=UNSUBSCRIBE>`,
       },
     };
 
     if (cc.length) payload.cc = Array.from(new Set(cc));
+    if (bcc.length) payload.bcc = Array.from(new Set(bcc));
     if (text) payload.text = text;
     if (html) payload.html = html;
 
