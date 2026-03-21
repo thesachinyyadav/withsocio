@@ -88,6 +88,21 @@ CREATE TABLE IF NOT EXISTS mailbox_email_state (
 
 CREATE INDEX IF NOT EXISTS idx_mailbox_state_updated_at ON mailbox_email_state(updated_at DESC);
 
+-- Mailbox inbound notification log (for Telegram push dedupe)
+CREATE TABLE IF NOT EXISTS mailbox_notification_log (
+    id BIGSERIAL PRIMARY KEY,
+    event_key TEXT NOT NULL UNIQUE,
+    email_id TEXT,
+    message_id TEXT,
+    from_email TEXT,
+    subject TEXT,
+    received_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_mailbox_notification_received_at ON mailbox_notification_log(received_at DESC);
+
 -- Create updated_at trigger
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
