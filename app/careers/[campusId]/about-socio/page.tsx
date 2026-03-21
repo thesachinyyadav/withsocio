@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import BackToApplicationButton from "./BackToApplicationButton";
 
 export const metadata: Metadata = {
   title: "About Socio and Role Descriptions",
@@ -39,7 +39,13 @@ const roleDescriptions = [
   },
 ];
 
-export default function AboutSocioPage() {
+export default async function AboutSocioPage({
+  params,
+}: {
+  params: Promise<{ campusId: string }>;
+}) {
+  const { campusId } = await params;
+
   return (
     <main className="min-h-screen bg-[#fafbff]">
       <div className="bg-gradient-to-br from-[#154CB3] via-[#1e5fc9] to-[#0f3d8f] py-16 px-4">
@@ -47,15 +53,7 @@ export default function AboutSocioPage() {
           <p className="text-sm font-semibold tracking-wide text-white/80 mb-3">SOCIO</p>
           <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">About Socio and Role Descriptions</h1>
           <p className="text-white/75 mt-4 max-w-2xl">A quick overview of how we work and what each internship role is responsible for.</p>
-          <Link
-            href="../"
-            className="inline-flex items-center gap-2 mt-8 px-5 py-2.5 rounded-full bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 transition-all"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Application
-          </Link>
+          <BackToApplicationButton fallbackHref={`/careers/${campusId}`} />
         </div>
       </div>
 
