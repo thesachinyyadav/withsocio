@@ -12,6 +12,62 @@ const isAuthorized = (request: Request) => {
 };
 
 const baseUrl = "https://socio.christuniversity.in";
+const DEFAULT_PANEL_PATH = "/panel";
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const getPanelUrl = (request: Request) => {
+  const configuredUrl = (process.env.MAILBOX_APP_URL || "").trim();
+  if (configuredUrl) return configuredUrl;
+
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const host = request.headers.get("host");
+
+  const protocol = forwardedProto || (host?.includes("localhost") ? "http" : "https");
+  const resolvedHost = forwardedHost || host;
+
+  if (resolvedHost) {
+    return `${protocol}://${resolvedHost}${DEFAULT_PANEL_PATH}`;
+  }
+
+  return `https://withsocio.com${DEFAULT_PANEL_PATH}`;
+};
+
+const sendTelegram = async (message: string) => {
+  const token = process.env.TELEGRAM_BOT_TOKEN || "";
+  const chatId = process.env.TELEGRAM_CHAT_ID || "";
+
+  if (!token || !chatId) {
+    return { ok: false, error: "Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID" };
+  }
+
+  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: message,
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.ok === false) {
+    return { ok: false, error: payload?.description || "Telegram send failed" };
+  }
+
+  return { ok: true };
+};
 
 const templates = {
   shortlisted: ({ firstName, role }: { firstName: string; role: string }) => ({
@@ -421,7 +477,23 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true });
+    const panelUrl = getPanelUrl(request);
+    const telegramMessage = [
+      "📨 <b>Panel Mail Sent</b>",
+      `Type: <b>custom</b>`,
+      `To: <b>${escapeHtml(String(email))}</b>`,
+      `Name: ${escapeHtml(String(fullName || "Unknown"))}`,
+      `Subject: ${escapeHtml(subject)}`,
+      `<a href=\"${panelUrl}\">Open Panel</a>`,
+    ].join("\n");
+
+    const telegramResult = await sendTelegram(telegramMessage);
+
+    return NextResponse.json({
+      success: true,
+      telegramNotified: telegramResult.ok,
+      telegramError: telegramResult.ok ? null : telegramResult.error,
+    });
   }
 
   const firstName = String(fullName).split(" ")[0];
@@ -444,5 +516,22 @@ export async function POST(request: Request) {
     },
   });
 
-  return NextResponse.json({ success: true });
+  const panelUrl = getPanelUrl(request);
+  const telegramMessage = [
+    "📨 <b>Panel Mail Sent</b>",
+    `Type: <b>${escapeHtml(String(type))}</b>`,
+    `To: <b>${escapeHtml(String(email))}</b>`,
+    `Name: ${escapeHtml(String(fullName || "Unknown"))}`,
+    `Role: ${escapeHtml(String(roleInterest || "N/A"))}`,
+    `Subject: ${escapeHtml(subject)}`,
+    `<a href=\"${panelUrl}\">Open Panel</a>`,
+  ].join("\n");
+
+  const telegramResult = await sendTelegram(telegramMessage);
+
+  return NextResponse.json({
+    success: true,
+    telegramNotified: telegramResult.ok,
+    telegramError: telegramResult.ok ? null : telegramResult.error,
+  });
 }
