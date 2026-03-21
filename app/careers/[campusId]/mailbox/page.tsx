@@ -135,6 +135,11 @@ export default function MailboxPage() {
     [filteredMails, selectedMailId]
   );
 
+  const unreadCount = useMemo(
+    () => mails.filter((mail: MailItem) => !mail.is_read).length,
+    [mails]
+  );
+
   const fetchMailDetail = useCallback(async (tab: TabType, emailId: string, token: string) => {
     setIsLoadingDetail(true);
     try {
@@ -545,6 +550,13 @@ export default function MailboxPage() {
                 }`}
               >
                 {tab === "inbox" ? "Inbox" : "Sent"}
+                {tab === "inbox" && unreadCount > 0 ? (
+                  <span className={`ml-2 inline-flex min-w-5 h-5 px-1 items-center justify-center rounded-full text-[11px] ${
+                    activeTab === "inbox" ? "bg-white text-[#154CB3]" : "bg-[#154CB3] text-white"
+                  }`}>
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                ) : null}
               </button>
             ))}
           </div>
@@ -578,17 +590,22 @@ export default function MailboxPage() {
                       <button
                         onClick={() => openMail(mail.id)}
                         className={`w-full px-4 py-3 text-left border-b border-gray-100 hover:bg-blue-50 transition-colors ${
-                          selectedMailId === mail.id ? "bg-blue-50" : "bg-white"
+                          selectedMailId === mail.id
+                            ? "bg-blue-50"
+                            : isUnread
+                              ? "bg-[#eef4ff]"
+                              : "bg-white"
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <div className="w-9 h-9 rounded-full bg-[#154CB3]/10 text-[#154CB3] flex items-center justify-center text-sm font-bold flex-shrink-0">
+                          <div className="relative w-9 h-9 rounded-full bg-[#154CB3]/10 text-[#154CB3] flex items-center justify-center text-sm font-bold flex-shrink-0">
                             {initial}
+                            {isUnread ? <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#154CB3] border-2 border-white" /> : null}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-2">
                               <p className={`text-sm truncate ${isUnread ? "font-black text-gray-900" : "font-semibold text-gray-900"}`}>{displayName}</p>
-                              <p className="text-[11px] text-gray-500 whitespace-nowrap">{formatDate(mail.created_at)}</p>
+                              <p className={`text-[11px] whitespace-nowrap ${isUnread ? "text-[#154CB3] font-bold" : "text-gray-500"}`}>{formatDate(mail.created_at)}</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <button
