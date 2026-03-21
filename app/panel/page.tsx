@@ -55,6 +55,7 @@ const roleColors: Record<string, string> = {
   "Content Writing": "bg-pink-50 text-pink-700 border border-pink-200",
   "Marketing": "bg-indigo-50 text-indigo-700 border border-indigo-200",
   "Digital Marketing": "bg-teal-50 text-teal-700 border border-teal-200",
+  "Legal Intern": "bg-violet-50 text-violet-700 border border-violet-200",
   "Video Editing / Videographer": "bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200",
 };
 
@@ -562,19 +563,14 @@ export default function AdminDashboard() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4">
-        <style jsx global>{`
-          @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:wght@700;800&display=swap');
-          .font-display { font-family: "Fraunces", serif; }
-          .font-ui { font-family: "Space Grotesk", sans-serif; }
-        `}</style>
         <div className="w-full max-w-lg">
-          <div className="bg-white border border-slate-200 rounded-2xl p-8 md:p-10 shadow-xl">
-            <div className="flex items-center justify-between mb-8">
+          <div className="bg-white border border-slate-200 rounded-xl p-7 md:p-8 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
               <Image src="/socio.svg" alt="SOCIO" width={120} height={36} />
               <span className="text-xs px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600">ADMIN</span>
             </div>
-            <h1 className="font-display text-3xl md:text-4xl leading-tight mb-2">SOCIO Admin Panel</h1>
-            <p className="text-slate-600 mb-8">Sign in to review and manage internship applications.</p>
+            <h1 className="text-2xl md:text-3xl font-bold leading-tight mb-2">SOCIO Admin Panel</h1>
+            <p className="text-slate-600 mb-6">Sign in to review and manage internship applications.</p>
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
@@ -584,7 +580,7 @@ export default function AdminDashboard() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter admin password"
-                  className="mt-2 w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] transition-all outline-none text-slate-900 placeholder:text-slate-400 font-ui"
+                  className="mt-2 w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] transition-colors outline-none text-slate-900 placeholder:text-slate-400"
                 />
               </div>
               {authError && (
@@ -592,7 +588,7 @@ export default function AdminDashboard() {
               )}
               <button
                 type="submit"
-                className="w-full bg-[#154CB3] hover:bg-[#0f3d8f] text-white font-semibold py-3 px-6 rounded-2xl transition-all shadow-sm"
+                className="w-full bg-[#154CB3] hover:bg-[#0f3d8f] text-white font-semibold py-2.5 px-6 rounded-xl transition-colors"
               >
                 Access Dashboard
               </button>
@@ -604,23 +600,15 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 relative font-ui overflow-x-hidden">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:wght@700;800&display=swap');
-        .font-display { font-family: "Fraunces", serif; }
-        .font-ui { font-family: "Space Grotesk", sans-serif; }
-        @keyframes glow { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.9; } }
-        .animate-glow { animation: glow 6s ease-in-out infinite; }
-      `}</style>
-
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50 text-slate-900 relative overflow-x-hidden">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="bg-white rounded-2xl px-4 py-2 border border-slate-200">
+            <div className="bg-white rounded-xl px-3 py-2 border border-slate-200">
               <Image src="/socio.svg" alt="SOCIO" width={100} height={30} />
             </div>
             <div>
-              <h1 className="font-display text-2xl">Admin Dashboard</h1>
+              <h1 className="text-xl font-semibold">Admin Dashboard</h1>
               <p className="text-xs text-slate-500">Internship applications</p>
             </div>
           </div>
@@ -628,13 +616,13 @@ export default function AdminDashboard() {
             <button
               onClick={fetchApplicants}
               disabled={isLoading}
-              className="text-sm px-3 py-2 rounded-xl bg-white border border-slate-200 hover:border-[#154CB3]/40 hover:text-[#154CB3] disabled:opacity-50"
+              className="text-sm px-3 py-2 rounded-lg bg-white border border-slate-200 hover:border-[#154CB3]/40 hover:text-[#154CB3] disabled:opacity-50"
             >
               {isLoading ? "Loading..." : "Refresh"}
             </button>
             <button
               onClick={() => setIsAuthenticated(false)}
-              className="text-sm px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100"
+              className="text-sm px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100"
             >
               Logout
             </button>
@@ -642,9 +630,9 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <div className="relative z-10 max-w-[1400px] mx-auto px-3 md:px-4 py-4 md:py-5 grid xl:grid-cols-[280px_minmax(0,1fr)] gap-4">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-3 md:px-4 py-4 grid xl:grid-cols-[260px_minmax(0,1fr)] gap-3">
         <aside className="space-y-5">
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Metrics</p>
             <div className="mt-4 space-y-3">
               <div className="flex items-center justify-between">
@@ -662,19 +650,19 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2.5 shadow-sm">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Filters</p>
             <input
               type="text"
               placeholder="Search name, email, campus..."
               value={searchDraft}
               onChange={(e) => setSearchDraft(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] outline-none text-slate-900 placeholder:text-slate-400"
+              className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] outline-none text-slate-900 placeholder:text-slate-400"
             />
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-white border border-slate-200 focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] outline-none text-slate-900"
+              className="w-full px-3 py-2.5 rounded-xl bg-white border border-slate-200 focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] outline-none text-slate-900"
             >
               <option value="">All Roles</option>
               <option value="Frontend Development">Frontend Development</option>
@@ -683,12 +671,13 @@ export default function AdminDashboard() {
               <option value="Content Writing">Content Writing</option>
               <option value="Marketing">Marketing</option>
               <option value="Digital Marketing">Digital Marketing</option>
+              <option value="Legal Intern">Legal Intern</option>
               <option value="Video Editing / Videographer">Video Editing / Videographer</option>
             </select>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-white border border-slate-200 focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] outline-none text-slate-900"
+              className="w-full px-3 py-2.5 rounded-xl bg-white border border-slate-200 focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] outline-none text-slate-900"
             >
               <option value="">All Status</option>
               <option value="pending">Pending</option>
@@ -699,11 +688,11 @@ export default function AdminDashboard() {
             </select>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-3 shadow-sm">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Exports</p>
             <button
               onClick={downloadByPreference}
-              className="w-full px-4 py-3 rounded-2xl bg-[#154CB3] text-white hover:bg-[#0f3d8f] text-sm font-semibold"
+              className="w-full px-4 py-2.5 rounded-xl bg-[#154CB3] text-white hover:bg-[#0f3d8f] text-sm font-semibold transition-colors"
             >
               Download Applicants Details
             </button>
@@ -735,7 +724,7 @@ export default function AdminDashboard() {
 
             <div className="space-y-2.5 max-h-[calc(100vh-210px)] overflow-y-auto pr-1">
               {applicants.length === 0 && !isLoading ? (
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
+                <div className="bg-white border border-slate-200 rounded-xl p-6 text-center">
                   <p className="text-slate-600">No applicants yet</p>
                   <button onClick={fetchApplicants} disabled={isLoading} className="text-xs text-[#154CB3] mt-2">
                     {isLoading ? "Refreshing..." : "Try refreshing"}
@@ -746,9 +735,9 @@ export default function AdminDashboard() {
                   <button
                     key={applicant.id}
                     onClick={() => setSelectedApplicant(applicant)}
-                    className={`w-full text-left bg-white border rounded-2xl p-3.5 transition-all hover:border-[#154CB3]/40 hover:shadow-sm ${
+                    className={`w-full text-left bg-white border rounded-xl p-3 transition-all hover:border-[#154CB3]/40 hover:shadow-sm ${
                       selectedApplicant?.id === applicant.id
-                        ? "border-[#154CB3]/50 shadow-md"
+                        ? "border-[#154CB3]/50 shadow-sm"
                         : "border-slate-200"
                     }`}
                   >
@@ -774,10 +763,10 @@ export default function AdminDashboard() {
           <div className="min-w-0">
             {selectedApplicant ? (
               <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm min-w-0">
-                <div className="p-4 md:p-5 border-b border-slate-200 bg-slate-50">
+                <div className="p-4 border-b border-slate-200 bg-slate-50">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                      <h2 className="font-display text-3xl">{selectedApplicant.full_name}</h2>
+                      <h2 className="text-2xl font-semibold">{selectedApplicant.full_name}</h2>
                       <p className="text-slate-600 mt-1">{selectedApplicant.course_year_dept}</p>
                       <p className="text-xs text-slate-500 mt-2">Applied: {formatDate(selectedApplicant.created_at)}</p>
                     </div>
@@ -797,8 +786,8 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="p-4 md:p-5 space-y-4">
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 min-w-0">
+                <div className="p-4 space-y-3.5">
+                  <div className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-3 min-w-0">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <h4 className="text-sm text-slate-600">Interview Scorecard</h4>
                       <span className="text-sm text-slate-700 font-semibold">Total: {totalScore}/50</span>
@@ -809,7 +798,7 @@ export default function AdminDashboard() {
                         <select
                           value={interviewer}
                           onChange={(e) => setInterviewer(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] outline-none text-slate-900"
+                          className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] outline-none text-slate-900"
                         >
                           {interviewerOptions.map((option) => (
                             <option key={option} value={option}>
@@ -835,7 +824,7 @@ export default function AdminDashboard() {
                                   )
                                 );
                               }}
-                              className="w-full px-2.5 py-2 rounded-xl bg-white border border-slate-200 focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] outline-none text-slate-900"
+                              className="w-full px-2.5 py-2 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-[#154CB3]/20 focus:border-[#154CB3] outline-none text-slate-900"
                             />
                           </div>
                         ))}
@@ -845,7 +834,7 @@ export default function AdminDashboard() {
                       <button
                         onClick={saveInterviewScore}
                         disabled={isSavingScore}
-                        className="px-4 py-2 rounded-xl text-sm font-semibold bg-[#154CB3] text-white hover:bg-[#0f3d8f] disabled:opacity-60"
+                        className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#154CB3] text-white hover:bg-[#0f3d8f] disabled:opacity-60 transition-colors"
                       >
                         {isSavingScore ? "Saving..." : "Save Score"}
                       </button>
@@ -858,7 +847,7 @@ export default function AdminDashboard() {
                     {interviewScores.length > 0 && (
                       <div className="grid sm:grid-cols-2 gap-2">
                         {interviewScores.map((score) => (
-                          <div key={score.id} className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                          <div key={score.id} className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm">
                             <span className="font-medium text-slate-700">{score.interviewer}</span>
                             <span className="text-slate-500">{score.total}/50</span>
                           </div>
@@ -868,13 +857,13 @@ export default function AdminDashboard() {
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-3">
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
                       <p className="text-xs text-slate-500">Email</p>
                       <a href={`mailto:${selectedApplicant.email}`} className="text-[#154CB3] font-medium text-sm break-all hover:underline">
                         {selectedApplicant.email}
                       </a>
                     </div>
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
                       <p className="text-xs text-slate-500">Phone</p>
                       <a href={`tel:${selectedApplicant.phone_number}`} className="text-slate-900 font-medium text-sm hover:underline">
                         {selectedApplicant.phone_number}
@@ -928,21 +917,21 @@ export default function AdminDashboard() {
 
                   <div>
                     <p className="text-xs text-slate-500 mb-2">Skills & Tools</p>
-                    <p className="text-slate-700 bg-slate-50 border border-slate-200 p-4 rounded-2xl text-sm">
+                    <p className="text-slate-700 bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm">
                       {selectedApplicant.existing_skills || "Not specified"}
                     </p>
                   </div>
 
                   <div>
                     <p className="text-xs text-slate-500 mb-2">Why should we consider you?</p>
-                    <p className="text-slate-700 bg-slate-50 border border-slate-200 p-4 rounded-2xl text-sm">
+                    <p className="text-slate-700 bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm">
                       {selectedApplicant.why_consider}
                     </p>
                   </div>
 
                   <div>
                     <p className="text-xs text-slate-500 mb-2">Project/Experience</p>
-                    <p className="text-slate-700 bg-slate-50 border border-slate-200 p-4 rounded-2xl text-sm">
+                    <p className="text-slate-700 bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm">
                       {selectedApplicant.project_experience}
                     </p>
                   </div>
@@ -960,7 +949,7 @@ export default function AdminDashboard() {
 
                   <div>
                     <p className="text-xs text-slate-500 mb-2">What do you want to gain?</p>
-                    <p className="text-slate-700 bg-slate-50 border border-slate-200 p-4 rounded-2xl text-sm">
+                    <p className="text-slate-700 bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm">
                       {selectedApplicant.internship_goals}
                     </p>
                   </div>
@@ -971,7 +960,7 @@ export default function AdminDashboard() {
                       href={selectedApplicant.resume_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-[#154CB3] text-white rounded-xl hover:bg-[#0f3d8f] transition-all text-sm font-semibold"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-[#154CB3] text-white rounded-lg hover:bg-[#0f3d8f] transition-colors text-sm font-semibold"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -993,7 +982,7 @@ export default function AdminDashboard() {
                         <button
                           key={value}
                           onClick={() => updateStatus(selectedApplicant.id, value)}
-                          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                             selectedApplicant.status === value
                               ? "ring-2 ring-offset-2 ring-[#154CB3]"
                               : ""
@@ -1008,7 +997,7 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => sendCandidateMail("shortlisted")}
                         disabled={sendingMailType !== null}
-                        className="px-4 py-2 rounded-xl text-sm font-semibold bg-sky-50 border border-sky-200 text-sky-700 hover:bg-sky-100 disabled:opacity-60"
+                        className="px-4 py-2 rounded-lg text-sm font-semibold bg-sky-50 border border-sky-200 text-sky-700 hover:bg-sky-100 disabled:opacity-60"
                         title={selectedMailState.shortlisted ? `Sent on ${formatDate(selectedMailState.shortlisted)}` : ""}
                       >
                         {sendingMailType === "shortlisted"
@@ -1020,7 +1009,7 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => sendCandidateMail("selected")}
                         disabled={sendingMailType !== null}
-                        className="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
+                        className="px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
                         title={selectedMailState.selected ? `Sent on ${formatDate(selectedMailState.selected)}` : ""}
                       >
                         {sendingMailType === "selected"
@@ -1032,7 +1021,7 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => sendCandidateMail("rejected")}
                         disabled={sendingMailType !== null}
-                        className="px-4 py-2 rounded-xl text-sm font-semibold bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 disabled:opacity-60"
+                        className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 disabled:opacity-60"
                         title={selectedMailState.rejected ? `Sent on ${formatDate(selectedMailState.rejected)}` : ""}
                       >
                         {sendingMailType === "rejected"
@@ -1044,7 +1033,7 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => setShowInterviewModal(true)}
                         disabled={isSendingInterviewMail}
-                        className="px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
+                        className="px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
                         title={selectedMailState.interview ? `Sent on ${formatDate(selectedMailState.interview)}` : ""}
                       >
                         {isSendingInterviewMail
@@ -1056,7 +1045,7 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => setShowCustomMailModal(true)}
                         disabled={isSendingCustomMail || sendingMailType !== null}
-                        className="px-4 py-2 rounded-xl text-sm font-semibold bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 disabled:opacity-60"
+                        className="px-4 py-2 rounded-lg text-sm font-semibold bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 disabled:opacity-60"
                         title={selectedMailState.custom ? `Sent on ${formatDate(selectedMailState.custom)}` : ""}
                       >
                         {isSendingCustomMail
@@ -1068,8 +1057,8 @@ export default function AdminDashboard() {
                     </div>
 
                     {showInterviewModal && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-                        <div className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-lg mx-3">
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 backdrop-blur-sm">
+                        <div className="bg-white rounded-xl p-6 shadow-lg w-full max-w-lg mx-3">
                           <h3 className="text-lg font-semibold mb-4">Send Interview Call Email</h3>
                           <div className="mb-3">
                             <label className="block text-xs font-semibold mb-1">Venue</label>
@@ -1077,7 +1066,7 @@ export default function AdminDashboard() {
                               type="text"
                               value={interviewVenue}
                               onChange={e => setInterviewVenue(e.target.value)}
-                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 outline-none"
                               placeholder="Enter venue"
                             />
                           </div>
@@ -1087,7 +1076,7 @@ export default function AdminDashboard() {
                               type="date"
                               value={interviewDate}
                               onChange={e => setInterviewDate(e.target.value)}
-                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 outline-none"
                             />
                           </div>
                           <div className="mb-4">
@@ -1096,20 +1085,20 @@ export default function AdminDashboard() {
                               type="time"
                               value={interviewTime}
                               onChange={e => setInterviewTime(e.target.value)}
-                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 outline-none"
                             />
                           </div>
                           <div className="flex gap-2 justify-end">
                             <button
                               onClick={() => setShowInterviewModal(false)}
-                              className="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200"
+                              className="px-4 py-2 rounded-lg text-sm font-semibold bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200"
                               disabled={isSendingInterviewMail}
                             >
                               Cancel
                             </button>
                             <button
                               onClick={sendInterviewMail}
-                              className="px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700"
+                              className="px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700"
                               disabled={isSendingInterviewMail}
                             >
                               {isSendingInterviewMail ? "Sending..." : "Send Email"}
@@ -1120,8 +1109,8 @@ export default function AdminDashboard() {
                     )}
 
                     {showCustomMailModal && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-                        <div className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-xl mx-3">
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 backdrop-blur-sm">
+                        <div className="bg-white rounded-xl p-6 shadow-lg w-full max-w-xl mx-3">
                           <h3 className="text-lg font-semibold mb-4">Send Custom Email</h3>
                           <div className="mb-3">
                             <label className="block text-xs font-semibold mb-1">Subject</label>
@@ -1129,7 +1118,7 @@ export default function AdminDashboard() {
                               type="text"
                               value={customSubject}
                               onChange={(e) => setCustomSubject(e.target.value)}
-                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 outline-none"
                               placeholder="Enter subject"
                             />
                           </div>
@@ -1139,7 +1128,7 @@ export default function AdminDashboard() {
                               type="text"
                               value={customCc}
                               onChange={(e) => setCustomCc(e.target.value)}
-                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 outline-none"
                               placeholder="example1@mail.com, example2@mail.com"
                             />
                           </div>
@@ -1149,21 +1138,21 @@ export default function AdminDashboard() {
                               value={customBody}
                               onChange={(e) => setCustomBody(e.target.value)}
                               rows={7}
-                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 outline-none resize-y"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 outline-none resize-y"
                               placeholder="Write your email body here"
                             />
                           </div>
                           <div className="flex gap-2 justify-end">
                             <button
                               onClick={() => setShowCustomMailModal(false)}
-                              className="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200"
+                              className="px-4 py-2 rounded-lg text-sm font-semibold bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200"
                               disabled={isSendingCustomMail}
                             >
                               Cancel
                             </button>
                             <button
                               onClick={sendCustomMail}
-                              className="px-4 py-2 rounded-xl text-sm font-semibold bg-amber-600 text-white hover:bg-amber-700"
+                              className="px-4 py-2 rounded-lg text-sm font-semibold bg-amber-600 text-white hover:bg-amber-700"
                               disabled={isSendingCustomMail}
                             >
                               {isSendingCustomMail ? "Sending..." : "Send Custom Email"}
@@ -1176,13 +1165,13 @@ export default function AdminDashboard() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center">
-                <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="bg-white border border-slate-200 rounded-xl p-10 text-center">
+                <div className="w-14 h-14 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-display mb-2">Select an Applicant</h3>
+                <h3 className="text-xl font-semibold mb-2">Select an Applicant</h3>
                 <p className="text-slate-600">Click an applicant on the left to view their profile and actions.</p>
               </div>
             )}
