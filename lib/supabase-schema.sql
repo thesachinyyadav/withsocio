@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS internship_applications (
         'Content Writing',
         'Marketing',
         'Digital Marketing',
+        'Legal Intern',
         'Video Editing / Videographer'
     )),
     existing_skills TEXT,
@@ -90,6 +91,24 @@ CREATE TRIGGER update_internship_applications_updated_at
     BEFORE UPDATE ON internship_applications
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+-- IMPORTANT: If table already exists, update role_interest CHECK constraint in place.
+-- (CREATE TABLE IF NOT EXISTS does not modify existing constraints.)
+ALTER TABLE internship_applications
+    DROP CONSTRAINT IF EXISTS internship_applications_role_interest_check;
+
+ALTER TABLE internship_applications
+    ADD CONSTRAINT internship_applications_role_interest_check
+    CHECK (role_interest IN (
+        'Database Handling',
+        'Frontend Development',
+        'Operations',
+        'Content Writing',
+        'Marketing',
+        'Digital Marketing',
+        'Legal Intern',
+        'Video Editing / Videographer'
+    ));
 
 -- Storage bucket for resumes (run this in Supabase Dashboard -> Storage)
 -- Create a bucket named 'internship-resumes'
