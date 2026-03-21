@@ -78,6 +78,16 @@ CREATE POLICY "Allow authenticated updates" ON internship_applications
     USING (auth.role() = 'authenticated')
     WITH CHECK (auth.role() = 'authenticated');
 
+-- Mailbox email state (for SOCIO Mail inbox UX)
+CREATE TABLE IF NOT EXISTS mailbox_email_state (
+    email_id TEXT PRIMARY KEY,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    is_starred BOOLEAN NOT NULL DEFAULT FALSE,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_mailbox_state_updated_at ON mailbox_email_state(updated_at DESC);
+
 -- Create updated_at trigger
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -89,6 +99,12 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_internship_applications_updated_at
     BEFORE UPDATE ON internship_applications
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_mailbox_email_state_updated_at ON mailbox_email_state;
+CREATE TRIGGER update_mailbox_email_state_updated_at
+    BEFORE UPDATE ON mailbox_email_state
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
