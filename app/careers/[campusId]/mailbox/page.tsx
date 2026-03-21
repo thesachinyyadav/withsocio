@@ -75,6 +75,7 @@ export default function MailboxPage() {
   const [previousCursors, setPreviousCursors] = useState<string[]>([]);
 
   const [showCompose, setShowCompose] = useState(false);
+  const [composeMode, setComposeMode] = useState<"new" | "reply">("new");
   const [senderPrefix, setSenderPrefix] = useState("");
   const [composeTo, setComposeTo] = useState("");
   const [composeCc, setComposeCc] = useState("");
@@ -295,6 +296,7 @@ export default function MailboxPage() {
 
   const openCompose = () => {
     resetComposeForm();
+    setComposeMode("new");
     setShowCompose(true);
   };
 
@@ -318,7 +320,8 @@ export default function MailboxPage() {
     setComposeCc("");
     setComposeBcc("");
     setComposeSubject(replySubject);
-    setComposeBody(quoted ? `${quoted}` : "");
+    setComposeBody(`Hi,\n\n${quoted}`);
+    setComposeMode("reply");
     setShowCompose(true);
   };
 
@@ -458,6 +461,7 @@ export default function MailboxPage() {
 
       alert("Email sent.");
       setShowCompose(false);
+      setComposeMode("new");
       resetComposeForm();
       await fetchMailList(activeTab, adminToken, { resetHistory: true });
     } catch (error) {
@@ -699,12 +703,12 @@ export default function MailboxPage() {
 
       {showCompose ? (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
+          <div className="w-full max-w-3xl max-h-[92vh] bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden flex flex-col">
             <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="font-bold text-gray-900">New Message</h2>
+              <h2 className="font-bold text-gray-900">{composeMode === "reply" ? "Reply" : "New Message"}</h2>
               <button onClick={() => setShowCompose(false)} className="text-gray-500 hover:text-gray-700">✕</button>
             </div>
-            <form onSubmit={sendMail} className="p-4 space-y-3">
+            <form onSubmit={sendMail} className="p-4 space-y-3 overflow-y-auto">
               <div>
                 <label className="text-xs text-gray-500 font-semibold">From Prefix</label>
                 <div className="mt-1 flex items-center gap-2">
@@ -744,8 +748,8 @@ export default function MailboxPage() {
               <textarea
                 value={composeBody}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComposeBody(e.target.value)}
-                rows={11}
-                placeholder="Write your message..."
+                rows={14}
+                placeholder="Write your reply/message here..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#154CB3] resize-y"
               />
               <div className="flex justify-end gap-2">

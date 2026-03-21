@@ -25,23 +25,42 @@ export async function GET(
     return NextResponse.json({ error: "Missing emailId" }, { status: 400 });
   }
 
+  const resendApiKey = process.env.RESEND_API_KEY;
+
+  if (!resendApiKey) {
+    return NextResponse.json({ error: "Missing RESEND_API_KEY" }, { status: 500 });
+  }
+
   try {
     const sentClient = (resend as any).emails;
 
-    if (!sentClient?.get) {
+    if (sentClient?.get) {
+      const result = await sentClient.get(emailId);
+
+      if (result?.error) {
+        return NextResponse.json({ error: result.error.message || "Failed to retrieve sent email" }, { status: 500 });
+      }
+
+      return NextResponse.json({ data: result?.data || null });
+    }
+
+    const fallbackResponse = await fetch(`https://api.resend.com/emails/${emailId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+      },
+    });
+
+    const fallbackPayload = await fallbackResponse.json().catch(() => ({}));
+
+    if (!fallbackResponse.ok) {
       return NextResponse.json(
-        { error: "Resend sent email detail API is not available in this SDK version." },
-        { status: 500 }
+        { error: fallbackPayload?.message || fallbackPayload?.error || "Failed to retrieve sent email" },
+        { status: fallbackResponse.status || 500 }
       );
     }
 
-    const result = await sentClient.get(emailId);
-
-    if (result?.error) {
-      return NextResponse.json({ error: result.error.message || "Failed to retrieve sent email" }, { status: 500 });
-    }
-
-    return NextResponse.json({ data: result?.data || null });
+    return NextResponse.json({ data: fallbackPayload || null });
   } catch (error) {
     console.error("Mailbox sent detail error:", error);
     return NextResponse.json({ error: "Failed to retrieve sent email" }, { status: 500 });
