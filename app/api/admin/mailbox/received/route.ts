@@ -33,28 +33,60 @@ export async function GET(request: NextRequest) {
   const before = (searchParams.get("before") || "").trim();
 
   const safeLimit = Number.isFinite(limit) ? Math.min(Math.max(limit, 1), 100) : 20;
+  const resendApiKey = process.env.RESEND_API_KEY;
+
+  if (!resendApiKey) {
+    return NextResponse.json({ error: "Missing RESEND_API_KEY" }, { status: 500 });
+  }
 
   try {
     const receivingClient = (resend as any).emails?.receiving;
-
-    if (!receivingClient?.list) {
-      return NextResponse.json(
-        { error: "Resend receiving API is not available in this SDK version." },
-        { status: 500 }
-      );
-    }
 
     const params: Record<string, string | number> = { limit: safeLimit };
     if (after) params.after = after;
     if (before) params.before = before;
 
-    const result = await receivingClient.list(params);
+    let data: any[] = [];
+    let hasMore = false;
+    let objectType = "list";
 
-    if (result?.error) {
-      return NextResponse.json({ error: result.error.message || "Failed to list received emails" }, { status: 500 });
+    if (receivingClient?.list) {
+      const result = await receivingClient.list(params);
+
+      if (result?.error) {
+        return NextResponse.json({ error: result.error.message || "Failed to list received emails" }, { status: 500 });
+      }
+
+      data = result?.data?.data || [];
+      hasMore = Boolean(result?.data?.has_more);
+      objectType = result?.data?.object || "list";
+    } else {
+      const query = new URLSearchParams();
+      query.set("limit", String(safeLimit));
+      if (after) query.set("after", after);
+      if (before) query.set("before", before);
+
+      const fallbackResponse = await fetch(`https://api.resend.com/emails/receiving?${query.toString()}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+        },
+      });
+
+      const fallbackPayload = await fallbackResponse.json().catch(() => ({}));
+
+      if (!fallbackResponse.ok) {
+        return NextResponse.json(
+          { error: fallbackPayload?.message || fallbackPayload?.error || "Failed to list received emails" },
+          { status: fallbackResponse.status || 500 }
+        );
+      }
+
+      data = Array.isArray(fallbackPayload?.data) ? fallbackPayload.data : [];
+      hasMore = Boolean(fallbackPayload?.has_more);
+      objectType = fallbackPayload?.object || "list";
     }
 
-    const data = result?.data?.data || [];
     const ids = data
       .map((item: any) => String(item?.id || "").trim())
       .filter(Boolean);
@@ -92,8 +124,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       data: enrichedData,
-      has_more: Boolean(result?.data?.has_more),
-      object: result?.data?.object || "list",
+      has_more: hasMore,
+      object: objectType,
       first_id: data?.[0]?.id || null,
       last_id: data?.[data.length - 1]?.id || null,
     });
