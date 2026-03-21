@@ -7,6 +7,25 @@ const supabaseAdmin = createClient(
 );
 
 const getNotifySecret = () => process.env.MAILBOX_NOTIFY_SECRET || "";
+const DEFAULT_MAILBOX_PATH = "/careers/christid/mailbox";
+
+const getMailboxUrl = (request: Request) => {
+  const configuredUrl = (process.env.MAILBOX_APP_URL || "").trim();
+  if (configuredUrl) return configuredUrl;
+
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const host = request.headers.get("host");
+
+  const protocol = forwardedProto || (host?.includes("localhost") ? "http" : "https");
+  const resolvedHost = forwardedHost || host;
+
+  if (resolvedHost) {
+    return `${protocol}://${resolvedHost}${DEFAULT_MAILBOX_PATH}`;
+  }
+
+  return `https://withsocio.com${DEFAULT_MAILBOX_PATH}`;
+};
 
 const isAuthorized = (request: Request) => {
   const secret = getNotifySecret();
@@ -104,7 +123,7 @@ export async function POST(request: Request) {
   }
 
   if (!insertError) {
-    const appUrl = process.env.MAILBOX_APP_URL || "https://withsocio.com/panel";
+    const appUrl = getMailboxUrl(request);
     const text = [
       "📩 <b>New SOCIO Mail</b>",
       from ? `From: <b>${from}</b>` : "From: (unknown)",

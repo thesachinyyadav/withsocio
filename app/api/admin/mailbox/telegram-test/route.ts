@@ -2,6 +2,25 @@ import { NextResponse } from "next/server";
 
 const getAdminPassword = () =>
   process.env.ADMIN_DASHBOARD_PASSWORD || "socio2026";
+const DEFAULT_MAILBOX_PATH = "/careers/christid/mailbox";
+
+const getMailboxUrl = (request: Request) => {
+  const configuredUrl = (process.env.MAILBOX_APP_URL || "").trim();
+  if (configuredUrl) return configuredUrl;
+
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const host = request.headers.get("host");
+
+  const protocol = forwardedProto || (host?.includes("localhost") ? "http" : "https");
+  const resolvedHost = forwardedHost || host;
+
+  if (resolvedHost) {
+    return `${protocol}://${resolvedHost}${DEFAULT_MAILBOX_PATH}`;
+  }
+
+  return `https://withsocio.com${DEFAULT_MAILBOX_PATH}`;
+};
 
 const isAuthorized = (request: Request) => {
   const headerPassword = request.headers.get("x-admin-password");
@@ -15,7 +34,7 @@ export async function POST(request: Request) {
 
   const token = process.env.TELEGRAM_BOT_TOKEN || "";
   const chatId = process.env.TELEGRAM_CHAT_ID || "";
-  const appUrl = process.env.MAILBOX_APP_URL || "https://withsocio.com/panel";
+  const appUrl = getMailboxUrl(request);
 
   if (!token || !chatId) {
     return NextResponse.json(
