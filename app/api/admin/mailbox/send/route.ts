@@ -31,7 +31,7 @@ const toPlainTextEmail = (text: string, html: string) => {
   return stripHtml(String(html || ""));
 };
 
-const generateHtmlEmail = (textBody: string, senderAddress: string, appUrl: string): string => {
+const generateHtmlEmail = (textBody: string, senderAddress: string): string => {
   const escapedBody = escapeHtml(textBody)
     .split("\n")
     .map((line) => (line.trim() ? `<p>${line}</p>` : "<br />"))
@@ -51,13 +51,13 @@ const generateHtmlEmail = (textBody: string, senderAddress: string, appUrl: stri
             color: #333;
             margin: 0;
             padding: 0;
-            background-color: #f8faff;
+            background-color: #154CB3;
         }
         .container {
             max-width: 600px;
             margin: 0 auto;
             background-color: #ffffff;
-          border: 1px solid #e5e7eb;
+          border: 1px solid #0f3d8f;
           border-radius: 10px;
           overflow: hidden;
         }
@@ -90,18 +90,18 @@ const generateHtmlEmail = (textBody: string, senderAddress: string, appUrl: stri
             margin-bottom: 0;
         }
         .footer {
-            background-color: #f8faff;
+          background-color: #154CB3;
             padding: 24px;
-            border-top: 1px solid #e5e7eb;
+          border-top: 1px solid #0f3d8f;
             text-align: center;
             font-size: 12px;
-            color: #666;
+          color: #eaf0ff;
         }
         .footer-links {
             margin-bottom: 16px;
         }
         .footer-links a {
-            color: #154CB3;
+          color: #ffffff;
             text-decoration: none;
             margin: 0 8px;
             display: inline-block;
@@ -111,12 +111,12 @@ const generateHtmlEmail = (textBody: string, senderAddress: string, appUrl: stri
         }
         .footer-text {
             font-size: 11px;
-            color: #999;
+          color: #d7e3ff;
             margin-top: 12px;
         }
         .divider {
             height: 1px;
-            background-color: #e5e7eb;
+          background-color: rgba(255, 255, 255, 0.3);
             margin: 16px 0;
         }
     </style>
@@ -134,16 +134,14 @@ const generateHtmlEmail = (textBody: string, senderAddress: string, appUrl: stri
         
         <div class="footer">
             <div class="footer-links">
-                <a href="${escapeHtml(appUrl)}">Open Mailbox</a>
-                <span>|</span>
             <a href="https://live.withsocio.com">Visit SOCIO</a>
             <span>|</span>
                 <a href="mailto:${escapeHtml(senderAddress)}?subject=UNSUBSCRIBE">Unsubscribe</a>
             </div>
             <div class="divider"></div>
             <div class="footer-text">
-                <p style="margin: 0; color: #999;">© 2026 SOCIO. All rights reserved.</p>
-                <p style="margin: 8px 0 0 0; color: #bbb;">This email was sent from ${escapeHtml(senderAddress)}</p>
+            <p style="margin: 0; color: #d7e3ff;">© 2026 SOCIO. All rights reserved.</p>
+            <p style="margin: 8px 0 0 0; color: #c5d8ff;">This email was sent from ${escapeHtml(senderAddress)}</p>
             </div>
         </div>
     </div>
@@ -257,7 +255,7 @@ export async function POST(request: Request) {
   try {
     const appUrl = getMailboxUrl(request);
     const textBody = toPlainTextEmail(text, html);
-    const htmlBody = generateHtmlEmail(textBody, senderAddress, appUrl);
+    const htmlBody = generateHtmlEmail(textBody, senderAddress);
 
     const payload: Record<string, unknown> = {
       from: `SOCIO <${senderAddress}>`,
