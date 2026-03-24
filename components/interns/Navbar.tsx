@@ -49,13 +49,13 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
           <Link href="/interns" className="flex items-center space-x-2">
             <Image
               src="/socio.svg"
-              alt="SOCIO"
-              width={28}
-              height={28}
-              className="h-7 w-7"
+              alt="SOCIO logo"
+              width={36}
+              height={36}
+              className="h-9 w-9"
               priority
             />
-            <span className="text-slate-900 font-bold">SOCIOSVG Workspace</span>
+            <span className="text-slate-900 font-bold tracking-tight">Workplace</span>
             {isAdmin && (
               <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
                 Admin

@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 export default function InternsLoginPage() {
   const [identifier, setIdentifier] = useState("");
@@ -96,12 +95,13 @@ export default function InternsLoginPage() {
           {/* Footer */}
           <div className="mt-6 text-center text-sm text-slate-600">
             <p>SOCIO Workspace</p>
-            <Link
-              href="/"
+            <a
+              href="https://live.withsocio.com"
+              target="_self"
               className="text-blue-700 hover:text-blue-800 transition mt-2 inline-block"
             >
               Back to SOCIO
-            </Link>
+            </a>
           </div>
         </div>
       </div>

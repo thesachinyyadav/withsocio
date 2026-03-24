@@ -10,6 +10,9 @@ interface Report {
   status: string;
   priority: string;
   created_at: string;
+  created_by_name?: string;
+  created_by_email?: string;
+  assigned_to_emails?: string[];
 }
 
 export default function InternReportsPage() {
@@ -80,6 +83,10 @@ export default function InternReportsPage() {
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[report.status || "open"]}`}>
                   {(report.status || "open").replace("_", " ")}
                 </span>
+              </div>
+              <div className="space-y-1 text-xs text-slate-600">
+                <p>Raised by: {report.created_by_name || report.created_by_email || "Unknown"}</p>
+                <p>Working on: {report.assigned_to_emails?.length ? report.assigned_to_emails.join(", ") : "Unassigned"}</p>
               </div>
               <div className="flex items-center justify-between text-sm text-slate-600 mt-4">
                 <span>Priority: {report.priority}</span>

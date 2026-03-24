@@ -16,6 +16,9 @@ interface ReportItem {
   status?: string;
   work_status?: string;
   created_at: string;
+  created_by_name?: string;
+  created_by_email?: string;
+  assigned_to_emails?: string[];
 }
 
 function Spinner() {
@@ -30,8 +33,31 @@ export default function InternWorkspace() {
   const [recentLogs, setRecentLogs] = useState<WorkLogItem[]>([]);
   const [recentReports, setRecentReports] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const user = typeof window !== "undefined" ? localStorage.getItem("interns_user") : null;
-  const userData = user ? JSON.parse(user) : null;
+  const [showWelcomeSplash, setShowWelcomeSplash] = useState(false);
+  const [displayName, setDisplayName] = useState("Intern");
+
+  useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem("interns_user");
+      const parsedUser = rawUser ? JSON.parse(rawUser) : null;
+      const fullName = (parsedUser?.fullName || "Intern").trim();
+      const firstName = fullName.split(" ")[0] || "Intern";
+      const normalizedName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+      setDisplayName(normalizedName);
+
+      const hasSeenWelcome = sessionStorage.getItem("interns_welcome_seen") === "true";
+      if (!hasSeenWelcome) {
+        setShowWelcomeSplash(true);
+        const timeout = setTimeout(() => {
+          setShowWelcomeSplash(false);
+          sessionStorage.setItem("interns_welcome_seen", "true");
+        }, 1200);
+        return () => clearTimeout(timeout);
+      }
+    } catch {
+      setDisplayName("Intern");
+    }
+  }, []);
 
   useEffect(() => {
     const fetchWorkspaceData = async () => {
@@ -77,6 +103,18 @@ export default function InternWorkspace() {
     );
   }
 
+  if (showWelcomeSplash) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="w-full max-w-xl rounded-2xl border border-blue-100 bg-blue-50 p-10 text-center shadow-sm">
+          <p className="text-sm font-medium uppercase tracking-wide text-blue-700">SOCIO</p>
+          <h1 className="mt-3 text-3xl font-bold text-slate-900">Welcome {displayName}</h1>
+          <p className="mt-2 text-slate-600">Loading your workplace...</p>
+        </div>
+      </div>
+    );
+  }
+
   const quickStats = [
     { label: "Work Logs", value: stats.logsSubmitted },
     { label: "Reports", value: stats.reportsSubmitted },
@@ -85,8 +123,20 @@ export default function InternWorkspace() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome, {userData?.fullName || "Intern"}</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome, {displayName}</h1>
         <p className="text-slate-600">Continue your internship work and track progress.</p>
+      </div>
+
+      <div className="mb-6 rounded-xl border border-blue-100 bg-blue-50 px-5 py-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium text-slate-800">Reminder: add your today&apos;s worklog before the day ends.</p>
+          <Link
+            href="/interns/workspace/work-logs/new"
+            className="inline-flex items-center justify-center rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 transition"
+          >
+            Add Today&apos;s Worklog
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -152,12 +202,22 @@ export default function InternWorkspace() {
           {recentReports.length ? (
             <div className="space-y-3">
               {recentReports.map((report) => (
-                <div key={report.id} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
-                  <div>
+                <div key={report.id} className="py-3 border-b border-slate-100 last:border-0">
+                  <div className="mb-2 flex items-start justify-between gap-4">
                     <p className="text-slate-900 font-medium">{report.title}</p>
-                    <p className="text-slate-500 text-xs">{new Date(report.created_at).toLocaleDateString()}</p>
+                    <span className="px-2 py-1 rounded text-xs bg-blue-50 text-blue-700 whitespace-nowrap">
+                      {report.status || report.work_status || "open"}
+                    </span>
                   </div>
-                  <span className="px-2 py-1 rounded text-xs bg-blue-50 text-blue-700">{report.status || report.work_status || "open"}</span>
+                  <div>
+                    <p className="text-slate-600 text-xs">
+                      Raised by {report.created_by_name || report.created_by_email || "Unknown"}
+                    </p>
+                    <p className="text-slate-600 text-xs mt-1">
+                      Working on: {report.assigned_to_emails?.length ? report.assigned_to_emails.join(", ") : "Unassigned"}
+                    </p>
+                    <p className="text-slate-500 text-xs mt-1">{new Date(report.created_at).toLocaleDateString()}</p>
+                  </div>
                 </div>
               ))}
             </div>
