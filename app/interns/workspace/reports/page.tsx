@@ -38,12 +38,26 @@ export default function InternReportsPage() {
 
   useEffect(() => {
     fetchReports();
-  }, [page]);
+  }, [page, searchQuery]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
 
   const fetchReports = async () => {
     try {
       const token = localStorage.getItem("interns_token");
-      const response = await fetch(`/api/interns/reports?page=${page}&limit=10`, {
+      const query = searchQuery.trim();
+      const params = new URLSearchParams();
+
+      if (query) {
+        params.set("q", query);
+      } else {
+        params.set("page", String(page));
+        params.set("limit", "10");
+      }
+
+      const response = await fetch(`/api/interns/reports?${params.toString()}`, {
         headers: { "x-interns-token": token || "" },
       });
 
@@ -121,24 +135,6 @@ export default function InternReportsPage() {
     closed: "bg-slate-100 text-slate-700",
   };
 
-  const normalizedSearch = searchQuery.trim().toLowerCase();
-
-  const filteredReports = reports.filter((report: Report) => {
-    if (!normalizedSearch) return true;
-
-    const searchable = [
-      report.title,
-      report.category,
-      report.created_by_name || "",
-      report.created_by_email || "",
-      ...(report.assigned_to_emails || []),
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    return searchable.includes(normalizedSearch);
-  });
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -172,13 +168,15 @@ export default function InternReportsPage() {
           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-800"
         />
         <p className="mt-1 text-xs text-slate-500">
-          Showing {filteredReports.length} of {reports.length} reports on this page
+          {searchQuery.trim()
+            ? `Showing all ${reports.length} matching results`
+            : `Showing ${reports.length} reports on this page`}
         </p>
       </div>
 
       <div className="space-y-4">
-        {filteredReports.length > 0 ? (
-          filteredReports.map((report: Report) => {
+        {reports.length > 0 ? (
+          reports.map((report: Report) => {
             const isOwner =
               report.assigned_to_emails?.some(
                 (email) => email.toLowerCase() === viewerEmail
@@ -204,7 +202,9 @@ export default function InternReportsPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <select
                     value={report.status || "open"}
-                    onChange={(e) => handleStatusChange(report.id, e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      handleStatusChange(report.id, e.target.value)
+                    }
                     disabled={!isOwner || updatingStatusId === report.id}
                     className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400"
                   >
@@ -246,7 +246,7 @@ export default function InternReportsPage() {
         )}
       </div>
 
-      {totalPages > 1 && (
+      {!searchQuery.trim() && totalPages > 1 && (
         <div className="mt-8 flex items-center justify-center gap-3">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}

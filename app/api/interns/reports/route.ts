@@ -18,6 +18,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const { safePage, safeLimit, from, to } = parsePage(searchParams);
+    const search = searchParams.get("search") || searchParams.get("q");
+    const safeSearch = search ? toSafeSearch(search).toLowerCase() : "";
 
     let query = supabaseAdmin
       .from("intern_reports")
@@ -50,20 +52,16 @@ export async function GET(request: NextRequest) {
     if (dateFrom) query = query.gte("created_at", `${dateFrom}T00:00:00`);
     if (dateTo) query = query.lte("created_at", `${dateTo}T23:59:59`);
 
-    const search = searchParams.get("search") || searchParams.get("q");
-    if (search) {
-      const safe = toSafeSearch(search);
-      query = query.or(`title.ilike.%${safe}%,details.ilike.%${safe}%`);
+    if (!safeSearch) {
+      query = query.range(from, to);
     }
-
-    query = query.range(from, to);
 
     const { data, count, error } = await query;
 
     if (error) throw error;
 
     // Enrich with author names
-    const response = await Promise.all(
+    const enrichedReports = await Promise.all(
       (data || []).map(async (report) => {
         const { data: author } = await supabaseAdmin
           .from("internship_applications")
@@ -78,8 +76,35 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    if (safeSearch) {
+      const matches = enrichedReports.filter((report) => {
+        const searchable = [
+          report.title,
+          report.details,
+          report.category,
+          report.created_by_name,
+          report.created_by_email,
+          ...(report.assigned_to_emails || []),
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        return searchable.includes(safeSearch);
+      });
+
+      return NextResponse.json({
+        data: matches,
+        pagination: {
+          page: 1,
+          limit: matches.length || 1,
+          total: matches.length,
+          pages: 1,
+        },
+      });
+    }
+
     return NextResponse.json({
-      data: response,
+      data: enrichedReports,
       pagination: {
         page: safePage,
         limit: safeLimit,
