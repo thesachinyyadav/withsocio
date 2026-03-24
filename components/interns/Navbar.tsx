@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 interface NavbarProps {
   user?: {
@@ -46,10 +47,15 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/interns" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">S</span>
-            </div>
-            <span className="text-slate-900 font-bold">SOCIO Workspace</span>
+            <Image
+              src="/socio.svg"
+              alt="SOCIO"
+              width={28}
+              height={28}
+              className="h-7 w-7"
+              priority
+            />
+            <span className="text-slate-900 font-bold">SOCIOSVG Workspace</span>
             {isAdmin && (
               <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
                 Admin
