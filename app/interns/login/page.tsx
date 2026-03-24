@@ -59,9 +59,7 @@ export default function InternsLoginPage() {
         {/* Login Card */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-8">
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Intern Login</h2>
-          <p className="text-sm text-slate-600 mb-6">
-            Use your selected/hired internship email. Admin can sign in from the same box.
-          </p>
+          <div className="mb-6" />
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
@@ -73,13 +71,13 @@ export default function InternsLoginPage() {
             {/* Identifier */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Email
+                Username
               </label>
               <input
                 type="text"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="intern@email.com"
+                placeholder="Enter username"
                 required
                 className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition"
               />

@@ -59,6 +59,15 @@ export default function InternsPage() {
     }
   };
 
+  const displayValue = (value: unknown) => {
+    if (value === null || value === undefined) return "-";
+    const normalized = String(value).trim().toLowerCase();
+    if (!normalized || normalized === "none" || normalized === "null" || normalized === "undefined") {
+      return "-";
+    }
+    return String(value);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -116,11 +125,11 @@ export default function InternsPage() {
               <div className="space-y-3 mb-4 pb-4 border-b border-slate-200">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Role Interest:</span>
-                  <span className="text-slate-900">{intern.roleInterest}</span>
+                  <span className="text-slate-900">{displayValue(intern.roleInterest)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Hours/Week:</span>
-                  <span className="text-slate-900">{intern.hoursPerWeek}</span>
+                  <span className="text-slate-900">{displayValue(intern.hoursPerWeek)}</span>
                 </div>
               </div>
 

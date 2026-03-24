@@ -3,12 +3,19 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 
-interface WorkspaceStats {
-  totalPoints: number;
-  currentStreak: number;
-  maxStreak: number;
-  logsSubmitted: number;
-  reportsSubmitted: number;
+interface WorkLogItem {
+  id: string;
+  title: string;
+  log_date: string;
+  progress_status: string;
+}
+
+interface ReportItem {
+  id: string;
+  title: string;
+  status?: string;
+  work_status?: string;
+  created_at: string;
 }
 
 function Spinner() {
@@ -16,22 +23,50 @@ function Spinner() {
 }
 
 export default function InternWorkspace() {
-  const [stats, setStats] = useState<WorkspaceStats | null>(null);
+  const [stats, setStats] = useState({
+    logsSubmitted: 0,
+    reportsSubmitted: 0,
+  });
+  const [recentLogs, setRecentLogs] = useState<WorkLogItem[]>([]);
+  const [recentReports, setRecentReports] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(true);
   const user = typeof window !== "undefined" ? localStorage.getItem("interns_user") : null;
   const userData = user ? JSON.parse(user) : null;
 
   useEffect(() => {
-    setTimeout(() => {
-      setStats({
-        totalPoints: 120,
-        currentStreak: 5,
-        maxStreak: 12,
-        logsSubmitted: 15,
-        reportsSubmitted: 3,
-      });
-      setLoading(false);
-    }, 400);
+    const fetchWorkspaceData = async () => {
+      try {
+        const token = localStorage.getItem("interns_token") || "";
+
+        const [logsRes, reportsRes] = await Promise.all([
+          fetch("/api/interns/work-logs?page=1&limit=5", {
+            headers: { "x-interns-token": token },
+          }),
+          fetch("/api/interns/reports?page=1&limit=5", {
+            headers: { "x-interns-token": token },
+          }),
+        ]);
+
+        const logsPayload = await logsRes.json().catch(() => ({}));
+        const reportsPayload = await reportsRes.json().catch(() => ({}));
+
+        const logsData = Array.isArray(logsPayload?.data) ? logsPayload.data : [];
+        const reportsData = Array.isArray(reportsPayload?.data) ? reportsPayload.data : [];
+
+        setRecentLogs(logsData);
+        setRecentReports(reportsData);
+        setStats({
+          logsSubmitted: logsPayload?.pagination?.total || 0,
+          reportsSubmitted: reportsPayload?.pagination?.total || 0,
+        });
+      } catch (error) {
+        console.error("Failed to load workspace data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWorkspaceData();
   }, []);
 
   if (loading) {
@@ -43,10 +78,8 @@ export default function InternWorkspace() {
   }
 
   const quickStats = [
-    { label: "Points", value: stats?.totalPoints || 0 },
-    { label: "Streak", value: stats?.currentStreak || 0 },
-    { label: "Work Logs", value: stats?.logsSubmitted || 0 },
-    { label: "Reports", value: stats?.reportsSubmitted || 0 },
+    { label: "Work Logs", value: stats.logsSubmitted },
+    { label: "Reports", value: stats.reportsSubmitted },
   ];
 
   return (
@@ -56,7 +89,7 @@ export default function InternWorkspace() {
         <p className="text-slate-600">Continue your internship work and track progress.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         {quickStats.map((stat) => (
           <div key={stat.label} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
             <p className="text-sm text-slate-500 mb-1">{stat.label}</p>
@@ -94,17 +127,21 @@ export default function InternWorkspace() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Recent Work Logs</h2>
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
-                <div>
-                  <p className="text-slate-900 font-medium">Work Log #{i}</p>
-                  <p className="text-slate-500 text-xs">Today</p>
+          {recentLogs.length ? (
+            <div className="space-y-3">
+              {recentLogs.map((log) => (
+                <div key={log.id} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+                  <div>
+                    <p className="text-slate-900 font-medium">{log.title}</p>
+                    <p className="text-slate-500 text-xs">{log.log_date}</p>
+                  </div>
+                  <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">{log.progress_status}</span>
                 </div>
-                <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">Submitted</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">No work logs submitted yet.</p>
+          )}
           <Link href="/interns/workspace/work-logs" className="inline-flex mt-4 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
             View All
           </Link>
@@ -112,21 +149,21 @@ export default function InternWorkspace() {
 
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Report Status</h2>
-          <div className="space-y-3">
-            {[
-              { name: "Bug in form", status: "open" },
-              { name: "Feature request", status: "in_progress" },
-              { name: "UI improvement", status: "resolved" },
-            ].map((report, i) => (
-              <div key={i} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
-                <div>
-                  <p className="text-slate-900 font-medium">{report.name}</p>
-                  <p className="text-slate-500 text-xs">Submitted recently</p>
+          {recentReports.length ? (
+            <div className="space-y-3">
+              {recentReports.map((report) => (
+                <div key={report.id} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+                  <div>
+                    <p className="text-slate-900 font-medium">{report.title}</p>
+                    <p className="text-slate-500 text-xs">{new Date(report.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <span className="px-2 py-1 rounded text-xs bg-blue-50 text-blue-700">{report.status || report.work_status || "open"}</span>
                 </div>
-                <span className="px-2 py-1 rounded text-xs bg-blue-50 text-blue-700">{report.status}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">No reports submitted yet.</p>
+          )}
           <Link href="/interns/workspace/reports" className="inline-flex mt-4 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
             View All
           </Link>
