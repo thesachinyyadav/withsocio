@@ -23,6 +23,126 @@ const escapeHtml = (value: string) =>
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
+const generateHtmlEmail = (textBody: string, senderAddress: string, appUrl: string): string => {
+  const escapedBody = escapeHtml(textBody)
+    .split("\n")
+    .map((line) => (line.trim() ? `<p>${line}</p>` : "<br />"))
+    .join("");
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOCIO Mail</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f8faff;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #154CB3 0%, #0f3d8f 100%);
+            padding: 32px 24px;
+            text-align: center;
+            color: white;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+        }
+        .header p {
+            margin: 8px 0 0 0;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 32px 24px;
+        }
+        .content p {
+            margin: 0 0 16px 0;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #444;
+        }
+        .content p:last-of-type {
+            margin-bottom: 0;
+        }
+        .footer {
+            background-color: #f8faff;
+            padding: 24px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .footer-links {
+            margin-bottom: 16px;
+        }
+        .footer-links a {
+            color: #154CB3;
+            text-decoration: none;
+            margin: 0 8px;
+            display: inline-block;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        .footer-text {
+            font-size: 11px;
+            color: #999;
+            margin-top: 12px;
+        }
+        .divider {
+            height: 1px;
+            background-color: #e5e7eb;
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SOCIO</h1>
+            <p>Professional Correspondence</p>
+        </div>
+        
+        <div class="content">
+            ${escapedBody}
+        </div>
+        
+        <div class="footer">
+            <div class="footer-links">
+                <a href="${escapeHtml(appUrl)}">Open Mailbox</a>
+                <span>|</span>
+                <a href="mailto:${escapeHtml(senderAddress)}?subject=UNSUBSCRIBE">Unsubscribe</a>
+            </div>
+            <div class="divider"></div>
+            <div class="footer-text">
+                <p style="margin: 0; color: #999;">© 2026 SOCIO. All rights reserved.</p>
+                <p style="margin: 8px 0 0 0; color: #bbb;">This email was sent from ${escapeHtml(senderAddress)}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+  `.trim();
+};
+
 const getMailboxUrl = (request: Request) => {
   const configuredUrl = (process.env.MAILBOX_APP_URL || "").trim();
   if (configuredUrl) return configuredUrl;
@@ -126,11 +246,15 @@ export async function POST(request: Request) {
   const senderAddress = `${senderPrefix}@withsocio.com`;
 
   try {
+    const appUrl = getMailboxUrl(request);
+    const htmlBody = generateHtmlEmail(text || html || "", senderAddress, appUrl);
+
     const payload: Record<string, unknown> = {
-      from: `SOCIO Mail <${senderAddress}>`,
+      from: `SOCIO <${senderAddress}>`,
       to,
       subject,
       replyTo: senderAddress,
+      html: htmlBody,
       headers: {
         "List-Unsubscribe": `<mailto:${senderAddress}?subject=UNSUBSCRIBE>`,
       },
@@ -138,8 +262,6 @@ export async function POST(request: Request) {
 
     if (cc.length) payload.cc = Array.from(new Set(cc));
     if (bcc.length) payload.bcc = Array.from(new Set(bcc));
-    if (text) payload.text = text;
-    if (html) payload.html = html;
 
     const result = await resend.emails.send(payload as any);
 
@@ -150,7 +272,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const appUrl = getMailboxUrl(request);
     const textSummary = text || html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
     const preview = textSummary ? `${textSummary.slice(0, 120)}${textSummary.length > 120 ? "…" : ""}` : "(no preview)";
 
