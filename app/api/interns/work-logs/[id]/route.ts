@@ -57,7 +57,7 @@ export async function PATCH(
   }
 
   await createAuditLog({
-    actor: "socio2026",
+    actorEmail: auth.identifier,
     action: "update_work_log_status",
     targetType: "work_log",
     targetId: id,
