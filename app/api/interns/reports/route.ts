@@ -9,7 +9,7 @@ import {
   REPORT_CATEGORIES,
   REPORT_PRIORITIES,
   REPORT_STATUSES,
-} from "../../_utils";
+} from "../_utils";
 
 export async function GET(request: NextRequest) {
   const auth = await authenticateRequest(request);

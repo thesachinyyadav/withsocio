@@ -5,7 +5,7 @@ import {
   createAuditLog,
   sendEmail,
   REPORT_STATUSES,
-} from "../../../_utils";
+} from "../../_utils";
 
 /**
  * PATCH /api/interns/reports/[id]

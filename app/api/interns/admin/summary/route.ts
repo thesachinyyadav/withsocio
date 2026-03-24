@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authenticateRequest, supabaseAdmin } from "../../_utils";
+import { authenticateRequest, supabaseAdmin } from "../../../_utils";
 
 type ActivityRow = {
   id: string;

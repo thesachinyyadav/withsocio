@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin, normalizeIdentifier, isValidEmail, verifyAdminCredentials, hashPassword } from "../../_utils";
+import { supabaseAdmin, normalizeIdentifier, isValidEmail, verifyAdminCredentials, hashPassword } from "../../../_utils";
 
 /**
  * Admin Login Endpoint

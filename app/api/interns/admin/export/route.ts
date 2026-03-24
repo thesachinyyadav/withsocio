@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
-import { authenticateRequest, csvEscape, supabaseAdmin, toSafeSearch } from "../../_utils";
+import { authenticateRequest, csvEscape, supabaseAdmin, toSafeSearch } from "../../../_utils";
 
 type ExportKind = "work-logs" | "reports";
 
