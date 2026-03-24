@@ -4,7 +4,7 @@ import {
   createAuditLog,
   supabaseAdmin,
   WORK_LOG_STATUSES,
-} from "../_utils";
+} from "../../_utils";
 
 export async function PATCH(
   request: Request,
