@@ -49,7 +49,7 @@ export default function InternWorkLogsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">My Work Logs</h1>
@@ -62,24 +62,22 @@ export default function InternWorkLogsPage() {
         </Link>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {logs.length > 0 ? (
           logs.map((log) => (
-            <div key={log.id} className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">{log.title}</h3>
-                  <p className="text-slate-600 text-sm">{log.log_date}</p>
+            <div key={log.id} className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+              <div className="grid grid-cols-1 md:grid-cols-[1.5fr_0.8fr_0.8fr_auto] gap-3 items-center">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold text-slate-900 truncate">{log.title}</h3>
+                  <p className="text-slate-600 text-xs truncate">{log.description}</p>
                 </div>
-                <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
+                <p className="text-xs text-slate-600">{log.log_date}</p>
+                <p className="text-xs text-slate-600">{log.total_hours ? `${log.total_hours}h` : "--"}</p>
+                <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-[11px] font-semibold text-center">
                   {log.progress_status.replace("_", " ")}
                 </span>
               </div>
-              <p className="text-slate-700 mb-4 line-clamp-2">{log.description}</p>
-              {log.total_hours && (
-                <p className="text-slate-600 text-sm mb-2">{log.total_hours} hours</p>
-              )}
-              <p className="text-slate-500 text-sm">Log ID: {log.id.slice(0, 8)}</p>
+              <p className="mt-2 text-[11px] text-slate-500">Log ID: {log.id.slice(0, 8)}</p>
             </div>
           ))
         ) : (

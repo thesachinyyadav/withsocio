@@ -23,6 +23,10 @@ export async function GET(request: NextRequest) {
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false });
 
+    if (auth.role === "intern") {
+      query = query.eq("created_by_email", auth.identifier);
+    }
+
     // Filters
     const status = searchParams.get("status");
     if (status && WORK_LOG_STATUSES.includes(status as any)) {

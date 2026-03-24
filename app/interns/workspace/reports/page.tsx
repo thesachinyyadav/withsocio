@@ -19,6 +19,18 @@ export default function InternReportsPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [viewerEmail, setViewerEmail] = useState("");
+
+  useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem("interns_user");
+      const parsedUser = rawUser ? JSON.parse(rawUser) : null;
+      setViewerEmail((parsedUser?.email || "").toLowerCase());
+    } catch {
+      setViewerEmail("");
+    }
+  }, []);
 
   useEffect(() => {
     fetchReports();
@@ -42,6 +54,33 @@ export default function InternReportsPage() {
     }
   };
 
+  const handleClaim = async (reportId: string) => {
+    try {
+      setClaimingId(reportId);
+      const token = localStorage.getItem("interns_token");
+      const response = await fetch(`/api/interns/reports/${reportId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-interns-token": token || "",
+        },
+        body: JSON.stringify({ claimOwnership: true }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload?.error || "Could not claim report");
+      }
+
+      await fetchReports();
+    } catch (error) {
+      console.error("Claim failed:", error);
+      alert("Could not claim this report right now.");
+    } finally {
+      setClaimingId(null);
+    }
+  };
+
   const statusColors: Record<string, string> = {
     open: "bg-blue-50 text-blue-700",
     in_progress: "bg-slate-100 text-slate-700",
@@ -61,8 +100,8 @@ export default function InternReportsPage() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">My Reports</h1>
-          <p className="text-slate-600">Track your submitted reports</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Reports Board</h1>
+          <p className="text-slate-600">See all reports, current owner, and status</p>
         </div>
         <Link href="/interns/workspace/reports/new">
           <button className="px-6 py-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg transition">
@@ -88,9 +127,21 @@ export default function InternReportsPage() {
                 <p>Raised by: {report.created_by_name || report.created_by_email || "Unknown"}</p>
                 <p>Working on: {report.assigned_to_emails?.length ? report.assigned_to_emails.join(", ") : "Unassigned"}</p>
               </div>
-              <div className="flex items-center justify-between text-sm text-slate-600 mt-4">
+              <div className="flex items-center justify-between text-sm text-slate-600 mt-4 gap-3">
                 <span>Priority: {report.priority}</span>
-                <span className="text-slate-500">Report ID: {report.id.slice(0, 8)}</span>
+                <div className="flex items-center gap-2">
+                  {report.status !== "resolved" && report.status !== "closed" &&
+                    !report.assigned_to_emails?.some((email) => email.toLowerCase() === viewerEmail) && (
+                      <button
+                        onClick={() => handleClaim(report.id)}
+                        disabled={claimingId === report.id}
+                        className="px-3 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 disabled:bg-blue-400 text-white text-xs font-semibold transition"
+                      >
+                        {claimingId === report.id ? "Claiming..." : "I’m working on this"}
+                      </button>
+                    )}
+                  <span className="text-slate-500">Report ID: {report.id.slice(0, 8)}</span>
+                </div>
               </div>
             </div>
           ))

@@ -22,13 +22,13 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await authenticateRequest(request, "admin");
+  const auth = await authenticateRequest(request);
   if (!auth.ok) return auth.response;
 
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status, assignedToEmails, adminNotes } = body;
+    const { status, assignedToEmails, adminNotes, claimOwnership } = body;
 
     // Get current report
     const { data: currentReport, error: fetchError } = await supabaseAdmin
@@ -47,16 +47,33 @@ export async function PATCH(
     // Build update object
     const updates: any = {};
 
-    if (status && REPORT_STATUSES.includes(status)) {
-      updates.status = status;
+    if (auth.role === "intern") {
+      const wantsClaim = claimOwnership === true;
+      if (!wantsClaim) {
+        return NextResponse.json(
+          { error: "Interns can only claim report ownership" },
+          { status: 403 }
+        );
+      }
+
+      updates.assigned_to_emails = [auth.identifier];
+      if (currentReport.status === "open") {
+        updates.status = "in_progress";
+      }
     }
 
-    if (assignedToEmails) {
-      updates.assigned_to_emails = assignedToEmails;
-    }
+    if (auth.role === "admin") {
+      if (status && REPORT_STATUSES.includes(status)) {
+        updates.status = status;
+      }
 
-    if (adminNotes !== undefined) {
-      updates.admin_notes = adminNotes;
+      if (assignedToEmails) {
+        updates.assigned_to_emails = assignedToEmails;
+      }
+
+      if (adminNotes !== undefined) {
+        updates.admin_notes = adminNotes;
+      }
     }
 
     if (Object.keys(updates).length === 0) {
@@ -79,18 +96,22 @@ export async function PATCH(
     // Create audit log
     await createAuditLog({
       actorEmail: auth.identifier,
-      action: "REPORT_UPDATED",
+      action: auth.role === "admin" ? "REPORT_UPDATED" : "REPORT_CLAIMED",
       targetType: "report",
       targetId: id,
       oldStatus: currentReport.status,
-      newStatus: status || undefined,
-      assignedToEmail: assignedToEmails?.[0] || undefined,
-      notes: adminNotes,
+      newStatus: updates.status || undefined,
+      assignedToEmail:
+        updates.assigned_to_emails?.[0] || assignedToEmails?.[0] || undefined,
+      notes: auth.role === "admin" ? adminNotes : "Claimed by intern",
     });
 
     // Send notification emails to assignees
-    if (assignedToEmails && assignedToEmails.length > 0) {
-      for (const assigneeEmail of assignedToEmails) {
+    const assigneesForNotify: string[] =
+      updates.assigned_to_emails || assignedToEmails || [];
+
+    if (assigneesForNotify.length > 0 && auth.role === "admin") {
+      for (const assigneeEmail of assigneesForNotify) {
         await sendEmail({
           to: assigneeEmail,
           subject: `[INTERNS] Report Assigned: ${updatedReport.title}`,
@@ -109,14 +130,14 @@ export async function PATCH(
     }
 
     // Send update email to reporter
-    if (status && status !== currentReport.status) {
+    if (updates.status && updates.status !== currentReport.status) {
       await sendEmail({
         to: currentReport.created_by_email,
         subject: `[INTERNS] Your Report Status Updated`,
         html: `
           <h2>Report Status Update</h2>
           <p><strong>Report:</strong> ${updatedReport.title}</p>
-          <p><strong>Status:</strong> ${currentReport.status} → ${status}</p>
+          <p><strong>Status:</strong> ${currentReport.status} → ${updates.status}</p>
           ${adminNotes ? `<p><strong>Admin Notes:</strong> ${adminNotes}</p>` : ""}
         `,
         adminEmail: auth.identifier,
