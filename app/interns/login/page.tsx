@@ -49,7 +49,7 @@ export default function InternsLoginPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">GATED</h1>
-          <p className="text-emerald-400 text-sm">Internship Management</p>
+          <p className="text-emerald-400 text-sm">Interns Workspace Login</p>
         </div>
 
         {/* Login Card */}
