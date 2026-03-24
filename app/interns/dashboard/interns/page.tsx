@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 
 interface Intern {
   id: string;
@@ -22,7 +21,19 @@ export default function InternsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState<"points" | "streak" | "joined">( "points");
+  const [sortBy, setSortBy] = useState<"points" | "streak" | "joined">("points");
+  const [selectedInternEmails, setSelectedInternEmails] = useState<string[]>([]);
+  const [showMeetScheduler, setShowMeetScheduler] = useState(false);
+  const [meetLoading, setMeetLoading] = useState(false);
+  const [meetError, setMeetError] = useState("");
+  const [meetForm, setMeetForm] = useState({
+    title: "Intern Weekly Sync",
+    agenda: "Project updates and blockers",
+    date: new Date().toISOString().split("T")[0],
+    time: "18:00",
+    durationMinutes: "30",
+    founderInviteOption: "none",
+  });
 
   useEffect(() => {
     fetchInterns();
@@ -68,6 +79,83 @@ export default function InternsPage() {
     return String(value);
   };
 
+  const toggleInternSelection = (email: string) => {
+    setSelectedInternEmails((current) => {
+      const normalized = String(email || "").trim().toLowerCase();
+      if (!normalized) return current;
+      if (current.includes(normalized)) {
+        return current.filter((item) => item !== normalized);
+      }
+      return [...current, normalized];
+    });
+  };
+
+  const handleScheduleMeet = async () => {
+    setMeetError("");
+
+    if (selectedInternEmails.length === 0) {
+      setMeetError("Select at least one intern to schedule a meeting.");
+      return;
+    }
+
+    if (!meetForm.title.trim()) {
+      setMeetError("Meeting title is required.");
+      return;
+    }
+
+    const startDateTime = new Date(`${meetForm.date}T${meetForm.time}:00`);
+    if (Number.isNaN(startDateTime.getTime())) {
+      setMeetError("Please provide a valid date and time.");
+      return;
+    }
+
+    try {
+      setMeetLoading(true);
+      const token = localStorage.getItem("interns_token") || "";
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata";
+
+      const response = await fetch("/api/interns/admin/schedule-meet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-interns-token": token,
+        },
+        body: JSON.stringify({
+          recipientEmails: selectedInternEmails,
+          title: meetForm.title,
+          agenda: meetForm.agenda,
+          meetingDate: meetForm.date,
+          meetingTime: meetForm.time,
+          startDateTimeIso: startDateTime.toISOString(),
+          timezone,
+          durationMinutes: Number(meetForm.durationMinutes),
+          founderInviteOption: meetForm.founderInviteOption,
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setMeetError(payload?.error || "Failed to schedule GMeet.");
+        return;
+      }
+
+      const link = payload?.data?.calendarLink;
+      if (link) {
+        window.open(link, "_blank", "noopener,noreferrer");
+      }
+
+      alert("GMeet invite prepared and invitation emails sent.");
+      setShowMeetScheduler(false);
+      setSelectedInternEmails([]);
+    } catch (err) {
+      console.error(err);
+      setMeetError("Could not schedule the meeting right now.");
+    } finally {
+      setMeetLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -109,6 +197,121 @@ export default function InternsPage() {
         ))}
       </div>
 
+      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="text-sm text-slate-700">
+            Selected interns: <span className="font-semibold">{selectedInternEmails.length}</span>
+          </div>
+          <button
+            onClick={() => {
+              setMeetError("");
+              setShowMeetScheduler((prev) => !prev);
+            }}
+            className="rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-900"
+          >
+            {showMeetScheduler ? "Close Scheduler" : "Schedule GMeet"}
+          </button>
+        </div>
+
+        {showMeetScheduler && (
+          <div className="mt-4 space-y-4 border-t border-slate-200 pt-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">Meeting Title</label>
+                <input
+                  type="text"
+                  value={meetForm.title}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setMeetForm((prev) => ({ ...prev, title: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">Agenda</label>
+                <input
+                  type="text"
+                  value={meetForm.agenda}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setMeetForm((prev) => ({ ...prev, agenda: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">Date</label>
+                <input
+                  type="date"
+                  value={meetForm.date}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setMeetForm((prev) => ({ ...prev, date: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">Time</label>
+                <input
+                  type="time"
+                  value={meetForm.time}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setMeetForm((prev) => ({ ...prev, time: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">Duration (mins)</label>
+                <input
+                  type="number"
+                  min={15}
+                  max={240}
+                  value={meetForm.durationMinutes}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setMeetForm((prev) => ({ ...prev, durationMinutes: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-700">Also invite founders?</label>
+              <select
+                value={meetForm.founderInviteOption}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setMeetForm((prev) => ({ ...prev, founderInviteOption: e.target.value }))
+                }
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800 md:w-[420px]"
+              >
+                <option value="none">No</option>
+                <option value="both_founders">Yes - add both founders (surya.s + sachin.yadav)</option>
+                <option value="socio_mail">Yes - add thesocioblr@gmail.com</option>
+              </select>
+            </div>
+
+            {meetError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {meetError}
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <button
+                onClick={handleScheduleMeet}
+                disabled={meetLoading}
+                className="rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 disabled:bg-blue-500"
+              >
+                {meetLoading ? "Scheduling..." : "Schedule & Send Invites"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Interns Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {interns.length > 0 ? (
@@ -117,9 +320,20 @@ export default function InternsPage() {
               key={intern.id}
               className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm"
             >
-              <div className="mb-4">
-                <h3 className="text-lg font-bold text-slate-900">{intern.fullName}</h3>
-                <p className="text-slate-600 text-sm">{intern.email}</p>
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">{intern.fullName}</h3>
+                  <p className="text-slate-600 text-sm">{intern.email}</p>
+                </div>
+                <label className="inline-flex items-center gap-2 text-xs text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={selectedInternEmails.includes(String(intern.email || "").toLowerCase())}
+                    onChange={() => toggleInternSelection(intern.email)}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-800 focus:ring-blue-800"
+                  />
+                  Select
+                </label>
               </div>
 
               <div className="space-y-3 mb-4 pb-4 border-b border-slate-200">
