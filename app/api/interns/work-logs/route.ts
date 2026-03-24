@@ -1,160 +1,201 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
+  supabaseAdmin,
   authenticateRequest,
   parsePage,
-  resolveIdentifier,
-  supabaseAdmin,
   toSafeSearch,
+  createAuditLog,
+  awardPoints,
+  updateStreak,
   WORK_LOG_STATUSES,
-} from "../_utils";
+} from "../../_utils";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const auth = await authenticateRequest(request);
-  if (!auth.ok) {
-    return auth.response;
-  }
+  if (!auth.ok) return auth.response;
 
-  const { searchParams } = new URL(request.url);
-  const { safePage, safeLimit, from, to } = parsePage(searchParams);
-  const status = (searchParams.get("status") || "").trim();
-  const email = (searchParams.get("email") || "").trim().toLowerCase();
-  const queryText = toSafeSearch(searchParams.get("q") || "");
-  const fromDate = (searchParams.get("from") || "").trim();
-  const toDate = (searchParams.get("to") || "").trim();
+  try {
+    const { searchParams } = new URL(request.url);
+    const { safePage, safeLimit, from, to } = parsePage(searchParams);
 
-  let query = supabaseAdmin.from("intern_work_logs").select("*", { count: "exact" });
+    let query = supabaseAdmin
+      .from("intern_work_logs")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false });
 
-  if (status) {
-    query = query.eq("progress_status", status);
-  }
+    // Filters
+    const status = searchParams.get("status");
+    if (status && WORK_LOG_STATUSES.includes(status as any)) {
+      query = query.eq("progress_status", status);
+    }
 
-  if (email) {
-    query = query.ilike("created_by_email", email);
-  }
+    const email = searchParams.get("email");
+    if (email) {
+      query = query.ilike("created_by_email", email);
+    }
 
-  if (fromDate) {
-    query = query.gte("log_date", fromDate);
-  }
+    const dateFrom = searchParams.get("dateFrom");
+    const dateTo = searchParams.get("dateTo");
+    if (dateFrom) query = query.gte("log_date", dateFrom);
+    if (dateTo) query = query.lte("log_date", dateTo);
 
-  if (toDate) {
-    query = query.lte("log_date", toDate);
-  }
+    const search = searchParams.get("search");
+    if (search) {
+      const safe = toSafeSearch(search);
+      query = query.or(
+        `title.ilike.%${safe}%,description.ilike.%${safe}%`
+      );
+    }
 
-  if (queryText) {
-    query = query.or(
-      `title.ilike.%${queryText}%,description.ilike.%${queryText}%,collaborated_with.ilike.%${queryText}%,created_by_email.ilike.%${queryText}%`
+    query = query.range(from, to);
+
+    const { data, count, error } = await query;
+
+    if (error) throw error;
+
+    // Enrich with intern names and developer list
+    const response = await Promise.all(
+      (data || []).map(async (log) => {
+        const { data: intern } = await supabaseAdmin
+          .from("internship_applications")
+          .select("full_name")
+          .eq("email", log.created_by_email)
+          .maybeSingle();
+
+        return {
+          ...log,
+          created_by_name: intern?.full_name || "Unknown",
+        };
+      })
     );
+
+    return NextResponse.json({
+      data: response,
+      pagination: {
+        page: safePage,
+        limit: safeLimit,
+        total: count || 0,
+        pages: Math.ceil((count || 0) / safeLimit),
+      },
+    });
+  } catch (error) {
+    console.error("Fetch error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  const { data, error, count } = await query
-    .order("log_date", { ascending: false })
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  const rows = data || [];
-  const emails = Array.from(new Set(rows.map((row) => row.created_by_email).filter(Boolean)));
-
-  let nameMap: Record<string, string> = {};
-  if (emails.length > 0) {
-    const { data: interns } = await supabaseAdmin
-      .from("internship_applications")
-      .select("email, full_name")
-      .in("email", emails);
-
-    nameMap = (interns || []).reduce<Record<string, string>>((acc, item) => {
-      acc[(item.email || "").toLowerCase()] = item.full_name || item.email;
-      return acc;
-    }, {});
-  }
-
-  return NextResponse.json({
-    data: rows.map((row) => ({
-      ...row,
-      created_by_name: nameMap[(row.created_by_email || "").toLowerCase()] || row.created_by_email,
-    })),
-    filters: {
-      statusOptions: WORK_LOG_STATUSES,
-    },
-    pagination: {
-      page: safePage,
-      limit: safeLimit,
-      total: count || 0,
-    },
-  });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const auth = await authenticateRequest(request);
-  if (!auth.ok) {
-    return auth.response;
-  }
+  if (!auth.ok) return auth.response;
 
-  const body = await request.json().catch(() => ({}));
+  try {
+    if (auth.role === "admin") {
+      return NextResponse.json(
+        { error: "Admins cannot submit work logs" },
+        { status: 403 }
+      );
+    }
 
-  const logDate = String(body?.logDate || "").trim();
-  const title = String(body?.title || "").trim();
-  const description = String(body?.description || "").trim();
-  const collaboratedWith = String(body?.collaboratedWith || "").trim();
-  const progressStatus = String(body?.progressStatus || "submitted").trim();
-  const createdByEmailInput = String(body?.createdByEmail || "").trim().toLowerCase();
-
-  if (!logDate || !title || !description) {
-    return NextResponse.json(
-      { error: "logDate, title, and description are required." },
-      { status: 400 }
-    );
-  }
-
-  if (title.length > 180) {
-    return NextResponse.json({ error: "Title must be 180 characters or less." }, { status: 400 });
-  }
-
-  if (description.length > 4000) {
-    return NextResponse.json(
-      { error: "Description must be 4000 characters or less." },
-      { status: 400 }
-    );
-  }
-
-  if (!WORK_LOG_STATUSES.includes(progressStatus as (typeof WORK_LOG_STATUSES)[number])) {
-    return NextResponse.json({ error: "Invalid progressStatus." }, { status: 400 });
-  }
-
-  const createdByEmail =
-    auth.role === "admin" ? createdByEmailInput : (auth.identifier || "").toLowerCase();
-
-  if (!createdByEmail) {
-    return NextResponse.json({ error: "createdByEmail is required." }, { status: 400 });
-  }
-
-  const creatorCheck = await resolveIdentifier(createdByEmail);
-  if (!creatorCheck.ok || creatorCheck.role !== "intern") {
-    return NextResponse.json(
-      { error: "createdByEmail must belong to a hired intern." },
-      { status: 400 }
-    );
-  }
-
-  const { data, error } = await supabaseAdmin
-    .from("intern_work_logs")
-    .insert({
-      log_date: logDate,
+    const body = await request.json();
+    const {
+      logDate,
       title,
       description,
-      collaborated_with: collaboratedWith || null,
-      progress_status: progressStatus,
-      created_by_email: createdByEmail,
-    })
-    .select("*")
-    .single();
+      collaboratorEmails,
+      attachments,
+      workStartTime,
+      workEndTime,
+    } = body;
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // Validation
+    if (!logDate || !title || !description) {
+      return NextResponse.json(
+        { error: "logDate, title, and description are required" },
+        { status: 400 }
+      );
+    }
+
+    if (title.length > 180) {
+      return NextResponse.json(
+        { error: "Title must be ≤ 180 characters" },
+        { status: 400 }
+      );
+    }
+
+    if (description.length > 4000) {
+      return NextResponse.json(
+        { error: "Description must be ≤ 4000 characters" },
+        { status: 400 }
+      );
+    }
+
+    // Verify creator is a hired intern
+    const { data: creator } = await supabaseAdmin
+      .from("internship_applications")
+      .select("id, full_name, email")
+      .eq("email", auth.identifier)
+      .eq("status", "hired")
+      .maybeSingle();
+
+    if (!creator) {
+      return NextResponse.json(
+        { error: "Only hired interns can submit work logs" },
+        { status: 403 }
+      );
+    }
+
+    // Calculate hours
+    let totalHours = null;
+    if (workStartTime && workEndTime) {
+      const start = new Date(workStartTime).getTime();
+      const end = new Date(workEndTime).getTime();
+      totalHours = Math.round((end - start) / 3600000 * 100) / 100;
+    }
+
+    // Create work log
+    const { data: workLog, error } = await supabaseAdmin
+      .from("intern_work_logs")
+      .insert({
+        log_date: logDate,
+        title,
+        description,
+        collaborator_emails: collaboratorEmails || [],
+        progress_status: "submitted",
+        created_by_email: auth.identifier,
+        attachments: attachments || [],
+        work_start_time: workStartTime || null,
+        work_end_time: workEndTime || null,
+        total_hours: totalHours,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Award points
+    await awardPoints(auth.identifier, 10, "work_log_submitted");
+    await updateStreak(auth.identifier);
+
+    // Audit log
+    await createAuditLog({
+      actorEmail: auth.identifier,
+      action: "WORK_LOG_CREATED",
+      targetType: "work_log",
+      targetId: workLog.id,
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          ...workLog,
+          created_by_name: creator.full_name,
+        },
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Create error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  return NextResponse.json({ success: true, data }, { status: 201 });
 }

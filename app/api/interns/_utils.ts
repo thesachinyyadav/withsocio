@@ -1,14 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import crypto from "crypto";
 
 export const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export const ADMIN_IDENTIFIER = "socio2026";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 
+// ==================== CONSTANTS ====================
 export const WORK_LOG_STATUSES = [
   "submitted",
   "in_progress",
@@ -17,10 +19,11 @@ export const WORK_LOG_STATUSES = [
   "reviewed",
 ] as const;
 
-export const REPORT_CATEGORIES = ["feature", "bug", "issue", "problem"] as const;
+export const REPORT_CATEGORIES = ["bug", "problem"] as const;
 export const REPORT_STATUSES = ["open", "in_progress", "resolved", "closed"] as const;
 export const REPORT_PRIORITIES = ["low", "medium", "high", "critical"] as const;
 
+// ==================== TYPES ====================
 export type InternsRole = "admin" | "intern";
 
 interface HiredInternRecord {
@@ -30,11 +33,20 @@ interface HiredInternRecord {
   status: "hired";
 }
 
+interface AdminUserRecord {
+  id: string;
+  email: string;
+  full_name: string;
+  role: "super_admin" | "admin";
+  is_active: boolean;
+}
+
 type ResolveIdentifierResult =
   | {
       ok: true;
       role: "admin";
       identifier: string;
+      adminUser: AdminUserRecord;
     }
   | {
       ok: true;
@@ -77,6 +89,52 @@ export function csvEscape(value: unknown): string {
   return `"${str}"`;
 }
 
+// ==================== ADMIN AUTHENTICATION ====================
+
+/**
+ * Verify admin credentials
+ */
+export async function verifyAdminCredentials(email: string, password: string): Promise<AdminUserRecord | null> {
+  const normalized = normalizeIdentifier(email);
+
+  if (!isValidEmail(normalized)) {
+    return null;
+  }
+
+  const { data: adminUser, error } = await supabaseAdmin
+    .from("intern_admin_users")
+    .select("*")
+    .ilike("email", normalized)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (error || !adminUser) {
+    return null;
+  }
+
+  // Verify password (simple hash comparison)
+  // In production, use bcrypt or similar
+  const passwordHash = simpleHashPassword(password);
+  if (adminUser.password_hash !== passwordHash) {
+    return null;
+  }
+
+  return adminUser;
+}
+
+/**
+ * Simple password hashing (NOTE: Use bcrypt in production!)
+ */
+function simpleHashPassword(password: string): string {
+  return crypto.createHash("sha256").update(password).digest("hex");
+}
+
+export function hashPassword(password: string): string {
+  return simpleHashPassword(password);
+}
+
+// ==================== IDENTIFIER RESOLUTION ====================
+
 export async function resolveIdentifier(identifier: string): Promise<ResolveIdentifierResult> {
   const normalized = normalizeIdentifier(identifier);
 
@@ -84,19 +142,29 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
     return { ok: false, message: "Missing identifier", status: 400 };
   }
 
-  if (normalized === ADMIN_IDENTIFIER) {
+  // Try to find admin user first
+  const { data: adminUser } = await supabaseAdmin
+    .from("intern_admin_users")
+    .select("*")
+    .ilike("email", normalized)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (adminUser) {
     return {
       ok: true,
       role: "admin",
-      identifier: ADMIN_IDENTIFIER,
+      identifier: adminUser.email,
+      adminUser,
     };
   }
 
+  // Fall back to hired intern check
   if (!isValidEmail(normalized)) {
-    return { ok: false, message: "Please enter a valid email or username.", status: 400 };
+    return { ok: false, message: "Please enter a valid email.", status: 400 };
   }
 
-  const { data, error } = await supabaseAdmin
+  const { data: intern, error } = await supabaseAdmin
     .from("internship_applications")
     .select("id, full_name, email, status")
     .ilike("email", normalized)
@@ -107,7 +175,7 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
     return { ok: false, message: error.message, status: 500 };
   }
 
-  if (!data) {
+  if (!intern) {
     return {
       ok: false,
       message: "Only hired interns can access this workspace.",
@@ -120,13 +188,15 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
     role: "intern",
     identifier: normalized,
     intern: {
-      id: data.id,
-      full_name: data.full_name,
-      email: normalizeIdentifier(data.email),
+      id: intern.id,
+      full_name: intern.full_name,
+      email: normalizeIdentifier(intern.email),
       status: "hired",
     },
   };
 }
+
+// ==================== REQUEST AUTHENTICATION ====================
 
 type AuthResult =
   | {
@@ -134,6 +204,7 @@ type AuthResult =
       role: InternsRole;
       identifier: string;
       intern?: HiredInternRecord;
+      adminUser?: AdminUserRecord;
     }
   | {
       ok: false;
@@ -172,7 +243,8 @@ export async function authenticateRequest(
     return {
       ok: true,
       role: "admin",
-      identifier: ADMIN_IDENTIFIER,
+      identifier: resolved.identifier,
+      adminUser: resolved.adminUser,
     };
   }
 
@@ -184,22 +256,179 @@ export async function authenticateRequest(
   };
 }
 
+// ==================== AUDIT LOGGING ====================
+
 export async function createAuditLog(input: {
-  actor: string;
+  actorEmail: string;
   action: string;
-  targetType: "work_log" | "report";
-  targetId: string;
+  targetType: "work_log" | "report" | "assignment" | "email";
+  targetId?: string | null;
   oldStatus?: string | null;
   newStatus?: string | null;
+  assignedToEmail?: string | null;
   notes?: string | null;
+  ipAddress?: string;
 }) {
   await supabaseAdmin.from("intern_admin_audit").insert({
-    actor: input.actor,
+    actor_email: input.actorEmail,
     action: input.action,
     target_type: input.targetType,
-    target_id: input.targetId,
+    target_id: input.targetId || null,
     old_status: input.oldStatus || null,
     new_status: input.newStatus || null,
+    assigned_to_email: input.assignedToEmail || null,
     notes: input.notes || null,
+    ip_address: input.ipAddress || null,
   });
+}
+
+// ==================== GAMIFICATION ====================
+
+/**
+ * Award points to an intern
+ */
+export async function awardPoints(internEmail: string, points: number, reason: string) {
+  const { data: gamification } = await supabaseAdmin
+    .from("intern_gamification")
+    .select("*")
+    .eq("intern_email", internEmail)
+    .maybeSingle();
+
+  if (!gamification) {
+    // Create new gamification record
+    await supabaseAdmin.from("intern_gamification").insert({
+      intern_email: internEmail,
+      total_points: points,
+      work_logs_submitted: reason.includes("work_log") ? 1 : 0,
+      reports_resolved: reason.includes("report") ? 1 : 0,
+      last_activity_date: new Date().toISOString().split("T")[0],
+    });
+  } else {
+    // Update existing record
+    const updates: any = {
+      total_points: gamification.total_points + points,
+      last_activity_date: new Date().toISOString().split("T")[0],
+    };
+
+    if (reason.includes("work_log")) {
+      updates.work_logs_submitted = gamification.work_logs_submitted + 1;
+    }
+    if (reason.includes("report")) {
+      updates.reports_resolved = gamification.reports_resolved + 1;
+    }
+
+    await supabaseAdmin
+      .from("intern_gamification")
+      .update(updates)
+      .eq("intern_email", internEmail);
+  }
+}
+
+/**
+ * Update intern streak
+ */
+export async function updateStreak(internEmail: string) {
+  const today = new Date().toISOString().split("T")[0];
+
+  const { data: gamification } = await supabaseAdmin
+    .from("intern_gamification")
+    .select("*")
+    .eq("intern_email", internEmail)
+    .maybeSingle();
+
+  if (!gamification) return;
+
+  const lastActivity = gamification.last_activity_date;
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+
+  let newStreak = gamification.current_streak;
+  if (lastActivity === yesterday) {
+    newStreak = gamification.current_streak + 1;
+  } else if (lastActivity !== today) {
+    newStreak = 1;
+  }
+
+  const maxStreak = Math.max(newStreak, gamification.max_streak);
+
+  await supabaseAdmin
+    .from("intern_gamification")
+    .update({
+      current_streak: newStreak,
+      max_streak: maxStreak,
+    })
+    .eq("intern_email", internEmail);
+}
+
+// ==================== EMAIL SENDING (RESEND) ====================
+
+export async function sendEmail(input: {
+  to: string;
+  subject: string;
+  html: string;
+  adminEmail: string;
+  templateId?: string;
+}) {
+  if (!RESEND_API_KEY) {
+    console.warn("RESEND_API_KEY not configured");
+    return { success: false, error: "Email service not configured" };
+  }
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: "interns@socio.tech",
+        to: input.to,
+        subject: input.subject,
+        html: input.html,
+      }),
+    });
+
+    const data = await response.json();
+
+    // Log email
+    await supabaseAdmin.from("intern_email_log").insert({
+      recipient_email: input.to,
+      subject: input.subject,
+      template_id: input.templateId || null,
+      sent_by_admin_email: input.adminEmail,
+      resend_message_id: data.id || null,
+      status: response.ok ? "sent" : "failed",
+    });
+
+    return { success: response.ok, messageId: data.id };
+  } catch (error) {
+    console.error("Failed to send email:", error);
+    return { success: false, error };
+  }
+}
+
+// ==================== FILE HANDLING ====================
+
+export async function uploadFileAttachment(
+  file: File,
+  targetType: "work_log" | "report"
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const bucket = targetType === "work_log" ? "work-log-attachments" : "report-attachments";
+    const fileName = `${Date.now()}-${file.name}`;
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(bucket)
+      .upload(fileName, file);
+
+    if (uploadError) {
+      return { success: false, error: uploadError.message };
+    }
+
+    const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(fileName);
+
+    return { success: true, url: data.publicUrl };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
 }

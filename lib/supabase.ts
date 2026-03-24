@@ -1,12 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 
-// TODO: Replace with your Supabase project credentials
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Types for the internship_applications table
+// ==================== INTERNSHIP APPLICATION TYPES ====================
 export interface InternshipApplication {
   id: string;
   full_name: string;
@@ -30,52 +29,129 @@ export interface InternshipApplication {
   updated_at: string;
 }
 
+// ==================== INTERNS WORKSPACE TYPES ====================
+
+export interface InternAdminUser {
+  id: string;
+  email: string;
+  full_name: string;
+  password_hash: string;
+  role: "super_admin" | "admin";
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Attachment {
+  id: string;
+  name: string;
+  url: string;
+  type: "file" | "drive_link" | "image";
+  size?: number;
+}
+
 export interface InternWorkLog {
   id: string;
   log_date: string;
   title: string;
   description: string;
-  collaborated_with: string | null;
+  collaborator_emails: string[];
   progress_status: "submitted" | "in_progress" | "completed" | "blocked" | "reviewed";
   created_by_email: string;
   admin_notes: string | null;
+  attachments: Attachment[];
+  work_start_time: string | null;
+  work_end_time: string | null;
+  total_hours: number | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface InternReport {
   id: string;
-  category: "feature" | "bug" | "issue" | "problem";
+  category: "bug" | "problem";
   title: string;
   details: string;
-  work_status: "open" | "in_progress" | "resolved" | "closed";
+  status: "open" | "in_progress" | "resolved" | "closed";
   priority: "low" | "medium" | "high" | "critical";
   created_by_email: string;
+  assigned_to_emails: string[];
   admin_notes: string | null;
+  attachments: Attachment[];
   created_at: string;
   updated_at: string;
 }
 
 export interface InternAdminAudit {
   id: string;
-  actor: string;
+  actor_email: string;
   action: string;
-  target_type: "work_log" | "report";
-  target_id: string;
+  target_type: "work_log" | "report" | "assignment" | "email";
+  target_id: string | null;
   old_status: string | null;
   new_status: string | null;
+  assigned_to_email: string | null;
   notes: string | null;
+  ip_address: string | null;
   created_at: string;
 }
 
-// Helper functions for CRUD operations
+export interface InternGamification {
+  id: string;
+  intern_email: string;
+  total_points: number;
+  work_logs_submitted: number;
+  reports_resolved: number;
+  current_streak: number;
+  max_streak: number;
+  last_activity_date: string | null;
+  badges: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InternWorkSession {
+  id: string;
+  intern_email: string;
+  session_date: string;
+  start_time: string;
+  end_time: string | null;
+  duration_minutes: number | null;
+  work_log_id: string | null;
+  created_at: string;
+}
+
+export interface InternEmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  html_template: string;
+  variables: string[];
+  created_by_admin_email: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InternEmailLog {
+  id: string;
+  recipient_email: string;
+  subject: string;
+  template_id: string | null;
+  sent_by_admin_email: string;
+  sent_at: string;
+  status: "sent" | "failed" | "bounced";
+  resend_message_id: string | null;
+  created_at: string;
+}
+
+// ==================== HELPER FUNCTIONS ====================
 
 export async function submitApplication(
   formData: Omit<InternshipApplication, "id" | "status" | "created_at" | "updated_at">,
   resumeFile: File
 ) {
   try {
-    // 1. Upload resume to Supabase Storage
     const fileExt = resumeFile.name.split(".").pop();
     const fileName = `${formData.campus_id}_${Date.now()}.${fileExt}`;
     const filePath = `resumes/${fileName}`;
@@ -88,12 +164,10 @@ export async function submitApplication(
       throw new Error("Failed to upload resume: " + uploadError.message);
     }
 
-    // 2. Get public URL for the resume
     const { data: urlData } = supabase.storage
       .from("internship-resumes")
       .getPublicUrl(filePath);
 
-    // 3. Insert application data
     const { data, error } = await supabase
       .from("internship_applications")
       .insert({
@@ -115,9 +189,6 @@ export async function submitApplication(
     return { success: false, error };
   }
 }
-
-export async function getAllApplications() {
-  const { data, error } = await supabase
     .from("internship_applications")
     .select("*")
     .order("created_at", { ascending: false });

@@ -1,178 +1,202 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
+  supabaseAdmin,
   authenticateRequest,
   parsePage,
+  toSafeSearch,
+  createAuditLog,
+  awardPoints,
   REPORT_CATEGORIES,
   REPORT_PRIORITIES,
   REPORT_STATUSES,
-  resolveIdentifier,
-  supabaseAdmin,
-  toSafeSearch,
-} from "../_utils";
+} from "../../_utils";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const auth = await authenticateRequest(request);
-  if (!auth.ok) {
-    return auth.response;
-  }
+  if (!auth.ok) return auth.response;
 
-  const { searchParams } = new URL(request.url);
-  const { safePage, safeLimit, from, to } = parsePage(searchParams);
-  const category = (searchParams.get("category") || "").trim();
-  const status = (searchParams.get("status") || "").trim();
-  const priority = (searchParams.get("priority") || "").trim();
-  const email = (searchParams.get("email") || "").trim().toLowerCase();
-  const queryText = toSafeSearch(searchParams.get("q") || "");
-  const fromDate = (searchParams.get("from") || "").trim();
-  const toDate = (searchParams.get("to") || "").trim();
+  try {
+    const { searchParams } = new URL(request.url);
+    const { safePage, safeLimit, from, to } = parsePage(searchParams);
 
-  let query = supabaseAdmin.from("intern_reports").select("*", { count: "exact" });
+    let query = supabaseAdmin
+      .from("intern_reports")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false });
 
-  if (category) {
-    query = query.eq("category", category);
-  }
+    // Filters
+    const category = searchParams.get("category");
+    if (category && REPORT_CATEGORIES.includes(category as any)) {
+      query = query.eq("category", category);
+    }
 
-  if (status) {
-    query = query.eq("work_status", status);
-  }
+    const status = searchParams.get("status");
+    if (status && REPORT_STATUSES.includes(status as any)) {
+      query = query.eq("status", status);
+    }
 
-  if (priority) {
-    query = query.eq("priority", priority);
-  }
+    const priority = searchParams.get("priority");
+    if (priority && REPORT_PRIORITIES.includes(priority as any)) {
+      query = query.eq("priority", priority);
+    }
 
-  if (email) {
-    query = query.ilike("created_by_email", email);
-  }
+    const email = searchParams.get("email");
+    if (email) {
+      query = query.ilike("created_by_email", email);
+    }
 
-  if (fromDate) {
-    query = query.gte("created_at", `${fromDate}T00:00:00`);
-  }
+    const dateFrom = searchParams.get("dateFrom");
+    const dateTo = searchParams.get("dateTo");
+    if (dateFrom) query = query.gte("created_at", `${dateFrom}T00:00:00`);
+    if (dateTo) query = query.lte("created_at", `${dateTo}T23:59:59`);
 
-  if (toDate) {
-    query = query.lte("created_at", `${toDate}T23:59:59`);
-  }
+    const search = searchParams.get("search");
+    if (search) {
+      const safe = toSafeSearch(search);
+      query = query.or(`title.ilike.%${safe}%,details.ilike.%${safe}%`);
+    }
 
-  if (queryText) {
-    query = query.or(
-      `title.ilike.%${queryText}%,details.ilike.%${queryText}%,created_by_email.ilike.%${queryText}%`
+    query = query.range(from, to);
+
+    const { data, count, error } = await query;
+
+    if (error) throw error;
+
+    // Enrich with author names
+    const response = await Promise.all(
+      (data || []).map(async (report) => {
+        const { data: author } = await supabaseAdmin
+          .from("internship_applications")
+          .select("full_name")
+          .eq("email", report.created_by_email)
+          .maybeSingle();
+
+        return {
+          ...report,
+          created_by_name: author?.full_name || "Unknown",
+        };
+      })
     );
+
+    return NextResponse.json({
+      data: response,
+      pagination: {
+        page: safePage,
+        limit: safeLimit,
+        total: count || 0,
+        pages: Math.ceil((count || 0) / safeLimit),
+      },
+    });
+  } catch (error) {
+    console.error("Fetch error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  const { data, error, count } = await query
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  const rows = data || [];
-  const emails = Array.from(new Set(rows.map((row) => row.created_by_email).filter(Boolean)));
-
-  let nameMap: Record<string, string> = {};
-  if (emails.length > 0) {
-    const { data: interns } = await supabaseAdmin
-      .from("internship_applications")
-      .select("email, full_name")
-      .in("email", emails);
-
-    nameMap = (interns || []).reduce<Record<string, string>>((acc, item) => {
-      acc[(item.email || "").toLowerCase()] = item.full_name || item.email;
-      return acc;
-    }, {});
-  }
-
-  return NextResponse.json({
-    data: rows.map((row) => ({
-      ...row,
-      created_by_name: nameMap[(row.created_by_email || "").toLowerCase()] || row.created_by_email,
-    })),
-    filters: {
-      categoryOptions: REPORT_CATEGORIES,
-      statusOptions: REPORT_STATUSES,
-      priorityOptions: REPORT_PRIORITIES,
-    },
-    pagination: {
-      page: safePage,
-      limit: safeLimit,
-      total: count || 0,
-    },
-  });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const auth = await authenticateRequest(request);
-  if (!auth.ok) {
-    return auth.response;
-  }
+  if (!auth.ok) return auth.response;
 
-  const body = await request.json().catch(() => ({}));
-
-  const category = String(body?.category || "").trim();
-  const title = String(body?.title || "").trim();
-  const details = String(body?.details || "").trim();
-  const workStatus = String(body?.workStatus || "open").trim();
-  const priority = String(body?.priority || "medium").trim();
-  const createdByEmailInput = String(body?.createdByEmail || "").trim().toLowerCase();
-
-  if (!category || !title || !details) {
+  if (auth.role === "admin") {
     return NextResponse.json(
-      { error: "category, title, and details are required." },
-      { status: 400 }
+      { error: "Admins cannot submit reports" },
+      { status: 403 }
     );
   }
 
-  if (!REPORT_CATEGORIES.includes(category as (typeof REPORT_CATEGORIES)[number])) {
-    return NextResponse.json({ error: "Invalid category." }, { status: 400 });
-  }
+  try {
+    const body = await request.json();
+    const { category, title, details, priority, attachments } = body;
 
-  if (!REPORT_STATUSES.includes(workStatus as (typeof REPORT_STATUSES)[number])) {
-    return NextResponse.json({ error: "Invalid workStatus." }, { status: 400 });
-  }
+    // Validation
+    if (!category || !title || !details) {
+      return NextResponse.json(
+        { error: "category, title, and details are required" },
+        { status: 400 }
+      );
+    }
 
-  if (!REPORT_PRIORITIES.includes(priority as (typeof REPORT_PRIORITIES)[number])) {
-    return NextResponse.json({ error: "Invalid priority." }, { status: 400 });
-  }
+    if (!REPORT_CATEGORIES.includes(category)) {
+      return NextResponse.json(
+        { error: "category must be 'bug' or 'problem'" },
+        { status: 400 }
+      );
+    }
 
-  if (title.length > 180) {
-    return NextResponse.json({ error: "Title must be 180 characters or less." }, { status: 400 });
-  }
+    if (title.length > 180) {
+      return NextResponse.json(
+        { error: "Title must be ≤ 180 characters" },
+        { status: 400 }
+      );
+    }
 
-  if (details.length > 5000) {
-    return NextResponse.json({ error: "Details must be 5000 characters or less." }, { status: 400 });
-  }
+    if (details.length > 5000) {
+      return NextResponse.json(
+        { error: "Details must be ≤ 5000 characters" },
+        { status: 400 }
+      );
+    }
 
-  const createdByEmail =
-    auth.role === "admin" ? createdByEmailInput : (auth.identifier || "").toLowerCase();
+    if (priority && !REPORT_PRIORITIES.includes(priority)) {
+      return NextResponse.json({ error: "Invalid priority" }, { status: 400 });
+    }
 
-  if (!createdByEmail) {
-    return NextResponse.json({ error: "createdByEmail is required." }, { status: 400 });
-  }
+    // Verify reporter is hired intern
+    const { data: reporter } = await supabaseAdmin
+      .from("internship_applications")
+      .select("id, full_name, email")
+      .eq("email", auth.identifier)
+      .eq("status", "hired")
+      .maybeSingle();
 
-  const creatorCheck = await resolveIdentifier(createdByEmail);
-  if (!creatorCheck.ok || creatorCheck.role !== "intern") {
+    if (!reporter) {
+      return NextResponse.json(
+        { error: "Only hired interns can submit reports" },
+        { status: 403 }
+      );
+    }
+
+    // Create report
+    const { data: report, error } = await supabaseAdmin
+      .from("intern_reports")
+      .insert({
+        category,
+        title,
+        details,
+        status: "open",
+        priority: priority || "medium",
+        created_by_email: auth.identifier,
+        attachments: attachments || [],
+        assigned_to_emails: [],
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Award points
+    await awardPoints(auth.identifier, 5, "report_submitted");
+
+    // Audit log
+    await createAuditLog({
+      actorEmail: auth.identifier,
+      action: "REPORT_CREATED",
+      targetType: "report",
+      targetId: report.id,
+    });
+
     return NextResponse.json(
-      { error: "createdByEmail must belong to a hired intern." },
-      { status: 400 }
+      {
+        success: true,
+        data: {
+          ...report,
+          created_by_name: reporter.full_name,
+        },
+      },
+      { status: 201 }
     );
+  } catch (error) {
+    console.error("Create error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  const { data, error } = await supabaseAdmin
-    .from("intern_reports")
-    .insert({
-      category,
-      title,
-      details,
-      work_status: workStatus,
-      priority,
-      created_by_email: createdByEmail,
-    })
-    .select("*")
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ success: true, data }, { status: 201 });
 }
