@@ -189,6 +189,9 @@ export async function submitApplication(
     return { success: false, error };
   }
 }
+
+export async function getAllApplications() {
+  const { data, error } = await supabase
     .from("internship_applications")
     .select("*")
     .order("created_at", { ascending: false });
