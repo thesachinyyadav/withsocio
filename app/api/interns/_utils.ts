@@ -312,7 +312,7 @@ export async function sendEmail(input: {
   html: string;
   adminEmail: string;
   templateId?: string;
-}) {
+}): Promise<{ success: boolean; messageId?: string; error?: unknown }> {
   if (!RESEND_API_KEY) {
     console.error("[EMAIL] RESEND_API_KEY is not configured");
     return { success: false, error: "Email service not configured" };
@@ -354,9 +354,15 @@ export async function sendEmail(input: {
 
     console.log(`[EMAIL] Audit log insert result:`, auditResult);
 
-    const result = { success: response.ok, messageId: data.id };
-    console.log(`[EMAIL] Final result for ${input.to}:`, result);
-    return result;
+    if (response.ok) {
+      const result = { success: true, messageId: data.id };
+      console.log(`[EMAIL] Final result for ${input.to}:`, result);
+      return result;
+    } else {
+      const result = { success: false, error: data };
+      console.log(`[EMAIL] Final result for ${input.to}:`, result);
+      return result;
+    }
   } catch (error) {
     console.error(`[EMAIL] Failed to send email to ${input.to}:`, error);
     return { success: false, error };
