@@ -31,28 +31,11 @@ const toPlainTextEmail = (text: string, html: string) => {
   return stripHtml(String(html || ""));
 };
 
-const getBaseOrigin = (url: string) => {
-  try {
-    return new URL(url).origin;
-  } catch {
-    return "https://withsocio.com";
-  }
-};
-
-const generateHtmlEmail = (
-  textBody: string,
-  senderAddress: string,
-  appUrl: string,
-  logoUrl: string
-): string => {
+const generateHtmlEmail = (textBody: string, senderAddress: string, appUrl: string): string => {
   const escapedBody = escapeHtml(textBody)
     .split("\n")
     .map((line) => (line.trim() ? `<p>${line}</p>` : "<br />"))
     .join("");
-  const plainPreview = textBody.replace(/\s+/g, " ").trim();
-  const preheader = escapeHtml(
-    plainPreview ? `${plainPreview.slice(0, 110)}${plainPreview.length > 110 ? "…" : ""}` : "SOCIO message"
-  );
 
   return `
 <!DOCTYPE html>
@@ -74,41 +57,20 @@ const generateHtmlEmail = (
             max-width: 600px;
             margin: 0 auto;
             background-color: #ffffff;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          border: 1px solid #e5e7eb;
+          border-radius: 10px;
+          overflow: hidden;
         }
         .header {
-            background: linear-gradient(135deg, #154CB3 0%, #0f3d8f 100%);
-            padding: 32px 24px;
+          background: #154CB3;
+          padding: 20px 24px;
             text-align: center;
             color: white;
         }
-        .logo-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 16px;
-        }
-        .logo {
-            width: 72px;
-            height: 72px;
-            background-color: rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            padding: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
         .header h1 {
             margin: 0;
-            font-size: 28px;
-            font-weight: 900;
-            letter-spacing: -0.5px;
+          font-size: 24px;
+          font-weight: 800;
         }
         .header p {
             margin: 8px 0 0 0;
@@ -160,14 +122,8 @@ const generateHtmlEmail = (
     </style>
 </head>
 <body>
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${preheader}</div>
     <div class="container">
         <div class="header">
-            <div class="logo-container">
-                <div class="logo">
-          <img src="${escapeHtml(logoUrl)}" alt="SOCIO Logo" width="56" height="56" />
-                </div>
-            </div>
             <h1>SOCIO</h1>
             <p>Professional Correspondence</p>
         </div>
@@ -180,6 +136,8 @@ const generateHtmlEmail = (
             <div class="footer-links">
                 <a href="${escapeHtml(appUrl)}">Open Mailbox</a>
                 <span>|</span>
+            <a href="https://live.withsocio.com">Visit SOCIO</a>
+            <span>|</span>
                 <a href="mailto:${escapeHtml(senderAddress)}?subject=UNSUBSCRIBE">Unsubscribe</a>
             </div>
             <div class="divider"></div>
@@ -299,8 +257,7 @@ export async function POST(request: Request) {
   try {
     const appUrl = getMailboxUrl(request);
     const textBody = toPlainTextEmail(text, html);
-    const logoUrl = `${getBaseOrigin(appUrl)}/socio.svg`;
-    const htmlBody = generateHtmlEmail(textBody, senderAddress, appUrl, logoUrl);
+    const htmlBody = generateHtmlEmail(textBody, senderAddress, appUrl);
 
     const payload: Record<string, unknown> = {
       from: `SOCIO <${senderAddress}>`,
