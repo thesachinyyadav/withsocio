@@ -34,6 +34,7 @@ export default function InternWorkspace() {
   const [recentReports, setRecentReports] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWelcomeSplash, setShowWelcomeSplash] = useState(false);
+  const [splashAnimateIn, setSplashAnimateIn] = useState(false);
   const [displayName, setDisplayName] = useState("Intern");
 
   useEffect(() => {
@@ -48,10 +49,12 @@ export default function InternWorkspace() {
       const hasSeenWelcome = sessionStorage.getItem("interns_welcome_seen") === "true";
       if (!hasSeenWelcome) {
         setShowWelcomeSplash(true);
+        setTimeout(() => setSplashAnimateIn(true), 30);
         const timeout = setTimeout(() => {
+          setSplashAnimateIn(false);
           setShowWelcomeSplash(false);
           sessionStorage.setItem("interns_welcome_seen", "true");
-        }, 1200);
+        }, 1500);
         return () => clearTimeout(timeout);
       }
     } catch {
@@ -106,10 +109,14 @@ export default function InternWorkspace() {
   if (showWelcomeSplash) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="w-full max-w-xl rounded-2xl border border-blue-200 bg-blue-100 p-10 text-center shadow-sm">
+        <div
+          className={`w-full max-w-xl rounded-2xl border border-blue-200 bg-blue-100 p-10 text-center shadow-sm transition-all duration-500 ease-out ${
+            splashAnimateIn ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-3 scale-95"
+          }`}
+        >
           <p className="text-sm font-medium uppercase tracking-wide text-blue-800">SOCIO</p>
           <h1 className="mt-3 text-3xl font-bold text-slate-900">Welcome {displayName}</h1>
-          <p className="mt-2 text-slate-600">Loading your workplace...</p>
+          <p className="mt-2 text-slate-600">Good to see you. Setting up your workspace...</p>
         </div>
       </div>
     );

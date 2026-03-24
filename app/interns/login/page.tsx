@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function InternsLoginPage() {
   const [identifier, setIdentifier] = useState("");
@@ -51,8 +52,17 @@ export default function InternsLoginPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">SOCIO</h1>
-          <p className="text-blue-700 text-sm">SOCIO Workspace Login</p>
+          <div className="flex justify-center mb-3">
+            <Image
+              src="/socio.svg"
+              alt="SOCIO logo"
+              width={64}
+              height={64}
+              className="h-14 w-14"
+              priority
+            />
+          </div>
+          <p className="text-blue-700 text-sm">Workspace Login</p>
         </div>
 
         {/* Login Card */}
@@ -75,7 +85,7 @@ export default function InternsLoginPage() {
               <input
                 type="text"
                 value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIdentifier(e.target.value)}
                 placeholder="Enter username"
                 required
                 className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition"
@@ -94,7 +104,6 @@ export default function InternsLoginPage() {
 
           {/* Footer */}
           <div className="mt-6 text-center text-sm text-slate-600">
-            <p>SOCIO Workspace</p>
             <a
               href="https://live.withsocio.com"
               target="_self"

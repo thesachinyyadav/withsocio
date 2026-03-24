@@ -29,16 +29,48 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
 
   const navItems = isAdmin
     ? [
-        { href: "/interns/dashboard", label: "Dashboard" },
-        { href: "/interns/dashboard/reports", label: "Reports" },
-        { href: "/interns/dashboard/work-logs", label: "Work Logs" },
-        { href: "/interns/dashboard/interns", label: "Interns" },
+        {
+          href: "/interns/dashboard",
+          label: "Dashboard",
+          description: "View overall internship analytics and admin insights",
+        },
+        {
+          href: "/interns/dashboard/reports",
+          label: "Reports",
+          description: "Review and manage all reported issues and requests",
+        },
+        {
+          href: "/interns/dashboard/work-logs",
+          label: "Work Logs",
+          description: "Monitor daily logs submitted by interns",
+        },
+        {
+          href: "/interns/dashboard/interns",
+          label: "Interns",
+          description: "See hired interns and their participation details",
+        },
       ]
     : [
-        { href: "/interns/workspace", label: "Workspace" },
-        { href: "/interns/workspace/work-logs", label: "Work Logs" },
-        { href: "/interns/workspace/reports", label: "Reports" },
-        { href: "/interns/workspace/leaderboard", label: "Profile" },
+        {
+          href: "/interns/workspace",
+          label: "Workspace",
+          description: "Your home for latest updates, logs, and reports",
+        },
+        {
+          href: "/interns/workspace/work-logs",
+          label: "Work Logs",
+          description: "Add and review your daily worklog entries",
+        },
+        {
+          href: "/interns/workspace/reports",
+          label: "Reports",
+          description: "Raise new issues and track report status",
+        },
+        {
+          href: "/interns/workspace/leaderboard",
+          label: "Profile",
+          description: "View your activity calendar and report progress",
+        },
       ];
 
   return (
@@ -71,6 +103,8 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
                 <Link
                   key={item.href}
                   href={item.href}
+                  title={item.description}
+                  aria-label={`${item.label}: ${item.description}`}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
                     isActive
                       ? "bg-blue-200 text-blue-800"
@@ -121,6 +155,8 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
                 <Link
                   key={item.href}
                   href={item.href}
+                  title={item.description}
+                  aria-label={`${item.label}: ${item.description}`}
                   className={`block px-4 py-2 rounded-lg text-sm transition ${
                     isActive
                       ? "bg-blue-200 text-blue-800"
