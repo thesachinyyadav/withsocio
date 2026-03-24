@@ -34,12 +34,12 @@ export async function GET(request: NextRequest) {
       query = query.ilike("created_by_email", email);
     }
 
-    const dateFrom = searchParams.get("dateFrom");
-    const dateTo = searchParams.get("dateTo");
+    const dateFrom = searchParams.get("dateFrom") || searchParams.get("from");
+    const dateTo = searchParams.get("dateTo") || searchParams.get("to");
     if (dateFrom) query = query.gte("log_date", dateFrom);
     if (dateTo) query = query.lte("log_date", dateTo);
 
-    const search = searchParams.get("search");
+    const search = searchParams.get("search") || searchParams.get("q");
     if (search) {
       const safe = toSafeSearch(search);
       query = query.or(

@@ -38,7 +38,7 @@ export default function InternsLayout({
 
   const verifyToken = async (token: string, role?: string | null) => {
     try {
-      const response = await fetch("/api/interns/admin/auth", {
+      const response = await fetch("/api/interns/auth", {
         headers: {
           "x-interns-token": token,
         },
@@ -46,20 +46,34 @@ export default function InternsLayout({
 
       if (response.ok) {
         const data = await response.json();
-        const userData = data.user || { role: role || "admin", email: "", fullName: "" };
+        const userData = {
+          role: (data.role || role || "intern") as "admin" | "intern",
+          email: data?.user?.email || "",
+          fullName: data?.user?.fullName || "SOCIO User",
+          id: data?.user?.id,
+        };
         setUser(userData);
+        localStorage.setItem("interns_user", JSON.stringify(userData));
       } else {
         localStorage.removeItem("interns_token");
         localStorage.removeItem("interns_role");
+        localStorage.removeItem("interns_user");
         if (!pathname.includes("/login")) {
           router.push("/interns/login");
         }
       }
     } catch (error) {
       console.error("Token verification error:", error);
-      localStorage.removeItem("interns_token");
-      localStorage.removeItem("interns_role");
-      if (!pathname.includes("/login")) {
+      const cachedUserRaw = localStorage.getItem("interns_user");
+      if (cachedUserRaw) {
+        try {
+          setUser(JSON.parse(cachedUserRaw));
+        } catch {
+          if (!pathname.includes("/login")) {
+            router.push("/interns/login");
+          }
+        }
+      } else if (!pathname.includes("/login")) {
         router.push("/interns/login");
       }
     } finally {
@@ -69,10 +83,10 @@ export default function InternsLayout({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+      <div className="flex items-center justify-center min-h-screen bg-slate-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-          <p className="text-slate-300">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading...</p>
         </div>
       </div>
     );
@@ -87,7 +101,7 @@ export default function InternsLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+    <div className="min-h-screen bg-slate-100">
       <Navbar user={user} />
       <main className="pt-20">
         {children}

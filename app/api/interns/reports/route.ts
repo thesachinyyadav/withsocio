@@ -45,12 +45,12 @@ export async function GET(request: NextRequest) {
       query = query.ilike("created_by_email", email);
     }
 
-    const dateFrom = searchParams.get("dateFrom");
-    const dateTo = searchParams.get("dateTo");
+    const dateFrom = searchParams.get("dateFrom") || searchParams.get("from");
+    const dateTo = searchParams.get("dateTo") || searchParams.get("to");
     if (dateFrom) query = query.gte("created_at", `${dateFrom}T00:00:00`);
     if (dateTo) query = query.lte("created_at", `${dateTo}T23:59:59`);
 
-    const search = searchParams.get("search");
+    const search = searchParams.get("search") || searchParams.get("q");
     if (search) {
       const safe = toSafeSearch(search);
       query = query.or(`title.ilike.%${safe}%,details.ilike.%${safe}%`);
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { category, title, details, priority, attachments } = body;
+    const { category, title, details, priority, attachments, workStatus } = body;
 
     // Validation
     if (!category || !title || !details) {
@@ -157,13 +157,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Create report
+    const initialStatus =
+      workStatus && REPORT_STATUSES.includes(workStatus) ? workStatus : "open";
+
     const { data: report, error } = await supabaseAdmin
       .from("intern_reports")
       .insert({
         category,
         title,
         details,
-        status: "open",
+        status: initialStatus,
         priority: priority || "medium",
         created_by_email: auth.identifier,
         attachments: attachments || [],

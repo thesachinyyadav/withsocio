@@ -1,5 +1,40 @@
-import { NextResponse } from "next/server";
-import { resolveIdentifier } from "../_utils";
+import { NextRequest, NextResponse } from "next/server";
+import { authenticateRequest, resolveIdentifier, supabaseAdmin } from "../_utils";
+
+export async function GET(request: NextRequest) {
+  const auth = await authenticateRequest(request);
+  if (!auth.ok) {
+    return auth.response;
+  }
+
+  if (auth.role === "admin") {
+    return NextResponse.json({
+      success: true,
+      role: "admin",
+      user: {
+        email: null,
+        fullName: "SOCIO Admin",
+      },
+    });
+  }
+
+  const { data: intern } = await supabaseAdmin
+    .from("internship_applications")
+    .select("id, full_name, email")
+    .ilike("email", auth.identifier)
+    .eq("status", "hired")
+    .maybeSingle();
+
+  return NextResponse.json({
+    success: true,
+    role: "intern",
+    user: {
+      id: intern?.id,
+      email: intern?.email || auth.identifier,
+      fullName: intern?.full_name || "SOCIO Intern",
+    },
+  });
+}
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
@@ -17,7 +52,7 @@ export async function POST(request: Request) {
       token: resolved.identifier,
       user: {
         email: null,
-        fullName: "Interns Admin",
+        fullName: "SOCIO Admin",
       },
     });
   }

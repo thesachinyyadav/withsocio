@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 
 interface Report {
   id: string;
@@ -47,23 +46,23 @@ export default function ReportsPage() {
   };
 
   const statusColors: Record<string, string> = {
-    open: "bg-blue-500/20 text-blue-400",
-    in_progress: "bg-yellow-500/20 text-yellow-400",
-    resolved: "bg-emerald-500/20 text-emerald-400",
-    closed: "bg-slate-500/20 text-slate-400",
+    open: "bg-blue-50 text-blue-700",
+    in_progress: "bg-slate-100 text-slate-700",
+    resolved: "bg-blue-100 text-blue-800",
+    closed: "bg-slate-100 text-slate-600",
   };
 
   const priorityColors: Record<string, string> = {
-    low: "text-slate-400",
-    medium: "text-yellow-400",
-    high: "text-orange-400",
-    critical: "text-rose-400",
+    low: "text-slate-500",
+    medium: "text-slate-700",
+    high: "text-blue-700",
+    critical: "text-blue-800",
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
       </div>
     );
   }
@@ -73,18 +72,13 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Reports</h1>
-          <p className="text-slate-400">Bug reports and feature requests</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Reports</h1>
+          <p className="text-slate-600">Bug reports and feature requests</p>
         </div>
-        <Link href="/interns/dashboard/reports/new">
-          <button className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition">
-            New Report
-          </button>
-        </Link>
       </div>
 
       {error && (
-        <div className="bg-rose-500/20 border border-rose-500/30 text-rose-300 px-6 py-4 rounded-lg mb-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg mb-6">
           {error}
         </div>
       )}
@@ -100,8 +94,8 @@ export default function ReportsPage() {
             }}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
               filterStatus === status
-                ? "bg-emerald-500 text-white"
-                : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                ? "bg-blue-700 text-white"
+                : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50"
             }`}
           >
             {status || "All"}
@@ -115,40 +109,31 @@ export default function ReportsPage() {
           reports.map((report) => (
             <div
               key={report.id}
-              className="bg-slate-800 border border-slate-700 rounded-xl p-6 hover:border-slate-600 transition"
+              className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm"
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-white">{report.title}</h3>
-                  <p className="text-slate-400 text-sm">{report.category}</p>
+                  <h3 className="text-lg font-bold text-slate-900">{report.title}</h3>
+                  <p className="text-slate-600 text-sm">{report.category}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[report.status] || "bg-slate-700 text-slate-300"}`}>
-                    {report.status.replace("_", " ")}
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[report.status || "open"] || "bg-slate-100 text-slate-700"}`}>
+                    {(report.status || "open").replace("_", " ")}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${priorityColors[report.priority]}`}>
                     {report.priority}
                   </span>
                 </div>
               </div>
-              <div className="flex justify-between items-center text-sm text-slate-400 mt-4">
+              <div className="flex justify-between items-center text-sm text-slate-600 mt-4">
                 <span>by {report.created_by_name}</span>
-                <Link href={`/interns/dashboard/reports/${report.id}`}>
-                  <button className="text-emerald-400 hover:text-emerald-300 transition">
-                    View Details →
-                  </button>
-                </Link>
+                <span className="text-slate-500">Report ID: {report.id.slice(0, 8)}</span>
               </div>
             </div>
           ))
         ) : (
-          <div className="text-center py-12 bg-slate-800/50 border border-slate-700 rounded-xl">
-            <p className="text-slate-400 mb-4">No reports yet</p>
-            <Link href="/interns/dashboard/reports/new">
-              <button className="text-emerald-400 hover:text-emerald-300 transition">
-                Submit your first report →
-              </button>
-            </Link>
+          <div className="text-center py-12 bg-white border border-slate-200 rounded-xl">
+            <p className="text-slate-600 mb-4">No reports yet</p>
           </div>
         )}
       </div>
@@ -159,14 +144,14 @@ export default function ReportsPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 rounded-lg transition"
+            className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-50 text-slate-700 rounded-lg transition"
           >
             Previous
           </button>
-          <span className="text-slate-300">Page {page}</span>
+          <span className="text-slate-700">Page {page}</span>
           <button
             onClick={() => setPage((p) => p + 1)}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition"
+            className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg transition"
           >
             Next
           </button>

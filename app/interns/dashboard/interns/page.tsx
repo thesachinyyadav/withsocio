@@ -62,7 +62,7 @@ export default function InternsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
       </div>
     );
   }
@@ -71,12 +71,12 @@ export default function InternsPage() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">Hired Interns</h1>
-        <p className="text-slate-400">Manage and monitor interns</p>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Hired Interns</h1>
+        <p className="text-slate-600">Manage and monitor interns</p>
       </div>
 
       {error && (
-        <div className="bg-rose-500/20 border border-rose-500/30 text-rose-300 px-6 py-4 rounded-lg mb-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg mb-6">
           {error}
         </div>
       )}
@@ -89,8 +89,8 @@ export default function InternsPage() {
             onClick={() => setSortBy(option as any)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
               sortBy === option
-                ? "bg-emerald-500 text-white"
-                : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                ? "bg-blue-700 text-white"
+                : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50"
             }`}
           >
             {option === "points" && "Top Points"}
@@ -106,56 +106,56 @@ export default function InternsPage() {
           interns.map((intern) => (
             <div
               key={intern.id}
-              className="bg-slate-800 border border-slate-700 rounded-xl p-6 hover:border-slate-600 transition"
+              className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm"
             >
               <div className="mb-4">
-                <h3 className="text-lg font-bold text-white">{intern.fullName}</h3>
-                <p className="text-slate-400 text-sm">{intern.email}</p>
+                <h3 className="text-lg font-bold text-slate-900">{intern.fullName}</h3>
+                <p className="text-slate-600 text-sm">{intern.email}</p>
               </div>
 
-              <div className="space-y-3 mb-4 pb-4 border-b border-slate-700">
+              <div className="space-y-3 mb-4 pb-4 border-b border-slate-200">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Role Interest:</span>
-                  <span className="text-white">{intern.roleInterest}</span>
+                  <span className="text-slate-500">Role Interest:</span>
+                  <span className="text-slate-900">{intern.roleInterest}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Hours/Week:</span>
-                  <span className="text-white">{intern.hoursPerWeek}</span>
+                  <span className="text-slate-500">Hours/Week:</span>
+                  <span className="text-slate-900">{intern.hoursPerWeek}</span>
                 </div>
               </div>
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-lg p-3">
-                  <p className="text-emerald-400 text-xs font-semibold">POINTS</p>
-                  <p className="text-emerald-400 text-2xl font-bold">{intern.points}</p>
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+                  <p className="text-blue-700 text-xs font-semibold">POINTS</p>
+                  <p className="text-blue-700 text-2xl font-bold">{intern.points}</p>
                 </div>
-                <div className="bg-orange-500/20 border border-orange-500/30 rounded-lg p-3">
-                  <p className="text-orange-400 text-xs font-semibold">STREAK</p>
-                  <p className="text-orange-400 text-2xl font-bold">{intern.streak} 🔥</p>
+                <div className="bg-slate-100 border border-slate-200 rounded-lg p-3">
+                  <p className="text-slate-700 text-xs font-semibold">STREAK</p>
+                  <p className="text-slate-700 text-2xl font-bold">{intern.streak}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-3">
-                  <p className="text-blue-400 text-xs font-semibold">LOGS</p>
-                  <p className="text-blue-400 text-2xl font-bold">{intern.logsSubmitted}</p>
+                <div className="bg-slate-100 border border-slate-200 rounded-lg p-3">
+                  <p className="text-slate-700 text-xs font-semibold">LOGS</p>
+                  <p className="text-slate-700 text-2xl font-bold">{intern.logsSubmitted}</p>
                 </div>
-                <div className="bg-rose-500/20 border border-rose-500/30 rounded-lg p-3">
-                  <p className="text-rose-400 text-xs font-semibold">REPORTS</p>
-                  <p className="text-rose-400 text-2xl font-bold">{intern.reportsSubmitted}</p>
+                <div className="bg-slate-100 border border-slate-200 rounded-lg p-3">
+                  <p className="text-slate-700 text-xs font-semibold">REPORTS</p>
+                  <p className="text-slate-700 text-2xl font-bold">{intern.reportsSubmitted}</p>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-slate-500">
                 Joined {new Date(intern.joinedAt).toLocaleDateString()}
               </div>
             </div>
           ))
         ) : (
-          <div className="col-span-full text-center py-12 bg-slate-800/50 border border-slate-700 rounded-xl">
-            <p className="text-slate-400">No interns found</p>
+          <div className="col-span-full text-center py-12 bg-white border border-slate-200 rounded-xl">
+            <p className="text-slate-600">No interns found</p>
           </div>
         )}
       </div>
@@ -166,14 +166,14 @@ export default function InternsPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 rounded-lg transition"
+            className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-50 text-slate-700 rounded-lg transition"
           >
             Previous
           </button>
-          <span className="text-slate-300">Page {page}</span>
+          <span className="text-slate-700">Page {page}</span>
           <button
             onClick={() => setPage((p) => p + 1)}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition"
+            className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg transition"
           >
             Next
           </button>

@@ -48,7 +48,7 @@ export async function GET(request: Request) {
     if (toDate) query = query.lte("log_date", toDate);
     if (queryText) {
       query = query.or(
-        `title.ilike.%${queryText}%,description.ilike.%${queryText}%,collaborated_with.ilike.%${queryText}%,created_by_email.ilike.%${queryText}%`
+        `title.ilike.%${queryText}%,description.ilike.%${queryText}%,created_by_email.ilike.%${queryText}%`
       );
     }
 
@@ -61,7 +61,9 @@ export async function GET(request: Request) {
       log_date: row.log_date,
       title: row.title,
       description: row.description,
-      collaborated_with: row.collaborated_with,
+      collaborator_emails: Array.isArray(row.collaborator_emails)
+        ? row.collaborator_emails.join(", ")
+        : "",
       progress_status: row.progress_status,
       created_by_email: row.created_by_email,
       admin_notes: row.admin_notes,
@@ -86,7 +88,7 @@ export async function GET(request: Request) {
       { header: "Date", key: "log_date", width: 14 },
       { header: "Title", key: "title", width: 30 },
       { header: "Description", key: "description", width: 50 },
-      { header: "Collaborated With", key: "collaborated_with", width: 30 },
+      { header: "Collaborator Emails", key: "collaborator_emails", width: 40 },
       { header: "Status", key: "progress_status", width: 14 },
       { header: "Created By", key: "created_by_email", width: 28 },
       { header: "Admin Notes", key: "admin_notes", width: 30 },
@@ -107,7 +109,7 @@ export async function GET(request: Request) {
 
   let query = supabaseAdmin.from("intern_reports").select("*");
 
-  if (status) query = query.eq("work_status", status);
+  if (status) query = query.eq("status", status);
   if (email) query = query.ilike("created_by_email", email);
   if (category) query = query.eq("category", category);
   if (priority) query = query.eq("priority", priority);
@@ -126,7 +128,7 @@ export async function GET(request: Request) {
     category: row.category,
     title: row.title,
     details: row.details,
-    work_status: row.work_status,
+    status: row.status,
     priority: row.priority,
     created_by_email: row.created_by_email,
     admin_notes: row.admin_notes,
@@ -151,7 +153,7 @@ export async function GET(request: Request) {
     { header: "Category", key: "category", width: 12 },
     { header: "Title", key: "title", width: 30 },
     { header: "Details", key: "details", width: 50 },
-    { header: "Status", key: "work_status", width: 14 },
+    { header: "Status", key: "status", width: 14 },
     { header: "Priority", key: "priority", width: 12 },
     { header: "Created By", key: "created_by_email", width: 28 },
     { header: "Admin Notes", key: "admin_notes", width: 30 },

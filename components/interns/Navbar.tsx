@@ -41,17 +41,17 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
       ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-slate-800/95 backdrop-blur border-b border-slate-700 z-50">
+    <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur border-b border-slate-200 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/interns" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">G</span>
+            <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">S</span>
             </div>
-            <span className="text-white font-bold">GATED</span>
+            <span className="text-slate-900 font-bold">SOCIO Workspace</span>
             {isAdmin && (
-              <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
                 Admin
               </span>
             )}
@@ -67,8 +67,8 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
                   href={item.href}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
                     isActive
-                      ? "bg-emerald-500/20 text-emerald-400"
-                      : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
+                      ? "bg-blue-100 text-blue-700"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
                   {item.label}
@@ -81,15 +81,15 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
           <div className="flex items-center space-x-4">
             <div className="hidden sm:flex items-center space-x-3 text-sm">
               <div>
-                <p className="text-white font-medium">{user?.fullName || "Admin"}</p>
-                <p className="text-slate-400 text-xs">{user?.email}</p>
+                <p className="text-slate-900 font-medium">{user?.fullName || "Admin"}</p>
+                <p className="text-slate-500 text-xs">{user?.email}</p>
               </div>
             </div>
 
             {/* Mobile Menu Button */}
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="md:hidden p-2 rounded-lg text-slate-300 hover:bg-slate-700"
+              className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -99,7 +99,7 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white rounded-lg transition"
+              className="px-4 py-2 text-sm bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition"
             >
               Logout
             </button>
@@ -117,8 +117,8 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
                   href={item.href}
                   className={`block px-4 py-2 rounded-lg text-sm transition ${
                     isActive
-                      ? "bg-emerald-500/20 text-emerald-400"
-                      : "text-slate-300 hover:bg-slate-700/50"
+                      ? "bg-blue-100 text-blue-700"
+                      : "text-slate-700 hover:bg-slate-100"
                   }`}
                   onClick={() => setShowMenu(false)}
                 >

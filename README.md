@@ -37,7 +37,7 @@ When enabled, all routes return `Site Unavailable` except:
 - `/api/admin/*`
 - `/api/interns/*`
 
-## Interns Workspace
+## SOCIO Workspace
 
 New route: `/interns`
 

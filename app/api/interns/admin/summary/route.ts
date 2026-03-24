@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     supabaseAdmin
       .from("intern_reports")
       .select("id", { count: "exact", head: true })
-      .in("work_status", ["open", "in_progress"]),
+      .in("status", ["open", "in_progress"]),
     supabaseAdmin
       .from("intern_work_logs")
       .select("id", { count: "exact", head: true })
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       .limit(6),
     supabaseAdmin
       .from("intern_reports")
-      .select("id, title, work_status, created_by_email, created_at")
+      .select("id, title, status, created_by_email, created_at")
       .order("created_at", { ascending: false })
       .limit(6),
   ]);
@@ -72,7 +72,7 @@ export async function GET(request: Request) {
     id: row.id,
     type: "report",
     title: row.title,
-    status: row.work_status,
+    status: row.status,
     createdByEmail: row.created_by_email,
     createdAt: row.created_at,
   }));

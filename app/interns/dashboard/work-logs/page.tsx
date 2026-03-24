@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 
 interface WorkLog {
   id: string;
@@ -43,17 +42,17 @@ export default function WorkLogsPage() {
   };
 
   const statusColors: Record<string, string> = {
-    submitted: "bg-blue-500/20 text-blue-400",
-    in_progress: "bg-yellow-500/20 text-yellow-400",
-    completed: "bg-emerald-500/20 text-emerald-400",
-    blocked: "bg-rose-500/20 text-rose-400",
-    reviewed: "bg-purple-500/20 text-purple-400",
+    submitted: "bg-blue-50 text-blue-700",
+    in_progress: "bg-slate-100 text-slate-700",
+    completed: "bg-blue-100 text-blue-800",
+    blocked: "bg-slate-100 text-slate-700",
+    reviewed: "bg-slate-100 text-slate-700",
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
       </div>
     );
   }
@@ -63,18 +62,13 @@ export default function WorkLogsPage() {
       {/* Header */}
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Work Logs</h1>
-          <p className="text-slate-400">Track your daily work and progress</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Work Logs</h1>
+          <p className="text-slate-600">Track daily work and progress</p>
         </div>
-        <Link href="/interns/dashboard/work-logs/new">
-          <button className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition">
-            New Log
-          </button>
-        </Link>
       </div>
 
       {error && (
-        <div className="bg-rose-500/20 border border-rose-500/30 text-rose-300 px-6 py-4 rounded-lg mb-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg mb-6">
           {error}
         </div>
       )}
@@ -85,36 +79,27 @@ export default function WorkLogsPage() {
           logs.map((log) => (
             <div
               key={log.id}
-              className="bg-slate-800 border border-slate-700 rounded-xl p-6 hover:border-slate-600 transition"
+              className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm"
             >
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <h3 className="text-lg font-bold text-white">{log.title}</h3>
-                  <p className="text-slate-400 text-sm">{log.log_date}</p>
+                  <h3 className="text-lg font-bold text-slate-900">{log.title}</h3>
+                  <p className="text-slate-600 text-sm">{log.log_date}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[log.progress_status] || "bg-slate-700 text-slate-300"}`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[log.progress_status] || "bg-slate-100 text-slate-700"}`}>
                   {log.progress_status.replace("_", " ")}
                 </span>
               </div>
-              <p className="text-slate-300 mb-4 line-clamp-2">{log.description}</p>
-              <div className="flex justify-between items-center text-sm text-slate-400">
+              <p className="text-slate-700 mb-4 line-clamp-2">{log.description}</p>
+              <div className="flex justify-between items-center text-sm text-slate-600">
                 <span>by {log.created_by_name}</span>
-                <Link href={`/interns/dashboard/work-logs/${log.id}`}>
-                  <button className="text-emerald-400 hover:text-emerald-300 transition">
-                    View Details →
-                  </button>
-                </Link>
+                <span className="text-slate-500">Log ID: {log.id.slice(0, 8)}</span>
               </div>
             </div>
           ))
         ) : (
-          <div className="text-center py-12 bg-slate-800/50 border border-slate-700 rounded-xl">
-            <p className="text-slate-400 mb-4">No work logs yet</p>
-            <Link href="/interns/dashboard/work-logs/new">
-              <button className="text-emerald-400 hover:text-emerald-300 transition">
-                Create your first work log →
-              </button>
-            </Link>
+          <div className="text-center py-12 bg-white border border-slate-200 rounded-xl">
+            <p className="text-slate-600 mb-4">No work logs yet</p>
           </div>
         )}
       </div>
@@ -125,14 +110,14 @@ export default function WorkLogsPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 rounded-lg transition"
+            className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-50 text-slate-700 rounded-lg transition"
           >
             Previous
           </button>
-          <span className="text-slate-300">Page {page}</span>
+          <span className="text-slate-700">Page {page}</span>
           <button
             onClick={() => setPage((p) => p + 1)}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition"
+            className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg transition"
           >
             Next
           </button>

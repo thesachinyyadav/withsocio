@@ -72,26 +72,26 @@ export default function SendEmailPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">Send Email</h1>
-        <p className="text-slate-400">Communicate with interns</p>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Send Email</h1>
+        <p className="text-slate-600">Communicate with interns</p>
       </div>
 
       {error && (
-        <div className="bg-rose-500/20 border border-rose-500/30 text-rose-300 px-6 py-4 rounded-lg mb-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg mb-6">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 px-6 py-4 rounded-lg mb-6">
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-6 py-4 rounded-lg mb-6">
           {success}
         </div>
       )}
 
       <form onSubmit={handleSend} className="space-y-6">
         {/* Recipients */}
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-          <label className="block text-sm font-semibold text-white mb-2">Recipients</label>
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <label className="block text-sm font-semibold text-slate-900 mb-2">Recipients</label>
           <div className="space-y-2">
             <input
               type="email"
@@ -104,14 +104,14 @@ export default function SendEmailPage() {
                   target.value = "";
                 }
               }}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
             {recipients.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {recipients.map((email) => (
                   <div
                     key={email}
-                    className="bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                    className="bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-2"
                   >
                     {email}
                     <button
@@ -125,33 +125,33 @@ export default function SendEmailPage() {
                 ))}
               </div>
             )}
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500">
               {recipients.length} recipient{recipients.length !== 1 ? "s" : ""} selected
             </p>
           </div>
         </div>
 
         {/* Subject */}
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-          <label className="block text-sm font-semibold text-white mb-2">Subject</label>
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <label className="block text-sm font-semibold text-slate-900 mb-2">Subject</label>
           <input
             type="text"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Email subject"
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
 
         {/* Content */}
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-          <label className="block text-sm font-semibold text-white mb-2">Message</label>
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <label className="block text-sm font-semibold text-slate-900 mb-2">Message</label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Email message (HTML supported)"
             rows={10}
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-sm"
+            className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono text-sm"
           />
         </div>
 
@@ -159,7 +159,7 @@ export default function SendEmailPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50 text-white font-semibold rounded-lg transition"
+          className="w-full py-3 bg-blue-700 hover:bg-blue-800 disabled:bg-blue-400 text-white font-semibold rounded-lg transition"
         >
           {loading ? "Sending..." : "Send Email"}
         </button>
