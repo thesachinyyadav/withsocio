@@ -110,6 +110,8 @@ export default function AdminDashboard() {
       setReminderLoading(internEmail);
       const token = localStorage.getItem("interns_token") || "";
 
+      console.log(`[REMINDER] Sending reminder to ${internEmail}`);
+
       const response = await fetch("/api/interns/admin/send-work-log-reminder", {
         method: "POST",
         headers: {
@@ -123,14 +125,24 @@ export default function AdminDashboard() {
 
       const payload = await response.json().catch(() => ({}));
 
+      console.log(`[REMINDER] Response status: ${response.status}`, payload);
+
       if (!response.ok) {
-        setReminderError(payload?.error || "Failed to send reminder");
+        const errorMsg = payload?.error || payload?.summary?.failCount ? `Failed to send to some interns (${payload.summary.failCount} failed)` : "Failed to send reminder";
+        setReminderError(errorMsg);
+        console.error(`[REMINDER] Error:`, errorMsg);
         return;
       }
 
-      alert("Reminder email sent successfully!");
+      const summary = payload?.summary;
+      if (summary?.failCount > 0) {
+        setReminderError(`Sent to ${summary.successCount}, but ${summary.failCount} failed`);
+        console.warn(`[REMINDER] Partial failure:`, payload);
+      } else {
+        alert("Reminder email sent successfully!");
+      }
     } catch (err) {
-      console.error(err);
+      console.error(`[REMINDER] Exception:`, err);
       setReminderError("Could not send reminder right now");
     } finally {
       setReminderLoading(null);

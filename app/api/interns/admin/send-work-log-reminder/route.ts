@@ -183,13 +183,20 @@ export async function POST(request: NextRequest) {
     let failCount = 0;
 
     // Send emails to each recipient
+    console.log(`[REMINDER] Sending to ${recipientEmails.length} interns`);
+    console.log(`[REMINDER] Subject: ${subject}`);
+    console.log(`[REMINDER] Recipients:`, recipientEmails);
+    
     for (const email of recipientEmails) {
+      console.log(`[REMINDER] Attempting to send to ${email}...`);
       const result = await sendEmail({
         to: email,
         subject,
         html: wrappedHtml,
         adminEmail: auth.identifier,
       });
+
+      console.log(`[REMINDER] Result for ${email}:`, result);
 
       if (result.success) {
         successCount++;
@@ -208,6 +215,8 @@ export async function POST(request: NextRequest) {
       notes: `Sent work log reminders to ${successCount} interns, ${failCount} failed`,
     });
 
+    console.log(`[REMINDER] Final result - Success: ${successCount}, Failed: ${failCount}`);
+
     return NextResponse.json({
       success: true,
       summary: {
@@ -218,7 +227,7 @@ export async function POST(request: NextRequest) {
       results,
     });
   } catch (error) {
-    console.error("Reminder email error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("[REMINDER] Error:", error);
+    return NextResponse.json({ error: `Internal server error: ${String(error)}` }, { status: 500 });
   }
 }

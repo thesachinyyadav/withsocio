@@ -314,29 +314,36 @@ export async function sendEmail(input: {
   templateId?: string;
 }) {
   if (!RESEND_API_KEY) {
-    console.warn("RESEND_API_KEY not configured");
+    console.error("[EMAIL] RESEND_API_KEY is not configured");
     return { success: false, error: "Email service not configured" };
   }
 
+  console.log(`[EMAIL] Preparing to send email to ${input.to} with subject: ${input.subject}`);
+
   try {
+    const payload = {
+      from: "interns@socio.tech",
+      to: input.to,
+      subject: input.subject,
+      html: input.html,
+    };
+
+    console.log(`[EMAIL] Resend API request payload:`, { from: payload.from, to: payload.to, subject: payload.subject });
+
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
-      body: JSON.stringify({
-        from: "interns@socio.tech",
-        to: input.to,
-        subject: input.subject,
-        html: input.html,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();
+    console.log(`[EMAIL] Resend API response status: ${response.status}`, data);
 
     // Log email
-    await supabaseAdmin.from("intern_email_log").insert({
+    const auditResult = await supabaseAdmin.from("intern_email_log").insert({
       recipient_email: input.to,
       subject: input.subject,
       template_id: input.templateId || null,
@@ -345,9 +352,13 @@ export async function sendEmail(input: {
       status: response.ok ? "sent" : "failed",
     });
 
-    return { success: response.ok, messageId: data.id };
+    console.log(`[EMAIL] Audit log insert result:`, auditResult);
+
+    const result = { success: response.ok, messageId: data.id };
+    console.log(`[EMAIL] Final result for ${input.to}:`, result);
+    return result;
   } catch (error) {
-    console.error("Failed to send email:", error);
+    console.error(`[EMAIL] Failed to send email to ${input.to}:`, error);
     return { success: false, error };
   }
 }
