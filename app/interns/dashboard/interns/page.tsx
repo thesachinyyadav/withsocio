@@ -29,6 +29,9 @@ export default function InternsPage() {
   const [showMailAllModal, setShowMailAllModal] = useState(false);
   const [mailLoading, setMailLoading] = useState(false);
   const [mailError, setMailError] = useState("");
+  const [mailAllInterns, setMailAllInterns] = useState<Array<{ id: string; fullName: string; email: string }>>([]);
+  const [selectedMailInterns, setSelectedMailInterns] = useState<string[]>([]);
+  const [mailAllFetching, setMailAllFetching] = useState(false);
   const [mailForm, setMailForm] = useState({
     subject: "",
     message: "",
@@ -176,6 +179,11 @@ export default function InternsPage() {
       return;
     }
 
+    if (selectedMailInterns.length === 0) {
+      setMailError("Select at least one intern to mail.");
+      return;
+    }
+
     try {
       setMailLoading(true);
       const token = localStorage.getItem("interns_token") || "";
@@ -193,7 +201,7 @@ export default function InternsPage() {
           "x-interns-token": token,
         },
         body: JSON.stringify({
-          sendToAllHiredInterns: true,
+          recipientEmails: selectedMailInterns,
           useSocioTemplate: true,
           subject: mailForm.subject,
           htmlContent: htmlMessage,
@@ -213,12 +221,52 @@ export default function InternsPage() {
       );
       setShowMailAllModal(false);
       setMailForm({ subject: "", message: "" });
+      setMailAllInterns([]);
+      setSelectedMailInterns([]);
     } catch (err) {
       console.error(err);
       setMailError("Could not send emails right now.");
     } finally {
       setMailLoading(false);
     }
+  };
+
+  const openMailAllModal = async () => {
+    setMailError("");
+    setMailForm({ subject: "", message: "" });
+    setShowMailAllModal(true);
+    setMailAllFetching(true);
+
+    try {
+      const token = localStorage.getItem("interns_token") || "";
+      const response = await fetch("/api/interns/admin/hired-people?limit=1000", {
+        headers: { "x-interns-token": token || "" },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch interns");
+
+      const data = await response.json();
+      const interns = data.data || [];
+      const internEmails = interns.map((i: Intern) => i.email?.toLowerCase()).filter(Boolean);
+
+      setMailAllInterns(interns);
+      setSelectedMailInterns(internEmails);
+    } catch (err) {
+      console.error(err);
+      setMailError("Failed to load interns list");
+    } finally {
+      setMailAllFetching(false);
+    }
+  };
+
+  const toggleMailIntern = (email: string) => {
+    const normalized = String(email || "").toLowerCase();
+    setSelectedMailInterns((current) => {
+      if (current.includes(normalized)) {
+        return current.filter((e) => e !== normalized);
+      }
+      return [...current, normalized];
+    });
   };
 
   if (loading) {
@@ -272,10 +320,7 @@ export default function InternsPage() {
         </button>
 
         <button
-          onClick={() => {
-            setMailError("");
-            setShowMailAllModal(true);
-          }}
+          onClick={openMailAllModal}
           className="px-4 py-2 rounded-lg text-sm font-medium transition bg-green-700 text-white hover:bg-green-800"
         >
           Mail All Interns
@@ -406,8 +451,8 @@ export default function InternsPage() {
 
       {showMailAllModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
+          <div className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-5 shadow-lg max-h-[90vh] overflow-y-auto">
+            <div className="mb-4 flex items-center justify-between sticky top-0 bg-white pb-4">
               <h2 className="text-lg font-bold text-slate-900">Mail All Interns</h2>
               <button
                 onClick={() => setShowMailAllModal(false)}
@@ -439,13 +484,50 @@ export default function InternsPage() {
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                     setMailForm((prev) => ({ ...prev, message: e.target.value }))
                   }
-                  rows={6}
+                  rows={4}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-600"
                 />
               </div>
 
-              <div className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-3">
-                📧 This email will be sent to <strong>all hired interns</strong> and will be wrapped in the SOCIO branded template.
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-slate-700">
+                  Recipients: <span className="text-green-700 font-bold">{selectedMailInterns.length}</span> selected
+                </label>
+                {mailAllFetching ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700"></div>
+                  </div>
+                ) : (
+                  <div className="border border-slate-300 rounded-lg divide-y max-h-64 overflow-y-auto bg-slate-50">
+                    {mailAllInterns.length > 0 ? (
+                      mailAllInterns.map((intern) => {
+                        const normalized = String(intern.email || "").toLowerCase();
+                        const isSelected = selectedMailInterns.includes(normalized);
+                        return (
+                          <label
+                            key={intern.id}
+                            className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleMailIntern(intern.email)}
+                              className="h-4 w-4 rounded border-slate-300 text-green-700 focus:ring-green-600"
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-slate-900">{intern.fullName}</p>
+                              <p className="text-xs text-slate-600">{intern.email}</p>
+                            </div>
+                          </label>
+                        );
+                      })
+                    ) : (
+                      <div className="px-4 py-8 text-center text-slate-600 text-sm">
+                        No interns found
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {mailError && (
@@ -463,10 +545,10 @@ export default function InternsPage() {
                 </button>
                 <button
                   onClick={handleMailAllInterns}
-                  disabled={mailLoading}
+                  disabled={mailLoading || selectedMailInterns.length === 0}
                   className="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 disabled:bg-green-500"
                 >
-                  {mailLoading ? "Sending..." : "Send to All Interns"}
+                  {mailLoading ? "Sending..." : `Send to ${selectedMailInterns.length} Interns`}
                 </button>
               </div>
             </div>
