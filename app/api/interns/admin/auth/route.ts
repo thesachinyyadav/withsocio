@@ -70,10 +70,15 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      role: "admin",
+      user: {
+        role: "admin",
+        email: "admin@socio.tech",
+        fullName: "Admin"
+      }
     });
   } catch (error) {
     console.error("Verify error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
 }

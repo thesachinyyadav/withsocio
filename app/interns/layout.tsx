@@ -24,17 +24,19 @@ export default function InternsLayout({
   useEffect(() => {
     // Check for existing session token
     const token = localStorage.getItem("interns_token");
+    const role = localStorage.getItem("interns_role");
+    
     if (token) {
-      verifyToken(token);
+      verifyToken(token, role);
     } else if (!pathname.includes("/login")) {
       // Redirect to login if no token and not on login page
       router.push("/interns/login");
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [router, pathname]);
 
-  const verifyToken = async (token: string) => {
+  const verifyToken = async (token: string, role?: string | null) => {
     try {
       const response = await fetch("/api/interns/admin/auth", {
         headers: {
@@ -44,15 +46,19 @@ export default function InternsLayout({
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data.user);
+        const userData = data.user || { role: role || "admin", email: "", fullName: "" };
+        setUser(userData);
       } else {
         localStorage.removeItem("interns_token");
+        localStorage.removeItem("interns_role");
         if (!pathname.includes("/login")) {
           router.push("/interns/login");
         }
       }
     } catch (error) {
+      console.error("Token verification error:", error);
       localStorage.removeItem("interns_token");
+      localStorage.removeItem("interns_role");
       if (!pathname.includes("/login")) {
         router.push("/interns/login");
       }
