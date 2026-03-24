@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import {
   authenticateRequest,
   createAuditLog,
@@ -7,15 +7,15 @@ import {
 } from "../../_utils";
 
 export async function PATCH(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await authenticateRequest(request, "admin");
   if (!auth.ok) {
     return auth.response;
   }
 
-  const { id } = await context.params;
+  const { id } = await params;
   if (!id) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }

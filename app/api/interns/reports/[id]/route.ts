@@ -20,13 +20,13 @@ import {
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await authenticateRequest(request, "admin");
   if (!auth.ok) return auth.response;
 
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { status, assignedToEmails, adminNotes } = body;
 
