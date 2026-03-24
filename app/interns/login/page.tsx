@@ -56,9 +56,9 @@ export default function InternsLoginPage() {
             <Image
               src="/socio.svg"
               alt="SOCIO logo"
-              width={64}
-              height={64}
-              className="h-14 w-14"
+              width={88}
+              height={88}
+              className="h-20 w-20"
               priority
             />
           </div>

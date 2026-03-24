@@ -82,9 +82,9 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
             <Image
               src="/socio.svg"
               alt="SOCIO logo"
-              width={36}
-              height={36}
-              className="h-9 w-9"
+              width={48}
+              height={48}
+              className="h-11 w-11"
               priority
             />
             <span className="text-slate-900 font-bold tracking-tight">Workplace</span>
