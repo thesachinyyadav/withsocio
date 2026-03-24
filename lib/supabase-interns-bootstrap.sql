@@ -193,7 +193,22 @@ ALTER TABLE public.intern_gamification ADD COLUMN IF NOT EXISTS last_activity_da
 ALTER TABLE public.intern_gamification ADD COLUMN IF NOT EXISTS badges TEXT[] DEFAULT '{}';
 ALTER TABLE public.intern_gamification ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 
+ALTER TABLE public.intern_admin_users ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.intern_admin_users ADD COLUMN IF NOT EXISTS full_name TEXT;
+ALTER TABLE public.intern_admin_users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'admin';
+ALTER TABLE public.intern_admin_users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+ALTER TABLE public.intern_admin_users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS actor_email TEXT;
+ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS action TEXT;
+ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS target_type TEXT;
+ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS target_id UUID;
+ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS old_status TEXT;
+ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS new_status TEXT;
+ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS assigned_to_email TEXT;
+ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS ip_address TEXT;
+ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.intern_email_templates ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.intern_email_log ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.intern_work_sessions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
