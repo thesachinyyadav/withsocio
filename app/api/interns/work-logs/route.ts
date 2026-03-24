@@ -17,13 +17,14 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const { safePage, safeLimit, from, to } = parsePage(searchParams);
+    const includeAll = searchParams.get("includeAll") === "true";
 
     let query = supabaseAdmin
       .from("intern_work_logs")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false });
 
-    if (auth.role === "intern") {
+    if (auth.role === "intern" && !includeAll) {
       query = query.eq("created_by_email", auth.identifier);
     }
 

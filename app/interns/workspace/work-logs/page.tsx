@@ -66,11 +66,19 @@ export default function InternWorkLogsPage() {
           <h1 className="text-3xl font-bold text-slate-900 mb-2">My Work Logs</h1>
           <p className="text-slate-600">Look at your entries and add your entries</p>
         </div>
-        <Link href="/interns/workspace/work-logs/new">
-          <button className="px-6 py-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg transition">
-            New Log
-          </button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/interns/workspace/work-logs/all"
+            className="px-4 py-2 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-lg transition text-sm"
+          >
+            View All WorkLogs
+          </Link>
+          <Link href="/interns/workspace/work-logs/new">
+            <button className="px-6 py-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg transition">
+              New Log
+            </button>
+          </Link>
+        </div>
       </div>
 
       <div className="mb-5 flex items-center gap-3">
