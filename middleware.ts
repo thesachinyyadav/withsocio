@@ -5,9 +5,11 @@ const MAINTENANCE_MODE = process.env.MAINTENANCE_MODE === "true";
 
 const ALLOWED_PREFIXES = [
   "/careers",
+  "/interns",
   "/panel",
   "/api/apply",
   "/api/admin",
+  "/api/interns",
   "/_next",
   "/favicon.ico",
   "/manifest.json",

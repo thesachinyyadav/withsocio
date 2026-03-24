@@ -123,6 +123,94 @@ CREATE TRIGGER update_mailbox_email_state_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+-- Interns work logs (used by /interns workspace)
+CREATE TABLE IF NOT EXISTS intern_work_logs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    log_date DATE NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    collaborated_with TEXT,
+    progress_status TEXT NOT NULL DEFAULT 'submitted' CHECK (progress_status IN (
+        'submitted',
+        'in_progress',
+        'completed',
+        'blocked',
+        'reviewed'
+    )),
+    created_by_email TEXT NOT NULL,
+    admin_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_intern_work_logs_date ON intern_work_logs(log_date DESC);
+CREATE INDEX IF NOT EXISTS idx_intern_work_logs_email ON intern_work_logs(created_by_email);
+CREATE INDEX IF NOT EXISTS idx_intern_work_logs_status ON intern_work_logs(progress_status);
+CREATE INDEX IF NOT EXISTS idx_intern_work_logs_created_at ON intern_work_logs(created_at DESC);
+
+-- Intern reports for feature/bug/issue/problem submissions
+CREATE TABLE IF NOT EXISTS intern_reports (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    category TEXT NOT NULL CHECK (category IN (
+        'feature',
+        'bug',
+        'issue',
+        'problem'
+    )),
+    title TEXT NOT NULL,
+    details TEXT NOT NULL,
+    work_status TEXT NOT NULL DEFAULT 'open' CHECK (work_status IN (
+        'open',
+        'in_progress',
+        'resolved',
+        'closed'
+    )),
+    priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN (
+        'low',
+        'medium',
+        'high',
+        'critical'
+    )),
+    created_by_email TEXT NOT NULL,
+    admin_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_intern_reports_category ON intern_reports(category);
+CREATE INDEX IF NOT EXISTS idx_intern_reports_status ON intern_reports(work_status);
+CREATE INDEX IF NOT EXISTS idx_intern_reports_priority ON intern_reports(priority);
+CREATE INDEX IF NOT EXISTS idx_intern_reports_email ON intern_reports(created_by_email);
+CREATE INDEX IF NOT EXISTS idx_intern_reports_created_at ON intern_reports(created_at DESC);
+
+-- Admin audit log for interns workspace actions
+CREATE TABLE IF NOT EXISTS intern_admin_audit (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    actor TEXT NOT NULL,
+    action TEXT NOT NULL,
+    target_type TEXT NOT NULL CHECK (target_type IN ('work_log', 'report')),
+    target_id UUID NOT NULL,
+    old_status TEXT,
+    new_status TEXT,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_intern_admin_audit_target ON intern_admin_audit(target_type, target_id);
+CREATE INDEX IF NOT EXISTS idx_intern_admin_audit_created_at ON intern_admin_audit(created_at DESC);
+
+DROP TRIGGER IF EXISTS update_intern_work_logs_updated_at ON intern_work_logs;
+CREATE TRIGGER update_intern_work_logs_updated_at
+    BEFORE UPDATE ON intern_work_logs
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_intern_reports_updated_at ON intern_reports;
+CREATE TRIGGER update_intern_reports_updated_at
+    BEFORE UPDATE ON intern_reports
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
 -- IMPORTANT: If table already exists, update role_interest CHECK constraint in place.
 -- (CREATE TABLE IF NOT EXISTS does not modify existing constraints.)
 ALTER TABLE internship_applications

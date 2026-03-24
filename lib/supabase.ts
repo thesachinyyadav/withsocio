@@ -30,6 +30,44 @@ export interface InternshipApplication {
   updated_at: string;
 }
 
+export interface InternWorkLog {
+  id: string;
+  log_date: string;
+  title: string;
+  description: string;
+  collaborated_with: string | null;
+  progress_status: "submitted" | "in_progress" | "completed" | "blocked" | "reviewed";
+  created_by_email: string;
+  admin_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InternReport {
+  id: string;
+  category: "feature" | "bug" | "issue" | "problem";
+  title: string;
+  details: string;
+  work_status: "open" | "in_progress" | "resolved" | "closed";
+  priority: "low" | "medium" | "high" | "critical";
+  created_by_email: string;
+  admin_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InternAdminAudit {
+  id: string;
+  actor: string;
+  action: string;
+  target_type: "work_log" | "report";
+  target_id: string;
+  old_status: string | null;
+  new_status: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
 // Helper functions for CRUD operations
 
 export async function submitApplication(

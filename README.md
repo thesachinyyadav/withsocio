@@ -31,9 +31,20 @@ Use this to put the site on hold while keeping `careers` and `panel` available.
 When enabled, all routes return `Site Unavailable` except:
 
 - `/careers/*`
+- `/interns/*`
 - `/panel/*`
 - `/api/apply/*`
 - `/api/admin/*`
+- `/api/interns/*`
+
+## Interns Workspace
+
+New route: `/interns`
+
+- Intern login: hired intern email
+- Admin login: `socio2026`
+- Intern features: submit work logs, submit feature/bug/issue/problem reports, view shared activity
+- Admin features: command-center summary, status updates, filters, CSV/XLSX exports
 
 To switch the full site back on, set `MAINTENANCE_MODE=false` (or remove it) and restart.
 
