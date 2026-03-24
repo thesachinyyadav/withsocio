@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin, normalizeIdentifier, isValidEmail, verifyAdminCredentials, hashPassword } from "../../_utils";
+import { ADMIN_IDENTIFIER } from "../../_utils";
 
 /**
  * Admin Login Endpoint
@@ -7,57 +7,34 @@ import { supabaseAdmin, normalizeIdentifier, isValidEmail, verifyAdminCredential
  * 
  * Request body:
  * {
- *   "email": "admin@socio.tech",
- *   "password": "secure_password"
+ *   "password": "socio2026"
  * }
  * 
  * Response:
  * {
  *   "success": true,
  *   "role": "admin",
- *   "token": "admin@socio.tech",
- *   "user": {
- *     "id": "uuid",
- *     "email": "admin@socio.tech",
- *     "fullName": "Admin Name",
- *     "role": "super_admin" | "admin"
- *   }
+ *   "token": "socio2026"
  * }
  */
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { password } = body;
 
-    if (!email || !password) {
+    if (!password) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: "Password is required" },
         { status: 400 }
       );
     }
 
-    if (!isValidEmail(email)) {
+    // Simple password check
+    if (password !== ADMIN_IDENTIFIER) {
       return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 }
-      );
-    }
-
-    // Verify credentials
-    const adminUser = await verifyAdminCredentials(email, password);
-
-    if (!adminUser) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
+        { error: "Invalid password" },
         { status: 401 }
-      );
-    }
-
-    if (!adminUser.is_active) {
-      return NextResponse.json(
-        { error: "Admin account is inactive" },
-        { status: 403 }
       );
     }
 
@@ -65,13 +42,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       role: "admin",
-      token: adminUser.email,
-      user: {
-        id: adminUser.id,
-        email: adminUser.email,
-        fullName: adminUser.full_name,
-        role: adminUser.role,
-      },
+      token: ADMIN_IDENTIFIER,
     });
   } catch (error) {
     console.error("Auth error:", error);
@@ -82,7 +53,7 @@ export async function POST(request: NextRequest) {
 /**
  * Verify Admin Token (Optional - for frontend session validation)
  * GET /api/interns/admin/auth
- * Headers: x-interns-token: admin@socio.tech
+ * Headers: x-interns-token: socio2026
  */
 export async function GET(request: NextRequest) {
   try {
@@ -92,27 +63,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Missing token" }, { status: 401 });
     }
 
-    const normalized = normalizeIdentifier(token);
-
-    const { data: adminUser, error } = await supabaseAdmin
-      .from("intern_admin_users")
-      .select("*")
-      .ilike("email", normalized)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (error || !adminUser) {
+    // Simple token check
+    if (token !== ADMIN_IDENTIFIER) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
     return NextResponse.json({
       success: true,
-      user: {
-        id: adminUser.id,
-        email: adminUser.email,
-        fullName: adminUser.full_name,
-        role: adminUser.role,
-      },
+      role: "admin",
     });
   } catch (error) {
     console.error("Verify error:", error);

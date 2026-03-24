@@ -11,6 +11,8 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 
 // ==================== CONSTANTS ====================
+export const ADMIN_IDENTIFIER = "socio2026";
+
 export const WORK_LOG_STATUSES = [
   "submitted",
   "in_progress",
@@ -33,20 +35,11 @@ interface HiredInternRecord {
   status: "hired";
 }
 
-interface AdminUserRecord {
-  id: string;
-  email: string;
-  full_name: string;
-  role: "super_admin" | "admin";
-  is_active: boolean;
-}
-
 type ResolveIdentifierResult =
   | {
       ok: true;
       role: "admin";
       identifier: string;
-      adminUser: AdminUserRecord;
     }
   | {
       ok: true;
@@ -89,51 +82,8 @@ export function csvEscape(value: unknown): string {
   return `"${str}"`;
 }
 
-// ==================== ADMIN AUTHENTICATION ====================
-
-/**
- * Verify admin credentials
- */
-export async function verifyAdminCredentials(email: string, password: string): Promise<AdminUserRecord | null> {
-  const normalized = normalizeIdentifier(email);
-
-  if (!isValidEmail(normalized)) {
-    return null;
-  }
-
-  const { data: adminUser, error } = await supabaseAdmin
-    .from("intern_admin_users")
-    .select("*")
-    .ilike("email", normalized)
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (error || !adminUser) {
-    return null;
-  }
-
-  // Verify password (simple hash comparison)
-  // In production, use bcrypt or similar
-  const passwordHash = simpleHashPassword(password);
-  if (adminUser.password_hash !== passwordHash) {
-    return null;
-  }
-
-  return adminUser;
-}
-
-/**
- * Simple password hashing (NOTE: Use bcrypt in production!)
- */
-function simpleHashPassword(password: string): string {
-  return crypto.createHash("sha256").update(password).digest("hex");
-}
-
-export function hashPassword(password: string): string {
-  return simpleHashPassword(password);
-}
-
 // ==================== IDENTIFIER RESOLUTION ====================
+// Simplified to direct intern lookup - admin access uses ADMIN_IDENTIFIER constant
 
 export async function resolveIdentifier(identifier: string): Promise<ResolveIdentifierResult> {
   const normalized = normalizeIdentifier(identifier);
@@ -142,20 +92,12 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
     return { ok: false, message: "Missing identifier", status: 400 };
   }
 
-  // Try to find admin user first
-  const { data: adminUser } = await supabaseAdmin
-    .from("intern_admin_users")
-    .select("*")
-    .ilike("email", normalized)
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (adminUser) {
+  // Check if admin identifier
+  if (normalized === ADMIN_IDENTIFIER) {
     return {
       ok: true,
       role: "admin",
-      identifier: adminUser.email,
-      adminUser,
+      identifier: ADMIN_IDENTIFIER,
     };
   }
 
@@ -201,10 +143,14 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
 type AuthResult =
   | {
       ok: true;
-      role: InternsRole;
+      role: "admin";
       identifier: string;
-      intern?: HiredInternRecord;
-      adminUser?: AdminUserRecord;
+    }
+  | {
+      ok: true;
+      role: "intern";
+      identifier: string;
+      intern: HiredInternRecord;
     }
   | {
       ok: false;
@@ -244,7 +190,6 @@ export async function authenticateRequest(
       ok: true,
       role: "admin",
       identifier: resolved.identifier,
-      adminUser: resolved.adminUser,
     };
   }
 
