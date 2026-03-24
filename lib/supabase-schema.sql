@@ -142,6 +142,7 @@ CREATE INDEX IF NOT EXISTS idx_intern_admin_users_active ON intern_admin_users(i
 CREATE TABLE IF NOT EXISTS intern_work_logs (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     log_date DATE NOT NULL,
+    work_mode TEXT NOT NULL DEFAULT 'onsite' CHECK (work_mode IN ('wfh', 'onsite')),
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     collaborator_emails TEXT[] NOT NULL DEFAULT '{}',
@@ -163,6 +164,7 @@ CREATE TABLE IF NOT EXISTS intern_work_logs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_intern_work_logs_date ON intern_work_logs(log_date DESC);
+CREATE INDEX IF NOT EXISTS idx_intern_work_logs_work_mode ON intern_work_logs(work_mode);
 CREATE INDEX IF NOT EXISTS idx_intern_work_logs_email ON intern_work_logs(created_by_email);
 CREATE INDEX IF NOT EXISTS idx_intern_work_logs_status ON intern_work_logs(progress_status);
 CREATE INDEX IF NOT EXISTS idx_intern_work_logs_created_at ON intern_work_logs(created_at DESC);

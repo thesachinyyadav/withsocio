@@ -104,6 +104,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       logDate,
+      workMode,
       title,
       description,
       collaboratorEmails,
@@ -116,6 +117,14 @@ export async function POST(request: NextRequest) {
     if (!logDate || !title || !description) {
       return NextResponse.json(
         { error: "logDate, title, and description are required" },
+        { status: 400 }
+      );
+    }
+
+    const normalizedWorkMode = String(workMode || "onsite").trim().toLowerCase();
+    if (!["wfh", "onsite"].includes(normalizedWorkMode)) {
+      return NextResponse.json(
+        { error: "workMode must be either 'wfh' or 'onsite'" },
         { status: 400 }
       );
     }
@@ -162,6 +171,7 @@ export async function POST(request: NextRequest) {
       .from("intern_work_logs")
       .insert({
         log_date: logDate,
+        work_mode: normalizedWorkMode,
         title,
         description,
         collaborator_emails: collaboratorEmails || [],

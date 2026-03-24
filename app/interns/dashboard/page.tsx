@@ -11,6 +11,14 @@ interface DashboardMetrics {
     activeToday: number;
   };
   statusDistribution: Record<string, number>;
+  workModeDistribution?: {
+    onsite: number;
+    wfh: number;
+  };
+  missedWorklogToday?: Array<{
+    fullName: string;
+    email: string;
+  }>;
   leaderboard: Array<{
     email: string;
     points: number;
@@ -27,13 +35,13 @@ interface DashboardMetrics {
 }
 
 function Spinner() {
-  return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700" />;
+  return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-800" />;
 }
 
 function MetricIcon({ type }: { type: "interns" | "logs" | "reports" | "active" }) {
   if (type === "interns") {
     return (
-      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-blue-700">
+      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-blue-800">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="1.8" />
         <path d="M22 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -43,7 +51,7 @@ function MetricIcon({ type }: { type: "interns" | "logs" | "reports" | "active" 
   }
   if (type === "logs") {
     return (
-      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-blue-700">
+      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-blue-800">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M14 2v6h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -52,14 +60,14 @@ function MetricIcon({ type }: { type: "interns" | "logs" | "reports" | "active" 
   }
   if (type === "reports") {
     return (
-      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-blue-700">
+      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-blue-800">
         <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-blue-700">
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-blue-800">
       <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -129,7 +137,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {metrics.map((metric) => (
           <div key={metric.label} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
+            <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
               <MetricIcon type={metric.type} />
             </div>
             <p className="text-sm text-slate-500">{metric.label}</p>
@@ -138,7 +146,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
         <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Reports Overview</h2>
           <div className="space-y-3">
@@ -157,14 +165,49 @@ export default function AdminDashboard() {
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">Work Mode Split</h2>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-700">Onsite Logs</span>
+              <span className="font-semibold text-slate-900">{data.workModeDistribution?.onsite || 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-700">WFH Logs</span>
+              <span className="font-semibold text-slate-900">{data.workModeDistribution?.wfh || 0}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h2>
           <div className="space-y-2">
             <Link href="/interns/dashboard/reports" className="block rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">View Reports</Link>
             <Link href="/interns/dashboard/work-logs" className="block rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">View Work Logs</Link>
             <Link href="/interns/dashboard/interns" className="block rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Manage Interns</Link>
             <Link href="/interns/dashboard/send-email" className="block rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Send Email</Link>
+            <a href="/api/interns/admin/export?kind=work-logs&format=xlsx" className="block rounded-lg border border-blue-200 bg-blue-100 px-4 py-2 text-sm text-blue-800 hover:bg-blue-200">Export WorkLogs (XLSX)</a>
+            <a href="/api/interns/admin/export?kind=work-logs&format=csv" className="block rounded-lg border border-blue-200 bg-blue-100 px-4 py-2 text-sm text-blue-800 hover:bg-blue-200">Export WorkLogs (CSV)</a>
           </div>
         </div>
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-xl p-6 mb-8 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-slate-900">Missed Today&apos;s WorkLog</h2>
+          <span className="text-sm text-slate-600">{data.missedWorklogToday?.length || 0} interns</span>
+        </div>
+        {data.missedWorklogToday?.length ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {data.missedWorklogToday.map((intern) => (
+              <div key={intern.email} className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="font-medium text-slate-900">{intern.fullName}</p>
+                <p className="text-xs text-slate-600 mt-1">{intern.email}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-600">No misses today. Everyone submitted a worklog.</p>
+        )}
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl p-6 mb-8 shadow-sm">
@@ -185,7 +228,7 @@ export default function AdminDashboard() {
                 <tr key={intern.email} className="border-b border-slate-100">
                   <td className="px-4 py-3 text-slate-900">
                     <div className="flex items-center space-x-2">
-                      <span className="text-blue-700 font-semibold">#{idx + 1}</span>
+                      <span className="text-blue-800 font-semibold">#{idx + 1}</span>
                       <span>{intern.email.split("@")[0]}</span>
                     </div>
                   </td>

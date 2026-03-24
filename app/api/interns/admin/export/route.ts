@@ -57,15 +57,31 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    const creatorEmails = Array.from(
+      new Set((data || []).map((row) => String(row.created_by_email || "").toLowerCase()).filter(Boolean))
+    );
+    const { data: internNames } = creatorEmails.length
+      ? await supabaseAdmin
+          .from("internship_applications")
+          .select("email, full_name")
+          .in("email", creatorEmails)
+      : { data: [] as Array<{ email: string; full_name: string }> };
+
+    const nameByEmail = new Map(
+      (internNames || []).map((row) => [String(row.email || "").toLowerCase(), row.full_name || "Unknown"])
+    );
+
     const rows = (data || []).map((row) => ({
       log_date: row.log_date,
+      work_mode: row.work_mode || "onsite",
+      created_by_name: nameByEmail.get(String(row.created_by_email || "").toLowerCase()) || "Unknown",
+      created_by_email: row.created_by_email,
       title: row.title,
       description: row.description,
       collaborator_emails: Array.isArray(row.collaborator_emails)
         ? row.collaborator_emails.join(", ")
         : "",
       progress_status: row.progress_status,
-      created_by_email: row.created_by_email,
       admin_notes: row.admin_notes,
       created_at: row.created_at,
       updated_at: row.updated_at,
@@ -86,11 +102,13 @@ export async function GET(request: Request) {
     const worksheet = workbook.addWorksheet("Work Logs");
     worksheet.columns = [
       { header: "Date", key: "log_date", width: 14 },
+      { header: "Work Mode", key: "work_mode", width: 14 },
+      { header: "Created By Name", key: "created_by_name", width: 24 },
+      { header: "Created By Email", key: "created_by_email", width: 28 },
       { header: "Title", key: "title", width: 30 },
       { header: "Description", key: "description", width: 50 },
       { header: "Collaborator Emails", key: "collaborator_emails", width: 40 },
       { header: "Status", key: "progress_status", width: 14 },
-      { header: "Created By", key: "created_by_email", width: 28 },
       { header: "Admin Notes", key: "admin_notes", width: 30 },
       { header: "Created At", key: "created_at", width: 24 },
       { header: "Updated At", key: "updated_at", width: 24 },

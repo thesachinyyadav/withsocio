@@ -178,7 +178,27 @@ ALTER TABLE public.intern_work_logs ADD COLUMN IF NOT EXISTS attachments JSONB D
 ALTER TABLE public.intern_work_logs ADD COLUMN IF NOT EXISTS work_start_time TIMESTAMP WITH TIME ZONE;
 ALTER TABLE public.intern_work_logs ADD COLUMN IF NOT EXISTS work_end_time TIMESTAMP WITH TIME ZONE;
 ALTER TABLE public.intern_work_logs ADD COLUMN IF NOT EXISTS total_hours NUMERIC(5,2);
+ALTER TABLE public.intern_work_logs ADD COLUMN IF NOT EXISTS work_mode TEXT NOT NULL DEFAULT 'onsite';
 ALTER TABLE public.intern_work_logs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
+DO $$
+BEGIN
+  IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='intern_work_logs' AND column_name='work_mode'
+  ) THEN
+      UPDATE public.intern_work_logs
+      SET work_mode = CASE
+          WHEN lower(coalesce(work_mode, '')) IN ('wfh', 'onsite') THEN lower(work_mode)
+          ELSE 'onsite'
+      END;
+
+      ALTER TABLE public.intern_work_logs DROP CONSTRAINT IF EXISTS intern_work_logs_work_mode_check;
+      ALTER TABLE public.intern_work_logs
+      ADD CONSTRAINT intern_work_logs_work_mode_check
+      CHECK (work_mode IN ('wfh', 'onsite'));
+  END IF;
+END $$;
 
 ALTER TABLE public.intern_reports ADD COLUMN IF NOT EXISTS assigned_to_emails TEXT[] DEFAULT '{}';
 ALTER TABLE public.intern_reports ADD COLUMN IF NOT EXISTS admin_notes TEXT;
@@ -193,22 +213,7 @@ ALTER TABLE public.intern_gamification ADD COLUMN IF NOT EXISTS last_activity_da
 ALTER TABLE public.intern_gamification ADD COLUMN IF NOT EXISTS badges TEXT[] DEFAULT '{}';
 ALTER TABLE public.intern_gamification ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 
-ALTER TABLE public.intern_admin_users ADD COLUMN IF NOT EXISTS email TEXT;
-ALTER TABLE public.intern_admin_users ADD COLUMN IF NOT EXISTS full_name TEXT;
-ALTER TABLE public.intern_admin_users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'admin';
-ALTER TABLE public.intern_admin_users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
-ALTER TABLE public.intern_admin_users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
-ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS actor_email TEXT;
-ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS action TEXT;
-ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS target_type TEXT;
-ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS target_id UUID;
-ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS old_status TEXT;
-ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS new_status TEXT;
-ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS assigned_to_email TEXT;
-ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS notes TEXT;
-ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS ip_address TEXT;
-ALTER TABLE public.intern_admin_audit ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.intern_email_templates ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.intern_email_log ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.intern_work_sessions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
@@ -221,6 +226,7 @@ CREATE INDEX IF NOT EXISTS idx_intern_admin_users_email ON public.intern_admin_u
 CREATE INDEX IF NOT EXISTS idx_intern_admin_users_active ON public.intern_admin_users(is_active);
 
 CREATE INDEX IF NOT EXISTS idx_intern_work_logs_date ON public.intern_work_logs(log_date DESC);
+CREATE INDEX IF NOT EXISTS idx_intern_work_logs_work_mode ON public.intern_work_logs(work_mode);
 CREATE INDEX IF NOT EXISTS idx_intern_work_logs_email ON public.intern_work_logs(created_by_email);
 CREATE INDEX IF NOT EXISTS idx_intern_work_logs_status ON public.intern_work_logs(progress_status);
 CREATE INDEX IF NOT EXISTS idx_intern_work_logs_created_at ON public.intern_work_logs(created_at DESC);

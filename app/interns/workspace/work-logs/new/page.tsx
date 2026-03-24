@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 export default function NewWorkLogPage() {
   const [formData, setFormData] = useState({
     logDate: new Date().toISOString().split("T")[0],
+    workMode: "onsite",
     title: "",
     description: "",
     collaboratorEmails: [] as string[],
@@ -72,6 +73,17 @@ export default function NewWorkLogPage() {
             className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
             required
           />
+
+          <label className="block text-sm font-semibold text-slate-900 mt-4 mb-2">Work Mode</label>
+          <select
+            value={formData.workMode}
+            onChange={(e) => setFormData({ ...formData, workMode: e.target.value })}
+            className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
+            required
+          >
+            <option value="onsite">Onsite</option>
+            <option value="wfh">WFH</option>
+          </select>
         </div>
 
         {/* Title */}
