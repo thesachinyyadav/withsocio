@@ -12,20 +12,24 @@ interface WorkLog {
   created_at: string;
 }
 
+interface GroupedRow {
+  date: string;
+  byPerson: Record<string, WorkLog[]>;
+}
+
 export default function WorkLogsPage() {
   const [logs, setLogs] = useState<WorkLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [page, setPage] = useState(1);
 
   useEffect(() => {
     fetchWorkLogs();
-  }, [page]);
+  }, []);
 
   const fetchWorkLogs = async () => {
     try {
       const token = localStorage.getItem("interns_token");
-      const response = await fetch(`/api/interns/work-logs?page=${page}&limit=10`, {
+      const response = await fetch(`/api/interns/work-logs?page=1&limit=200`, {
         headers: { "x-interns-token": token || "" },
       });
 
@@ -41,13 +45,39 @@ export default function WorkLogsPage() {
     }
   };
 
-  const statusColors: Record<string, string> = {
-    submitted: "bg-blue-50 text-blue-700",
-    in_progress: "bg-slate-100 text-slate-700",
-    completed: "bg-blue-100 text-blue-800",
-    blocked: "bg-slate-100 text-slate-700",
-    reviewed: "bg-slate-100 text-slate-700",
-  };
+  const people: string[] = Array.from(
+    new Set<string>(logs.map((log: WorkLog) => log.created_by_name || "Unknown"))
+  ).sort((a: string, b: string) => a.localeCompare(b));
+
+  const groupedMap = logs.reduce<Map<string, Record<string, WorkLog[]>>>(
+    (map: Map<string, Record<string, WorkLog[]>>, log: WorkLog) => {
+      const date = log.log_date;
+      const person = log.created_by_name || "Unknown";
+      if (!map.has(date)) {
+        map.set(date, {});
+      }
+      const row = map.get(date)!;
+      if (!row[person]) row[person] = [];
+      row[person].push(log);
+      return map;
+    },
+    new Map<string, Record<string, WorkLog[]>>()
+  );
+
+  const groupedEntries: [string, Record<string, WorkLog[]>][] = [];
+  groupedMap.forEach((value: Record<string, WorkLog[]>, key: string) => {
+    groupedEntries.push([key, value]);
+  });
+
+  const groupedRows: GroupedRow[] = groupedEntries
+    .sort(
+      (a: [string, Record<string, WorkLog[]>], b: [string, Record<string, WorkLog[]>]) =>
+        new Date(b[0]).getTime() - new Date(a[0]).getTime()
+    )
+    .map(([date, byPerson]: [string, Record<string, WorkLog[]>]) => ({
+      date,
+      byPerson,
+    }));
 
   if (loading) {
     return (
@@ -59,11 +89,10 @@ export default function WorkLogsPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8 flex justify-between items-center">
+      <div className="mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Work Logs</h1>
-          <p className="text-slate-600">Track daily work and progress</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">WorkLog Page</h1>
+          <p className="text-slate-600">Daily worklogs by person</p>
         </div>
       </div>
 
@@ -73,54 +102,60 @@ export default function WorkLogsPage() {
         </div>
       )}
 
-      {/* Work Logs List */}
-      <div className="space-y-4">
-        {logs.length > 0 ? (
-          logs.map((log) => (
-            <div
-              key={log.id}
-              className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">{log.title}</h3>
-                  <p className="text-slate-600 text-sm">{log.log_date}</p>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[log.progress_status] || "bg-slate-100 text-slate-700"}`}>
-                  {log.progress_status.replace("_", " ")}
-                </span>
-              </div>
-              <p className="text-slate-700 mb-4 line-clamp-2">{log.description}</p>
-              <div className="flex justify-between items-center text-sm text-slate-600">
-                <span>by {log.created_by_name}</span>
-                <span className="text-slate-500">Log ID: {log.id.slice(0, 8)}</span>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="text-center py-12 bg-white border border-slate-200 rounded-xl">
-            <p className="text-slate-600 mb-4">No work logs yet</p>
-          </div>
-        )}
-      </div>
-
-      {/* Pagination */}
-      {logs.length > 0 && (
-        <div className="flex justify-center items-center space-x-4 mt-8">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-50 text-slate-700 rounded-lg transition"
-          >
-            Previous
-          </button>
-          <span className="text-slate-700">Page {page}</span>
-          <button
-            onClick={() => setPage((p) => p + 1)}
-            className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg transition"
-          >
-            Next
-          </button>
+      {logs.length === 0 ? (
+        <div className="text-center py-12 bg-white border border-slate-200 rounded-xl">
+          <p className="text-slate-600 mb-4">No work logs yet</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="min-w-full border-collapse text-sm">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="border-b border-r border-slate-200 px-4 py-3 text-left font-semibold text-slate-800 min-w-[130px]">
+                  Date
+                </th>
+                {people.map((person) => (
+                  <th
+                    key={person}
+                    className="border-b border-r last:border-r-0 border-slate-200 px-4 py-3 text-left font-semibold text-slate-800 min-w-[220px]"
+                  >
+                    {person}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {groupedRows.map((row) => (
+                <tr key={row.date} className="align-top">
+                  <td className="border-b border-r border-slate-200 px-4 py-3 font-medium text-slate-800 whitespace-nowrap">
+                    {row.date}
+                  </td>
+                  {people.map((person) => {
+                    const personLogs = row.byPerson[person] || [];
+                    return (
+                      <td
+                        key={`${row.date}-${person}`}
+                        className="border-b border-r last:border-r-0 border-slate-200 px-4 py-3 text-slate-700"
+                      >
+                        {personLogs.length ? (
+                          <ol className="list-decimal list-inside space-y-1">
+                            {personLogs.map((entry) => (
+                              <li key={entry.id}>
+                                <span className="font-medium text-slate-900">{entry.title}</span>
+                                {entry.description ? `: ${entry.description}` : ""}
+                              </li>
+                            ))}
+                          </ol>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
