@@ -24,6 +24,7 @@ export default function InternReportsPage() {
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [viewerEmail, setViewerEmail] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     try {
@@ -120,6 +121,24 @@ export default function InternReportsPage() {
     closed: "bg-slate-100 text-slate-700",
   };
 
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+
+  const filteredReports = reports.filter((report: Report) => {
+    if (!normalizedSearch) return true;
+
+    const searchable = [
+      report.title,
+      report.category,
+      report.created_by_name || "",
+      report.created_by_email || "",
+      ...(report.assigned_to_emails || []),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return searchable.includes(normalizedSearch);
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -144,9 +163,22 @@ export default function InternReportsPage() {
 
       <div className="mb-4 text-sm text-slate-600">Total reports: {totalReports}</div>
 
+      <div className="mb-6">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+          placeholder="Search by user, email, or problem title/category"
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-800"
+        />
+        <p className="mt-1 text-xs text-slate-500">
+          Showing {filteredReports.length} of {reports.length} reports on this page
+        </p>
+      </div>
+
       <div className="space-y-4">
-        {reports.length > 0 ? (
-          reports.map((report) => {
+        {filteredReports.length > 0 ? (
+          filteredReports.map((report: Report) => {
             const isOwner =
               report.assigned_to_emails?.some(
                 (email) => email.toLowerCase() === viewerEmail
@@ -198,12 +230,18 @@ export default function InternReportsPage() {
           )})
         ) : (
           <div className="text-center py-12 bg-white border border-slate-200 rounded-xl">
-            <p className="text-slate-600 mb-4">No reports yet</p>
-            <Link href="/interns/workspace/reports/new">
-              <button className="text-blue-800 hover:text-blue-900 transition">
-                Submit your first report
-              </button>
-            </Link>
+            {searchQuery.trim() ? (
+              <p className="text-slate-600">No reports match your search</p>
+            ) : (
+              <>
+                <p className="text-slate-600 mb-4">No reports yet</p>
+                <Link href="/interns/workspace/reports/new">
+                  <button className="text-blue-800 hover:text-blue-900 transition">
+                    Submit your first report
+                  </button>
+                </Link>
+              </>
+            )}
           </div>
         )}
       </div>
