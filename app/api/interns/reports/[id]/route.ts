@@ -49,16 +49,38 @@ export async function PATCH(
 
     if (auth.role === "intern") {
       const wantsClaim = claimOwnership === true;
-      if (!wantsClaim) {
+      const wantsStatusUpdate =
+        typeof status === "string" && REPORT_STATUSES.includes(status as any);
+
+      const currentlyAssigned: string[] = Array.isArray(currentReport.assigned_to_emails)
+        ? currentReport.assigned_to_emails
+        : [];
+      const internOwnsReport = currentlyAssigned
+        .map((email: string) => String(email).toLowerCase())
+        .includes(auth.identifier.toLowerCase());
+
+      if (!wantsClaim && !wantsStatusUpdate) {
         return NextResponse.json(
-          { error: "Interns can only claim report ownership" },
+          { error: "Interns can only claim ownership or update status" },
           { status: 403 }
         );
       }
 
-      updates.assigned_to_emails = [auth.identifier];
-      if (currentReport.status === "open") {
-        updates.status = "in_progress";
+      if (wantsClaim) {
+        updates.assigned_to_emails = [auth.identifier];
+        if (currentReport.status === "open" && !wantsStatusUpdate) {
+          updates.status = "in_progress";
+        }
+      }
+
+      if (wantsStatusUpdate) {
+        if (!internOwnsReport && !wantsClaim) {
+          return NextResponse.json(
+            { error: "Claim this report first to update status" },
+            { status: 403 }
+          );
+        }
+        updates.status = status;
       }
     }
 
@@ -96,7 +118,14 @@ export async function PATCH(
     // Create audit log
     await createAuditLog({
       actorEmail: auth.identifier,
-      action: auth.role === "admin" ? "REPORT_UPDATED" : "REPORT_CLAIMED",
+      action:
+        auth.role === "admin"
+          ? "REPORT_UPDATED"
+          : updates.status && updates.assigned_to_emails
+            ? "REPORT_CLAIMED_AND_STATUS_UPDATED"
+            : updates.status
+              ? "REPORT_STATUS_UPDATED"
+              : "REPORT_CLAIMED",
       targetType: "report",
       targetId: id,
       oldStatus: currentReport.status,

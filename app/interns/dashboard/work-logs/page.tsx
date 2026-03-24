@@ -108,16 +108,16 @@ export default function WorkLogsPage() {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="min-w-full border-collapse text-sm">
+          <table className="w-max min-w-full border-collapse text-sm">
             <thead className="bg-slate-50">
               <tr>
-                <th className="border-b border-r border-slate-200 px-4 py-3 text-left font-semibold text-slate-800 min-w-[130px]">
+                <th className="sticky left-0 z-10 bg-slate-50 border-b border-r border-slate-200 px-4 py-3 text-left font-semibold text-slate-800 min-w-[140px]">
                   Date
                 </th>
                 {people.map((person) => (
                   <th
                     key={person}
-                    className="border-b border-r last:border-r-0 border-slate-200 px-4 py-3 text-left font-semibold text-slate-800 min-w-[220px]"
+                    className="border-b border-r last:border-r-0 border-slate-200 px-4 py-3 text-left font-semibold text-slate-800 min-w-[300px]"
                   >
                     {person}
                   </th>
@@ -127,7 +127,7 @@ export default function WorkLogsPage() {
             <tbody>
               {groupedRows.map((row) => (
                 <tr key={row.date} className="align-top">
-                  <td className="border-b border-r border-slate-200 px-4 py-3 font-medium text-slate-800 whitespace-nowrap">
+                  <td className="sticky left-0 z-[1] bg-white border-b border-r border-slate-200 px-4 py-3 font-medium text-slate-800 whitespace-nowrap">
                     {row.date}
                   </td>
                   {people.map((person) => {
@@ -135,7 +135,7 @@ export default function WorkLogsPage() {
                     return (
                       <td
                         key={`${row.date}-${person}`}
-                        className="border-b border-r last:border-r-0 border-slate-200 px-4 py-3 text-slate-700"
+                        className="border-b border-r last:border-r-0 border-slate-200 px-4 py-3 text-slate-700 whitespace-normal break-words"
                       >
                         {personLogs.length ? (
                           <ol className="list-decimal list-inside space-y-1">

@@ -20,6 +20,7 @@ export default function InternReportsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [viewerEmail, setViewerEmail] = useState("");
 
   useEffect(() => {
@@ -81,6 +82,33 @@ export default function InternReportsPage() {
     }
   };
 
+  const handleStatusChange = async (reportId: string, nextStatus: string) => {
+    try {
+      setUpdatingStatusId(reportId);
+      const token = localStorage.getItem("interns_token");
+      const response = await fetch(`/api/interns/reports/${reportId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-interns-token": token || "",
+        },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload?.error || "Could not update status");
+      }
+
+      await fetchReports();
+    } catch (error) {
+      console.error("Status update failed:", error);
+      alert("Claim this report first, then update status.");
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
+
   const statusColors: Record<string, string> = {
     open: "bg-blue-50 text-blue-700",
     in_progress: "bg-slate-100 text-slate-700",
@@ -112,7 +140,13 @@ export default function InternReportsPage() {
 
       <div className="space-y-4">
         {reports.length > 0 ? (
-          reports.map((report) => (
+          reports.map((report) => {
+            const isOwner =
+              report.assigned_to_emails?.some(
+                (email) => email.toLowerCase() === viewerEmail
+              ) || false;
+
+            return (
             <div key={report.id} className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
               <div className="flex justify-between items-start mb-3">
                 <div>
@@ -127,11 +161,22 @@ export default function InternReportsPage() {
                 <p>Raised by: {report.created_by_name || report.created_by_email || "Unknown"}</p>
                 <p>Working on: {report.assigned_to_emails?.length ? report.assigned_to_emails.join(", ") : "Unassigned"}</p>
               </div>
-              <div className="flex items-center justify-between text-sm text-slate-600 mt-4 gap-3">
+              <div className="flex flex-wrap items-center justify-between text-sm text-slate-600 mt-4 gap-3">
                 <span>Priority: {report.priority}</span>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={report.status || "open"}
+                    onChange={(e) => handleStatusChange(report.id, e.target.value)}
+                    disabled={!isOwner || updatingStatusId === report.id}
+                    className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400"
+                  >
+                    <option value="open">open</option>
+                    <option value="in_progress">in progress</option>
+                    <option value="resolved">resolved</option>
+                    <option value="closed">closed</option>
+                  </select>
                   {report.status !== "resolved" && report.status !== "closed" &&
-                    !report.assigned_to_emails?.some((email) => email.toLowerCase() === viewerEmail) && (
+                    !isOwner && (
                       <button
                         onClick={() => handleClaim(report.id)}
                         disabled={claimingId === report.id}
@@ -144,7 +189,7 @@ export default function InternReportsPage() {
                 </div>
               </div>
             </div>
-          ))
+          )})
         ) : (
           <div className="text-center py-12 bg-white border border-slate-200 rounded-xl">
             <p className="text-slate-600 mb-4">No reports yet</p>
