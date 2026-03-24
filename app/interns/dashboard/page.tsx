@@ -77,6 +77,8 @@ export default function AdminDashboard() {
   const [data, setData] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reminderLoading, setReminderLoading] = useState<string | null>(null);
+  const [reminderError, setReminderError] = useState("");
 
   useEffect(() => {
     fetchDashboard();
@@ -99,6 +101,39 @@ export default function AdminDashboard() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendReminder = async (internEmail: string) => {
+    setReminderError("");
+    try {
+      setReminderLoading(internEmail);
+      const token = localStorage.getItem("interns_token") || "";
+
+      const response = await fetch("/api/interns/admin/send-work-log-reminder", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-interns-token": token,
+        },
+        body: JSON.stringify({
+          internEmails: [internEmail],
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setReminderError(payload?.error || "Failed to send reminder");
+        return;
+      }
+
+      alert("Reminder email sent successfully!");
+    } catch (err) {
+      console.error(err);
+      setReminderError("Could not send reminder right now");
+    } finally {
+      setReminderLoading(null);
     }
   };
 
@@ -196,12 +231,26 @@ export default function AdminDashboard() {
           <h2 className="text-lg font-semibold text-slate-900">Missed Today&apos;s WorkLog</h2>
           <span className="text-sm text-slate-600">{data.missedWorklogToday?.length || 0} interns</span>
         </div>
+        {reminderError && (
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-sm">
+            {reminderError}
+          </div>
+        )}
         {data.missedWorklogToday?.length ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {data.missedWorklogToday.map((intern) => (
-              <div key={intern.email} className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="font-medium text-slate-900">{intern.fullName}</p>
-                <p className="text-xs text-slate-600 mt-1">{intern.email}</p>
+              <div key={intern.email} className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-slate-900">{intern.fullName}</p>
+                  <p className="text-xs text-slate-600 mt-1">{intern.email}</p>
+                </div>
+                <button
+                  onClick={() => handleSendReminder(intern.email)}
+                  disabled={reminderLoading === intern.email}
+                  className="ml-3 px-3 py-1 rounded-lg text-xs font-semibold transition bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50 hover:disabled:bg-blue-50 whitespace-nowrap"
+                >
+                  {reminderLoading === intern.email ? "Sending..." : "Remind"}
+                </button>
               </div>
             ))}
           </div>

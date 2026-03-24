@@ -26,6 +26,13 @@ export default function InternsPage() {
   const [showMeetScheduler, setShowMeetScheduler] = useState(false);
   const [meetLoading, setMeetLoading] = useState(false);
   const [meetError, setMeetError] = useState("");
+  const [showMailAllModal, setShowMailAllModal] = useState(false);
+  const [mailLoading, setMailLoading] = useState(false);
+  const [mailError, setMailError] = useState("");
+  const [mailForm, setMailForm] = useState({
+    subject: "",
+    message: "",
+  });
   const [meetForm, setMeetForm] = useState({
     title: "Intern Weekly Sync",
     agenda: "Project updates and blockers",
@@ -156,6 +163,64 @@ export default function InternsPage() {
     }
   };
 
+  const handleMailAllInterns = async () => {
+    setMailError("");
+
+    if (!mailForm.subject.trim()) {
+      setMailError("Subject is required.");
+      return;
+    }
+
+    if (!mailForm.message.trim()) {
+      setMailError("Message is required.");
+      return;
+    }
+
+    try {
+      setMailLoading(true);
+      const token = localStorage.getItem("interns_token") || "";
+
+      // Convert newlines to <br/> tags for HTML
+      const htmlMessage = mailForm.message
+        .split("\n")
+        .map((line) => `<p>${line}</p>`)
+        .join("");
+
+      const response = await fetch("/api/interns/admin/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-interns-token": token,
+        },
+        body: JSON.stringify({
+          sendToAllHiredInterns: true,
+          useSocioTemplate: true,
+          subject: mailForm.subject,
+          htmlContent: htmlMessage,
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setMailError(payload?.error || "Failed to send emails.");
+        return;
+      }
+
+      const summary = payload?.summary;
+      alert(
+        `Email sent successfully!\nSent to: ${summary?.successCount}\nFailed: ${summary?.failCount}`
+      );
+      setShowMailAllModal(false);
+      setMailForm({ subject: "", message: "" });
+    } catch (err) {
+      console.error(err);
+      setMailError("Could not send emails right now.");
+    } finally {
+      setMailLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -204,6 +269,16 @@ export default function InternsPage() {
           className="px-4 py-2 rounded-lg text-sm font-medium transition bg-blue-800 text-white hover:bg-blue-900"
         >
           Schedule Meeting ({selectedInternEmails.length})
+        </button>
+
+        <button
+          onClick={() => {
+            setMailError("");
+            setShowMailAllModal(true);
+          }}
+          className="px-4 py-2 rounded-lg text-sm font-medium transition bg-green-700 text-white hover:bg-green-800"
+        >
+          Mail All Interns
         </button>
       </div>
 
@@ -329,7 +404,75 @@ export default function InternsPage() {
         </div>
       )}
 
-      {/* Interns Grid */}
+      {showMailAllModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900">Mail All Interns</h2>
+              <button
+                onClick={() => setShowMailAllModal(false)}
+                className="text-sm font-semibold text-slate-600 hover:text-slate-900"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">Subject</label>
+                <input
+                  type="text"
+                  placeholder="Email subject"
+                  value={mailForm.subject}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setMailForm((prev) => ({ ...prev, subject: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-600"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">Message</label>
+                <textarea
+                  placeholder="Type your message here. Use line breaks for paragraphs."
+                  value={mailForm.message}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setMailForm((prev) => ({ ...prev, message: e.target.value }))
+                  }
+                  rows={6}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-600"
+                />
+              </div>
+
+              <div className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-3">
+                📧 This email will be sent to <strong>all hired interns</strong> and will be wrapped in the SOCIO branded template.
+              </div>
+
+              {mailError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {mailError}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowMailAllModal(false)}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleMailAllInterns}
+                  disabled={mailLoading}
+                  className="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 disabled:bg-green-500"
+                >
+                  {mailLoading ? "Sending..." : "Send to All Interns"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {interns.length > 0 ? (
           interns.map((intern) => (

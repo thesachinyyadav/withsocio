@@ -14,7 +14,7 @@ const escapeHtml = (value: string): string =>
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
-const wrapInSocioTemplate = (htmlContent: string, senderEmail: string): string => {
+const wrapInSocioTemplate = (htmlContent: string): string => {
   // Remove any outer HTML/body tags from htmlContent if present
   let cleanContent = htmlContent
     .replace(/<\/?html[^>]*>/gi, "")
@@ -122,7 +122,7 @@ const wrapInSocioTemplate = (htmlContent: string, senderEmail: string): string =
             <div class="footer-links">
             <a href="https://live.withsocio.com">Visit SOCIO</a>
             <span>|</span>
-                <a href="mailto:${escapeHtml(senderEmail)}?subject=UNSUBSCRIBE">Unsubscribe</a>
+                <a href="mailto:interns@socio.tech?subject=UNSUBSCRIBE">Unsubscribe</a>
             </div>
             <div class="divider"></div>
             <div class="footer-text">
@@ -137,19 +137,13 @@ const wrapInSocioTemplate = (htmlContent: string, senderEmail: string): string =
 };
 
 /**
- * POST /api/interns/admin/send-email
- * Send templated email to selected interns or all hired interns
+ * POST /api/interns/admin/send-work-log-reminder
+ * Send work log submission reminder email to specific interns
  * 
  * Request body:
  * {
- *   "recipientEmails": ["intern1@example.com", "intern2@example.com"],
- *   "subject": "Important Update",
- *   "htmlContent": "<h1>Update</h1><p>Content here</p>",
- *   "sendToAllHiredInterns": false,
- *   "useSocioTemplate": true,
- *   "templateVariables": {
- *     "intern1@example.com": { "name": "John", "points": 100 }
- *   }
+ *   "internEmails": ["intern1@example.com"],
+ *   "customMessage": "Optional custom message here"
  * }
  */
 export async function POST(request: NextRequest) {
@@ -158,76 +152,42 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { 
-      recipientEmails, 
-      subject, 
-      htmlContent, 
-      templateVariables,
-      sendToAllHiredInterns = false,
-      useSocioTemplate = false
-    } = body;
+    const { internEmails, customMessage } = body;
 
-    let finalRecipientEmails: string[] = [];
-
-    // Get recipient list
-    if (sendToAllHiredInterns) {
-      // Fetch all hired interns
-      const { data: hiredInterns, error } = await supabaseAdmin
-        .from("internship_applications")
-        .select("email")
-        .eq("status", "hired");
-
-      if (error) {
-        return NextResponse.json(
-          { error: "Failed to fetch hired interns: " + error.message },
-          { status: 500 }
-        );
-      }
-
-      finalRecipientEmails = (hiredInterns || [])
-        .map((i: any) => String(i.email || "").trim().toLowerCase())
-        .filter(Boolean);
-    } else if (recipientEmails && Array.isArray(recipientEmails) && recipientEmails.length > 0) {
-      finalRecipientEmails = recipientEmails.map((e: string) => String(e || "").trim().toLowerCase()).filter(Boolean);
-    } else {
+    if (!internEmails || !Array.isArray(internEmails) || internEmails.length === 0) {
       return NextResponse.json(
-        { error: "Either recipientEmails array or sendToAllHiredInterns flag is required" },
+        { error: "internEmails array is required" },
         { status: 400 }
       );
     }
 
-    if (!subject || !htmlContent) {
+    const recipientEmails = internEmails
+      .map((e: string) => String(e || "").trim().toLowerCase())
+      .filter(Boolean);
+
+    if (recipientEmails.length === 0) {
       return NextResponse.json(
-        { error: "subject and htmlContent are required" },
+        { error: "No valid email addresses provided" },
         { status: 400 }
       );
     }
+
+    const subject = "Reminder: Daily Work Log Submission";
+    const messageBody = customMessage || "You missed today's work log submission. Please submit your work log to keep your streak going!";
+
+    const htmlContent = `<p>${escapeHtml(messageBody)}</p>`;
+    const wrappedHtml = wrapInSocioTemplate(htmlContent);
 
     const results = [];
     let successCount = 0;
     let failCount = 0;
 
-    // Prepare email content wrapper
-    let baseContent = htmlContent;
-    if (useSocioTemplate) {
-      baseContent = wrapInSocioTemplate(htmlContent, "interns@socio.tech");
-    }
-
     // Send emails to each recipient
-    for (const email of finalRecipientEmails) {
-      // Replace variables if provided
-      let finalContent = baseContent;
-      if (templateVariables && templateVariables[email]) {
-        const vars = templateVariables[email];
-        Object.entries(vars).forEach(([key, value]) => {
-          finalContent = finalContent.replace(new RegExp(`{{${key}}}`, "g"), String(value));
-        });
-      }
-
+    for (const email of recipientEmails) {
       const result = await sendEmail({
         to: email,
         subject,
-        html: finalContent,
+        html: wrappedHtml,
         adminEmail: auth.identifier,
       });
 
@@ -243,46 +203,22 @@ export async function POST(request: NextRequest) {
     // Audit log
     await createAuditLog({
       actorEmail: auth.identifier,
-      action: sendToAllHiredInterns ? "MASS_EMAIL_ALL_INTERNS_SENT" : "MASS_EMAIL_SENT",
+      action: "WORK_LOG_REMINDER_SENT",
       targetType: "email",
-      notes: `Sent to ${successCount} recipients, ${failCount} failed`,
+      notes: `Sent work log reminders to ${successCount} interns, ${failCount} failed`,
     });
 
     return NextResponse.json({
       success: true,
       summary: {
-        total: finalRecipientEmails.length,
+        total: recipientEmails.length,
         successCount,
         failCount,
       },
       results,
     });
   } catch (error) {
-    console.error("Email error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
-
-/**
- * GET /api/interns/admin/send-email
- * Get list of email templates
- */
-export async function GET(request: NextRequest) {
-  const auth = await authenticateRequest(request, "admin");
-  if (!auth.ok) return auth.response;
-
-  try {
-    const { data: templates, error } = await supabaseAdmin
-      .from("intern_email_templates")
-      .select("*")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    return NextResponse.json({ data: templates || [] });
-  } catch (error) {
-    console.error("Fetch error:", error);
+    console.error("Reminder email error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
