@@ -4,7 +4,7 @@ import {
   authenticateRequest,
   sendEmail,
   createAuditLog,
-} from "../../../../_utils";
+} from "../../_utils";
 
 /**
  * POST /api/interns/admin/send-email

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin, authenticateRequest, parsePage } from "../../../../_utils";
+import { supabaseAdmin, authenticateRequest, parsePage } from "../../_utils";
 
 /**
  * GET /api/interns/admin/hired-people
