@@ -45,24 +45,17 @@ export default function WorkLogsPage() {
     }
   };
 
-  const people: string[] = Array.from(
-    new Set<string>(logs.map((log: WorkLog) => log.created_by_name || "Unknown"))
-  ).sort((a: string, b: string) => a.localeCompare(b));
+  const groupedMap = logs.reduce((map: Map<string, Record<string, WorkLog[]>>, log: WorkLog) => {
+    const date = log.log_date;
+    const person = log.created_by_name || "Unknown";
 
-  const groupedMap = logs.reduce<Map<string, Record<string, WorkLog[]>>>(
-    (map: Map<string, Record<string, WorkLog[]>>, log: WorkLog) => {
-      const date = log.log_date;
-      const person = log.created_by_name || "Unknown";
-      if (!map.has(date)) {
-        map.set(date, {});
-      }
-      const row = map.get(date)!;
-      if (!row[person]) row[person] = [];
-      row[person].push(log);
-      return map;
-    },
-    new Map<string, Record<string, WorkLog[]>>()
-  );
+    if (!map.has(date)) map.set(date, {});
+    const dateBucket = map.get(date)!;
+    if (!dateBucket[person]) dateBucket[person] = [];
+    dateBucket[person].push(log);
+
+    return map;
+  }, new Map<string, Record<string, WorkLog[]>>());
 
   const groupedEntries: [string, Record<string, WorkLog[]>][] = [];
   groupedMap.forEach((value: Record<string, WorkLog[]>, key: string) => {
@@ -70,19 +63,21 @@ export default function WorkLogsPage() {
   });
 
   const groupedRows: GroupedRow[] = groupedEntries
-    .sort(
-      (a: [string, Record<string, WorkLog[]>], b: [string, Record<string, WorkLog[]>]) =>
-        new Date(b[0]).getTime() - new Date(a[0]).getTime()
-    )
-    .map(([date, byPerson]: [string, Record<string, WorkLog[]>]) => ({
-      date,
-      byPerson,
-    }));
+    .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime())
+    .map(([date, byPerson]) => ({ date, byPerson }));
+
+  const statusStyle: Record<string, string> = {
+    submitted: "bg-blue-100 text-blue-800",
+    in_progress: "bg-slate-200 text-slate-700",
+    completed: "bg-blue-200 text-blue-900",
+    blocked: "bg-slate-200 text-slate-700",
+    reviewed: "bg-blue-100 text-blue-900",
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-800"></div>
       </div>
     );
   }
@@ -107,55 +102,56 @@ export default function WorkLogsPage() {
           <p className="text-slate-600 mb-4">No work logs yet</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-max min-w-full border-collapse text-sm">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="sticky left-0 z-10 bg-slate-50 border-b border-r border-slate-200 px-4 py-3 text-left font-semibold text-slate-800 min-w-[140px]">
-                  Date
-                </th>
-                {people.map((person) => (
-                  <th
-                    key={person}
-                    className="border-b border-r last:border-r-0 border-slate-200 px-4 py-3 text-left font-semibold text-slate-800 min-w-[300px]"
-                  >
-                    {person}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {groupedRows.map((row) => (
-                <tr key={row.date} className="align-top">
-                  <td className="sticky left-0 z-[1] bg-white border-b border-r border-slate-200 px-4 py-3 font-medium text-slate-800 whitespace-nowrap">
-                    {row.date}
-                  </td>
-                  {people.map((person) => {
+        <div className="space-y-5">
+          {groupedRows.map((row) => {
+            const peopleInDate = Object.keys(row.byPerson).sort((a, b) => a.localeCompare(b));
+            const totalItems = peopleInDate.reduce((sum, person) => sum + row.byPerson[person].length, 0);
+
+            return (
+              <section key={row.date} className="rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-5 py-4">
+                  <div>
+                    <h2 className="text-base font-semibold text-slate-900">{row.date}</h2>
+                    <p className="text-xs text-slate-600">{peopleInDate.length} people • {totalItems} entries</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4">
+                  {peopleInDate.map((person) => {
                     const personLogs = row.byPerson[person] || [];
                     return (
-                      <td
-                        key={`${row.date}-${person}`}
-                        className="border-b border-r last:border-r-0 border-slate-200 px-4 py-3 text-slate-700 whitespace-normal break-words"
-                      >
-                        {personLogs.length ? (
-                          <ol className="list-decimal list-inside space-y-1">
-                            {personLogs.map((entry) => (
-                              <li key={entry.id}>
-                                <span className="font-medium text-slate-900">{entry.title}</span>
-                                {entry.description ? `: ${entry.description}` : ""}
-                              </li>
-                            ))}
-                          </ol>
-                        ) : (
-                          <span className="text-slate-400">—</span>
-                        )}
-                      </td>
+                      <article key={`${row.date}-${person}`} className="rounded-lg border border-slate-200 bg-white">
+                        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                          <p className="font-semibold text-slate-900">{person}</p>
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                            {personLogs.length} {personLogs.length > 1 ? "logs" : "log"}
+                          </span>
+                        </div>
+
+                        <div className="space-y-3 p-4">
+                          {personLogs.map((entry) => (
+                            <div key={entry.id} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                              <div className="flex items-start justify-between gap-3">
+                                <p className="text-sm font-medium text-slate-900">{entry.title}</p>
+                                <span
+                                  className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusStyle[entry.progress_status] || "bg-slate-100 text-slate-700"}`}
+                                >
+                                  {entry.progress_status.replace("_", " ")}
+                                </span>
+                              </div>
+                              {entry.description && (
+                                <p className="mt-1 text-xs text-slate-600">{entry.description}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </article>
                     );
                   })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                </div>
+              </section>
+            );
+          })}
         </div>
       )}
     </div>

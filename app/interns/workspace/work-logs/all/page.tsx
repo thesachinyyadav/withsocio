@@ -17,6 +17,10 @@ export default function AllWorkLogsPage() {
   const [logs, setLogs] = useState<WorkLog[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const sortedLogs = [...logs].sort(
+    (a, b) => new Date(b.log_date).getTime() - new Date(a.log_date).getTime()
+  );
+
   useEffect(() => {
     const fetchAllLogs = async () => {
       try {
@@ -44,7 +48,7 @@ export default function AllWorkLogsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-700" />
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-800" />
       </div>
     );
   }
@@ -88,7 +92,7 @@ export default function AllWorkLogsPage() {
               </tr>
             </thead>
             <tbody>
-              {logs.map((log) => (
+              {sortedLogs.map((log) => (
                 <tr key={log.id} className="align-top">
                   <td className="border-b border-r border-slate-200 px-4 py-3 text-slate-800">
                     {log.created_by_name || log.created_by_email || "Unknown"}

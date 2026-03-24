@@ -38,7 +38,7 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
         { href: "/interns/workspace", label: "Workspace" },
         { href: "/interns/workspace/work-logs", label: "Work Logs" },
         { href: "/interns/workspace/reports", label: "Reports" },
-        { href: "/interns/workspace/leaderboard", label: "Leaderboard" },
+        { href: "/interns/workspace/leaderboard", label: "Profile" },
       ];
 
   return (
@@ -57,7 +57,7 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
             />
             <span className="text-slate-900 font-bold tracking-tight">Workplace</span>
             {isAdmin && (
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+              <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">
                 Admin
               </span>
             )}
@@ -73,7 +73,7 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
                   href={item.href}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
                     isActive
-                      ? "bg-blue-100 text-blue-700"
+                      ? "bg-blue-200 text-blue-800"
                       : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
@@ -105,7 +105,7 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="px-4 py-2 text-sm bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition"
+              className="px-4 py-2 text-sm bg-blue-800 hover:bg-blue-900 text-white rounded-lg transition"
             >
               Logout
             </button>
@@ -123,7 +123,7 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
                   href={item.href}
                   className={`block px-4 py-2 rounded-lg text-sm transition ${
                     isActive
-                      ? "bg-blue-100 text-blue-700"
+                      ? "bg-blue-200 text-blue-800"
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                   onClick={() => setShowMenu(false)}

@@ -43,7 +43,7 @@ export default function InternWorkLogsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-800"></div>
       </div>
     );
   }
@@ -74,7 +74,7 @@ export default function InternWorkLogsPage() {
             View All WorkLogs
           </Link>
           <Link href="/interns/workspace/work-logs/new">
-            <button className="px-6 py-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg transition">
+            <button className="px-6 py-2 bg-blue-800 hover:bg-blue-900 text-white font-semibold rounded-lg transition">
               New Log
             </button>
           </Link>
@@ -91,7 +91,7 @@ export default function InternWorkLogsPage() {
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
             setSelectedDate(e.target.value)
           }
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-800"
         >
           <option value="all">All dates</option>
           {uniqueDates.map((date) => (
@@ -113,7 +113,7 @@ export default function InternWorkLogsPage() {
                 </div>
                 <p className="text-xs text-slate-600">{log.log_date}</p>
                 <p className="text-xs text-slate-600">{log.total_hours ? `${log.total_hours}h` : "--"}</p>
-                <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-[11px] font-semibold text-center">
+                <span className="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full text-[11px] font-semibold text-center">
                   {log.progress_status.replace("_", " ")}
                 </span>
               </div>
@@ -124,7 +124,7 @@ export default function InternWorkLogsPage() {
           <div className="text-center py-12 bg-white border border-slate-200 rounded-xl">
             <p className="text-slate-600 mb-4">No work logs for selected date</p>
             <Link href="/interns/workspace/work-logs/new">
-              <button className="text-blue-700 hover:text-blue-800 transition">
+              <button className="text-blue-800 hover:text-blue-900 transition">
                 Create your first work log
               </button>
             </Link>

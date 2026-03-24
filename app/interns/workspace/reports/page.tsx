@@ -19,6 +19,8 @@ export default function InternReportsPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalReports, setTotalReports] = useState(0);
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [viewerEmail, setViewerEmail] = useState("");
@@ -47,6 +49,8 @@ export default function InternReportsPage() {
       if (response.ok) {
         const data = await response.json();
         setReports(data.data || []);
+        setTotalPages(data?.pagination?.pages || 1);
+        setTotalReports(data?.pagination?.total || 0);
       }
     } catch (err) {
       console.error("Failed to fetch reports:", err);
@@ -110,16 +114,16 @@ export default function InternReportsPage() {
   };
 
   const statusColors: Record<string, string> = {
-    open: "bg-blue-50 text-blue-700",
+    open: "bg-blue-100 text-blue-800",
     in_progress: "bg-slate-100 text-slate-700",
-    resolved: "bg-blue-100 text-blue-800",
+    resolved: "bg-blue-200 text-blue-900",
     closed: "bg-slate-100 text-slate-700",
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-800"></div>
       </div>
     );
   }
@@ -132,11 +136,13 @@ export default function InternReportsPage() {
           <p className="text-slate-600">See all reports, current owner, and status</p>
         </div>
         <Link href="/interns/workspace/reports/new">
-          <button className="px-6 py-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg transition">
+          <button className="px-6 py-2 bg-blue-800 hover:bg-blue-900 text-white font-semibold rounded-lg transition">
             New Report
           </button>
         </Link>
       </div>
+
+      <div className="mb-4 text-sm text-slate-600">Total reports: {totalReports}</div>
 
       <div className="space-y-4">
         {reports.length > 0 ? (
@@ -180,7 +186,7 @@ export default function InternReportsPage() {
                       <button
                         onClick={() => handleClaim(report.id)}
                         disabled={claimingId === report.id}
-                        className="px-3 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 disabled:bg-blue-400 text-white text-xs font-semibold transition"
+                        className="px-3 py-1.5 rounded-lg bg-blue-800 hover:bg-blue-900 disabled:bg-blue-500 text-white text-xs font-semibold transition"
                       >
                         {claimingId === report.id ? "Claiming..." : "I’m working on this"}
                       </button>
@@ -194,13 +200,35 @@ export default function InternReportsPage() {
           <div className="text-center py-12 bg-white border border-slate-200 rounded-xl">
             <p className="text-slate-600 mb-4">No reports yet</p>
             <Link href="/interns/workspace/reports/new">
-              <button className="text-blue-700 hover:text-blue-800 transition">
+              <button className="text-blue-800 hover:text-blue-900 transition">
                 Submit your first report
               </button>
             </Link>
           </div>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="text-sm font-medium text-slate-700">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
