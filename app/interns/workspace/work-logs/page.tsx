@@ -16,16 +16,16 @@ interface WorkLog {
 export default function InternWorkLogsPage() {
   const [logs, setLogs] = useState<WorkLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
+  const [selectedDate, setSelectedDate] = useState("all");
 
   useEffect(() => {
     fetchWorkLogs();
-  }, [page]);
+  }, []);
 
   const fetchWorkLogs = async () => {
     try {
       const token = localStorage.getItem("interns_token");
-      const response = await fetch(`/api/interns/work-logs?page=${page}&limit=10`, {
+      const response = await fetch(`/api/interns/work-logs?page=1&limit=200`, {
         headers: { "x-interns-token": token || "" },
       });
 
@@ -48,12 +48,23 @@ export default function InternWorkLogsPage() {
     );
   }
 
+  const uniqueDates: string[] = Array.from(
+    new Set<string>(logs.map((log: WorkLog) => log.log_date))
+  ).sort(
+    (a: string, b: string) => new Date(b).getTime() - new Date(a).getTime()
+  );
+
+  const filteredLogs =
+    selectedDate === "all"
+      ? logs
+      : logs.filter((log: WorkLog) => log.log_date === selectedDate);
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">My Work Logs</h1>
-          <p className="text-slate-600">Track your submitted work</p>
+          <p className="text-slate-600">Look at your entries and add your entries</p>
         </div>
         <Link href="/interns/workspace/work-logs/new">
           <button className="px-6 py-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg transition">
@@ -62,9 +73,30 @@ export default function InternWorkLogsPage() {
         </Link>
       </div>
 
+      <div className="mb-5 flex items-center gap-3">
+        <label htmlFor="worklog-date" className="text-sm font-medium text-slate-700">
+          Date
+        </label>
+        <select
+          id="worklog-date"
+          value={selectedDate}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            setSelectedDate(e.target.value)
+          }
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600"
+        >
+          <option value="all">All dates</option>
+          {uniqueDates.map((date) => (
+            <option key={date} value={date}>
+              {date}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="space-y-3">
-        {logs.length > 0 ? (
-          logs.map((log) => (
+        {filteredLogs.length > 0 ? (
+          filteredLogs.map((log) => (
             <div key={log.id} className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
               <div className="grid grid-cols-1 md:grid-cols-[1.5fr_0.8fr_0.8fr_auto] gap-3 items-center">
                 <div className="min-w-0">
@@ -82,7 +114,7 @@ export default function InternWorkLogsPage() {
           ))
         ) : (
           <div className="text-center py-12 bg-white border border-slate-200 rounded-xl">
-            <p className="text-slate-600 mb-4">No work logs yet</p>
+            <p className="text-slate-600 mb-4">No work logs for selected date</p>
             <Link href="/interns/workspace/work-logs/new">
               <button className="text-blue-700 hover:text-blue-800 transition">
                 Create your first work log
