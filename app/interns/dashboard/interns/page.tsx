@@ -178,8 +178,8 @@ export default function InternsPage() {
         </div>
       )}
 
-      {/* Sort Options */}
-      <div className="mb-6 flex gap-2">
+      {/* Sort + Actions */}
+      <div className="mb-6 flex flex-wrap items-center gap-2">
         {["points", "streak", "joined"].map((option) => (
           <button
             key={option}
@@ -195,122 +195,139 @@ export default function InternsPage() {
             {option === "joined" && "Recently Joined"}
           </button>
         ))}
+
+        <button
+          onClick={() => {
+            setMeetError("");
+            setShowMeetScheduler(true);
+          }}
+          className="px-4 py-2 rounded-lg text-sm font-medium transition bg-blue-800 text-white hover:bg-blue-900"
+        >
+          Schedule Meeting ({selectedInternEmails.length})
+        </button>
       </div>
 
-      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-sm text-slate-700">
-            Selected interns: <span className="font-semibold">{selectedInternEmails.length}</span>
-          </div>
-          <button
-            onClick={() => {
-              setMeetError("");
-              setShowMeetScheduler((prev) => !prev);
-            }}
-            className="rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-900"
-          >
-            {showMeetScheduler ? "Close Scheduler" : "Schedule GMeet"}
-          </button>
-        </div>
-
-        {showMeetScheduler && (
-          <div className="mt-4 space-y-4 border-t border-slate-200 pt-4">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-700">Meeting Title</label>
-                <input
-                  type="text"
-                  value={meetForm.title}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setMeetForm((prev) => ({ ...prev, title: e.target.value }))
-                  }
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-700">Agenda</label>
-                <input
-                  type="text"
-                  value={meetForm.agenda}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setMeetForm((prev) => ({ ...prev, agenda: e.target.value }))
-                  }
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-700">Date</label>
-                <input
-                  type="date"
-                  value={meetForm.date}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setMeetForm((prev) => ({ ...prev, date: e.target.value }))
-                  }
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-700">Time</label>
-                <input
-                  type="time"
-                  value={meetForm.time}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setMeetForm((prev) => ({ ...prev, time: e.target.value }))
-                  }
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-700">Duration (mins)</label>
-                <input
-                  type="number"
-                  min={15}
-                  max={240}
-                  value={meetForm.durationMinutes}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setMeetForm((prev) => ({ ...prev, durationMinutes: e.target.value }))
-                  }
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-700">Also invite founders?</label>
-              <select
-                value={meetForm.founderInviteOption}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  setMeetForm((prev) => ({ ...prev, founderInviteOption: e.target.value }))
-                }
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800 md:w-[420px]"
-              >
-                <option value="none">No</option>
-                <option value="both_founders">Yes - add both founders (surya.s + sachin.yadav)</option>
-                <option value="socio_mail">Yes - add thesocioblr@gmail.com</option>
-              </select>
-            </div>
-
-            {meetError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {meetError}
-              </div>
-            )}
-
-            <div className="flex justify-end">
+      {showMeetScheduler && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-xl rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900">Schedule GMeet</h2>
               <button
-                onClick={handleScheduleMeet}
-                disabled={meetLoading}
-                className="rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 disabled:bg-blue-500"
+                onClick={() => setShowMeetScheduler(false)}
+                className="text-sm font-semibold text-slate-600 hover:text-slate-900"
               >
-                {meetLoading ? "Scheduling..." : "Schedule & Send Invites"}
+                Close
               </button>
             </div>
+
+            <div className="space-y-4">
+              <div className="text-xs text-slate-600">
+                Selected interns: <span className="font-semibold text-slate-900">{selectedInternEmails.length}</span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Meeting Title</label>
+                  <input
+                    type="text"
+                    value={meetForm.title}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setMeetForm((prev) => ({ ...prev, title: e.target.value }))
+                    }
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Agenda</label>
+                  <input
+                    type="text"
+                    value={meetForm.agenda}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setMeetForm((prev) => ({ ...prev, agenda: e.target.value }))
+                    }
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Date</label>
+                  <input
+                    type="date"
+                    value={meetForm.date}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setMeetForm((prev) => ({ ...prev, date: e.target.value }))
+                    }
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Time</label>
+                  <input
+                    type="time"
+                    value={meetForm.time}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setMeetForm((prev) => ({ ...prev, time: e.target.value }))
+                    }
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Duration (mins)</label>
+                  <input
+                    type="number"
+                    min={15}
+                    max={240}
+                    value={meetForm.durationMinutes}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setMeetForm((prev) => ({ ...prev, durationMinutes: e.target.value }))
+                    }
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">Also invite founders?</label>
+                <select
+                  value={meetForm.founderInviteOption}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setMeetForm((prev) => ({ ...prev, founderInviteOption: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-800"
+                >
+                  <option value="none">No</option>
+                  <option value="both_founders">Yes - add both founders (surya.s + sachin.yadav)</option>
+                  <option value="socio_mail">Yes - add thesocioblr@gmail.com</option>
+                </select>
+              </div>
+
+              {meetError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {meetError}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowMeetScheduler(false)}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleScheduleMeet}
+                  disabled={meetLoading}
+                  className="rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 disabled:bg-blue-500"
+                >
+                  {meetLoading ? "Scheduling..." : "Schedule & Send Invites"}
+                </button>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Interns Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
