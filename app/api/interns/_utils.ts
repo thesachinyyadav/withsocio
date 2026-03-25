@@ -113,47 +113,50 @@ export function buildSocioEmailHtml(input: {
     body {
       margin: 0;
       padding: 0;
-      background: #f5f7fb;
+      background: #f8fafc;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      color: #1f2937;
+      color: #0f172a;
     }
     .wrap {
       width: 100%;
-      padding: 24px 12px;
+      padding: 28px 12px;
       box-sizing: border-box;
     }
     .card {
-      max-width: 640px;
+      max-width: 620px;
       margin: 0 auto;
       background: #ffffff;
-      border: 1px solid #e5e7eb;
+      border: 1px solid #e2e8f0;
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 4px 18px rgba(2, 20, 55, 0.06);
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
     }
     .header {
-      background: linear-gradient(135deg, #154CB3 0%, #1a56c4 100%);
-      padding: 28px 24px;
-      color: #ffffff;
+      background: #ffffff;
+      padding: 26px 24px 18px;
+      color: #0f172a;
       text-align: center;
+      border-bottom: 1px solid #e2e8f0;
     }
     .brand {
       margin: 0;
-      font-size: 24px;
+      font-size: 30px;
       line-height: 1.2;
-      font-weight: 800;
-      letter-spacing: 0.5px;
+      font-weight: 900;
+      letter-spacing: 0.8px;
     }
     .subtitle {
-      margin: 8px 0 0;
-      font-size: 13px;
-      opacity: 0.92;
+      margin: 10px 0 0;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+      letter-spacing: 0.3px;
     }
     .content {
-      padding: 28px 24px;
+      padding: 24px;
       font-size: 15px;
-      line-height: 1.75;
-      color: #334155;
+      line-height: 1.7;
+      color: #1e293b;
     }
     .content p {
       margin: 0 0 14px;
@@ -162,12 +165,12 @@ export function buildSocioEmailHtml(input: {
       margin-bottom: 0;
     }
     .footer {
-      padding: 18px 24px 22px;
-      border-top: 1px solid #e5e7eb;
+      padding: 16px 24px 20px;
+      border-top: 1px solid #e2e8f0;
       color: #64748b;
       font-size: 12px;
       text-align: center;
-      background: #fafcff;
+      background: #ffffff;
     }
     .footer a {
       color: #154CB3;

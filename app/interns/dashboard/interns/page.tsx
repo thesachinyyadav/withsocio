@@ -40,7 +40,7 @@ export default function InternsPage() {
     title: "Intern Weekly Sync",
     agenda: "Project updates and blockers",
     date: new Date().toISOString().split("T")[0],
-    time: "18:00",
+    time: "12:00",
     durationMinutes: "30",
     founderInviteOption: "none",
   });
@@ -89,12 +89,12 @@ export default function InternsPage() {
     return String(value);
   };
 
-  const toggleInternSelection = (email: string) => {
-    setSelectedInternEmails((current) => {
+  const toggleMeetIntern = (email: string) => {
+    setSelectedInternEmails((current: string[]) => {
       const normalized = String(email || "").trim().toLowerCase();
       if (!normalized) return current;
       if (current.includes(normalized)) {
-        return current.filter((item) => item !== normalized);
+        return current.filter((item: string) => item !== normalized);
       }
       return [...current, normalized];
     });
@@ -166,6 +166,15 @@ export default function InternsPage() {
     }
   };
 
+  const openMeetScheduler = () => {
+    setMeetError("");
+    const allInternEmails = interns
+      .map((intern: Intern) => String(intern.email || "").trim().toLowerCase())
+      .filter(Boolean);
+    setSelectedInternEmails(allInternEmails);
+    setShowMeetScheduler(true);
+  };
+
   const handleMailAllInterns = async () => {
     setMailError("");
 
@@ -191,7 +200,7 @@ export default function InternsPage() {
       // Convert newlines to <br/> tags for HTML
       const htmlMessage = mailForm.message
         .split("\n")
-        .map((line) => `<p>${line}</p>`)
+        .map((line: string) => `<p>${line}</p>`)
         .join("");
 
       const response = await fetch("/api/interns/admin/send-email", {
@@ -261,9 +270,9 @@ export default function InternsPage() {
 
   const toggleMailIntern = (email: string) => {
     const normalized = String(email || "").toLowerCase();
-    setSelectedMailInterns((current) => {
+    setSelectedMailInterns((current: string[]) => {
       if (current.includes(normalized)) {
-        return current.filter((e) => e !== normalized);
+        return current.filter((e: string) => e !== normalized);
       }
       return [...current, normalized];
     });
@@ -310,13 +319,10 @@ export default function InternsPage() {
         ))}
 
         <button
-          onClick={() => {
-            setMeetError("");
-            setShowMeetScheduler(true);
-          }}
+          onClick={openMeetScheduler}
           className="px-4 py-2 rounded-lg text-sm font-medium transition bg-blue-800 text-white hover:bg-blue-900"
         >
-          Schedule Meeting ({selectedInternEmails.length})
+          Schedule Meeting
         </button>
 
         <button
@@ -343,6 +349,40 @@ export default function InternsPage() {
             <div className="space-y-4">
               <div className="text-xs text-slate-600">
                 Selected interns: <span className="font-semibold text-slate-900">{selectedInternEmails.length}</span>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-slate-700">
+                  Recipients ({selectedInternEmails.length} selected)
+                </label>
+                <div className="border border-slate-300 rounded-lg divide-y max-h-48 overflow-y-auto bg-slate-50">
+                  {interns.length > 0 ? (
+                    interns.map((intern) => {
+                      const normalized = String(intern.email || "").toLowerCase();
+                      const isSelected = selectedInternEmails.includes(normalized);
+
+                      return (
+                        <label
+                          key={intern.id}
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleMeetIntern(intern.email)}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-800 focus:ring-blue-800"
+                          />
+                          <div>
+                            <p className="text-sm font-medium text-slate-900">{intern.fullName}</p>
+                            <p className="text-xs text-slate-600">{intern.email}</p>
+                          </div>
+                        </label>
+                      );
+                    })
+                  ) : (
+                    <div className="px-4 py-8 text-center text-slate-600 text-sm">No interns found</div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -567,15 +607,6 @@ export default function InternsPage() {
                   <h3 className="text-lg font-bold text-slate-900">{intern.fullName}</h3>
                   <p className="text-slate-600 text-sm">{intern.email}</p>
                 </div>
-                <label className="inline-flex items-center gap-2 text-xs text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={selectedInternEmails.includes(String(intern.email || "").toLowerCase())}
-                    onChange={() => toggleInternSelection(intern.email)}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-800 focus:ring-blue-800"
-                  />
-                  Select
-                </label>
               </div>
 
               <div className="space-y-3 mb-4 pb-4 border-b border-slate-200">
