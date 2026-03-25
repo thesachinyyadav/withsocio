@@ -217,8 +217,24 @@ export async function POST(request: NextRequest) {
 
     console.log(`[REMINDER] Final result - Success: ${successCount}, Failed: ${failCount}`);
 
+    if (failCount === recipientEmails.length) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: typeof results[0]?.error === "string" ? results[0].error : "All reminder emails failed to send",
+          summary: {
+            total: recipientEmails.length,
+            successCount,
+            failCount,
+          },
+          results,
+        },
+        { status: 502 }
+      );
+    }
+
     return NextResponse.json({
-      success: true,
+      success: failCount === 0,
       summary: {
         total: recipientEmails.length,
         successCount,

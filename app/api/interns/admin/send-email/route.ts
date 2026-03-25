@@ -248,8 +248,24 @@ export async function POST(request: NextRequest) {
       notes: `Sent to ${successCount} recipients, ${failCount} failed`,
     });
 
+    if (failCount === finalRecipientEmails.length) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: typeof results[0]?.error === "string" ? results[0].error : "All emails failed to send",
+          summary: {
+            total: finalRecipientEmails.length,
+            successCount,
+            failCount,
+          },
+          results,
+        },
+        { status: 502 }
+      );
+    }
+
     return NextResponse.json({
-      success: true,
+      success: failCount === 0,
       summary: {
         total: finalRecipientEmails.length,
         successCount,

@@ -9,6 +9,8 @@ export const supabaseAdmin = createClient(
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+const RESEND_FROM_EMAIL =
+  (process.env.RESEND_FROM_EMAIL || "").trim() || "SOCIO Careers <careers@withsocio.com>";
 
 // ==================== CONSTANTS ====================
 export const ADMIN_IDENTIFIER = "socio2026";
@@ -322,7 +324,7 @@ export async function sendEmail(input: {
 
   try {
     const payload = {
-      from: "interns@socio.tech",
+      from: RESEND_FROM_EMAIL,
       to: input.to,
       subject: input.subject,
       html: input.html,
@@ -359,7 +361,10 @@ export async function sendEmail(input: {
       console.log(`[EMAIL] Final result for ${input.to}:`, result);
       return result;
     } else {
-      const result = { success: false, error: data };
+      const result = {
+        success: false,
+        error: data?.message || data?.error || data,
+      };
       console.log(`[EMAIL] Final result for ${input.to}:`, result);
       return result;
     }
