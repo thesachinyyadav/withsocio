@@ -3,7 +3,6 @@ import {
   supabaseAdmin,
   authenticateRequest,
   createAuditLog,
-  sendEmail,
   REPORT_STATUSES,
 } from "../../_utils";
 
@@ -156,21 +155,6 @@ export async function PATCH(
           adminEmail: auth.identifier,
         });
       }
-    }
-
-    // Send update email to reporter
-    if (updates.status && updates.status !== currentReport.status) {
-      await sendEmail({
-        to: currentReport.created_by_email,
-        subject: `[INTERNS] Your Report Status Updated`,
-        html: `
-          <h2>Report Status Update</h2>
-          <p><strong>Report:</strong> ${updatedReport.title}</p>
-          <p><strong>Status:</strong> ${currentReport.status} → ${updates.status}</p>
-          ${adminNotes ? `<p><strong>Admin Notes:</strong> ${adminNotes}</p>` : ""}
-        `,
-        adminEmail: auth.identifier,
-      });
     }
 
     return NextResponse.json({
