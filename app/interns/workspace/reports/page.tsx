@@ -24,6 +24,7 @@ export default function InternReportsPage() {
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [viewerEmail, setViewerEmail] = useState("");
+  const [viewerName, setViewerName] = useState("My Work");
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -31,8 +32,10 @@ export default function InternReportsPage() {
       const rawUser = localStorage.getItem("interns_user");
       const parsedUser = rawUser ? JSON.parse(rawUser) : null;
       setViewerEmail((parsedUser?.email || "").toLowerCase());
+      setViewerName(parsedUser?.fullName || parsedUser?.name || "My Work");
     } catch {
       setViewerEmail("");
+      setViewerName("My Work");
     }
   }, []);
 
@@ -135,6 +138,81 @@ export default function InternReportsPage() {
     closed: "bg-slate-100 text-slate-700",
   };
 
+  const isOwnedByViewer = (report: Report) => {
+    const normalizedViewer = viewerEmail.trim().toLowerCase();
+    if (!normalizedViewer) return false;
+
+    const assigned = (report.assigned_to_emails || []).some(
+      (email) => String(email || "").toLowerCase() === normalizedViewer
+    );
+
+    const createdBy = String(report.created_by_email || "").toLowerCase() === normalizedViewer;
+
+    return assigned || createdBy;
+  };
+
+  const ownedReports = reports.filter(isOwnedByViewer);
+  const otherReports = reports.filter((report: Report) => !isOwnedByViewer(report));
+
+  const renderReportCard = (report: Report, highlightOwned = false) => {
+    const isOwner = isOwnedByViewer(report);
+
+    return (
+      <div
+        key={report.id}
+        className={`bg-white border rounded-xl p-6 shadow-sm ${
+          highlightOwned ? "border-blue-200" : "border-slate-200"
+        }`}
+      >
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">{report.title}</h3>
+            <p className="text-slate-600 text-sm">{report.category}</p>
+          </div>
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[report.status || "open"]}`}>
+            {(report.status || "open").replace("_", " ")}
+          </span>
+        </div>
+
+        <div className="space-y-1 text-xs text-slate-600">
+          <p>Raised by: {report.created_by_name || report.created_by_email || "Unknown"}</p>
+          <p>Working on: {report.assigned_to_emails?.length ? report.assigned_to_emails.join(", ") : "Unassigned"}</p>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between text-sm text-slate-600 mt-4 gap-3">
+          <span>Priority: {report.priority}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={report.status || "open"}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                handleStatusChange(report.id, e.target.value)
+              }
+              disabled={!isOwner || updatingStatusId === report.id}
+              className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400"
+            >
+              <option value="open">open</option>
+              <option value="in_progress">in progress</option>
+              <option value="resolved">resolved</option>
+              <option value="closed">closed</option>
+            </select>
+
+            {report.status !== "resolved" && report.status !== "closed" && !isOwner && (
+              <button
+                onClick={() => handleClaim(report.id)}
+                disabled={claimingId === report.id}
+                className="px-3 py-1.5 rounded-lg bg-blue-800 hover:bg-blue-900 disabled:bg-blue-500 text-white text-xs font-semibold transition"
+              >
+                {claimingId === report.id ? "Claiming..." : "I’m working on this"}
+              </button>
+            )}
+
+            <span className="text-slate-500">Report ID: {report.id.slice(0, 8)}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -176,58 +254,29 @@ export default function InternReportsPage() {
 
       <div className="space-y-4">
         {reports.length > 0 ? (
-          reports.map((report: Report) => {
-            const isOwner =
-              report.assigned_to_emails?.some(
-                (email) => email.toLowerCase() === viewerEmail
-              ) || false;
+          <>
+            {ownedReports.length > 0 && (
+              <div className="mb-2">
+                <h2 className="text-sm font-semibold text-blue-800 uppercase tracking-wide">
+                  WORK BY {viewerName}
+                </h2>
+              </div>
+            )}
 
-            return (
-            <div key={report.id} className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">{report.title}</h3>
-                  <p className="text-slate-600 text-sm">{report.category}</p>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[report.status || "open"]}`}>
-                  {(report.status || "open").replace("_", " ")}
-                </span>
+            {ownedReports.map((report) => renderReportCard(report, true))}
+
+            {otherReports.length > 0 && ownedReports.length > 0 && (
+              <div className="pt-2">
+                <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                  Other Reports
+                </h2>
               </div>
-              <div className="space-y-1 text-xs text-slate-600">
-                <p>Raised by: {report.created_by_name || report.created_by_email || "Unknown"}</p>
-                <p>Working on: {report.assigned_to_emails?.length ? report.assigned_to_emails.join(", ") : "Unassigned"}</p>
-              </div>
-              <div className="flex flex-wrap items-center justify-between text-sm text-slate-600 mt-4 gap-3">
-                <span>Priority: {report.priority}</span>
-                <div className="flex flex-wrap items-center gap-2">
-                  <select
-                    value={report.status || "open"}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      handleStatusChange(report.id, e.target.value)
-                    }
-                    disabled={!isOwner || updatingStatusId === report.id}
-                    className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400"
-                  >
-                    <option value="open">open</option>
-                    <option value="in_progress">in progress</option>
-                    <option value="resolved">resolved</option>
-                    <option value="closed">closed</option>
-                  </select>
-                  {report.status !== "resolved" && report.status !== "closed" &&
-                    !isOwner && (
-                      <button
-                        onClick={() => handleClaim(report.id)}
-                        disabled={claimingId === report.id}
-                        className="px-3 py-1.5 rounded-lg bg-blue-800 hover:bg-blue-900 disabled:bg-blue-500 text-white text-xs font-semibold transition"
-                      >
-                        {claimingId === report.id ? "Claiming..." : "I’m working on this"}
-                      </button>
-                    )}
-                  <span className="text-slate-500">Report ID: {report.id.slice(0, 8)}</span>
-                </div>
-              </div>
-            </div>
-          )})
+            )}
+
+            {(ownedReports.length > 0 ? otherReports : reports).map((report) =>
+              renderReportCard(report)
+            )}
+          </>
         ) : (
           <div className="text-center py-12 bg-white border border-slate-200 rounded-xl">
             {searchQuery.trim() ? (
