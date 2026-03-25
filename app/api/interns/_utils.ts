@@ -84,6 +84,122 @@ export function csvEscape(value: unknown): string {
   return `"${str}"`;
 }
 
+export function normalizeEmailHtmlFragment(htmlContent: string): string {
+  return String(htmlContent || "")
+    .replace(/<\/?html[^>]*>/gi, "")
+    .replace(/<\/?head[^>]*>/gi, "")
+    .replace(/<\/?body[^>]*>/gi, "")
+    .replace(/<\/?style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .trim();
+}
+
+export function buildSocioEmailHtml(input: {
+  subject?: string;
+  htmlContent: string;
+  senderEmail?: string;
+}) {
+  const cleanContent = normalizeEmailHtmlFragment(input.htmlContent);
+  const senderEmail = String(input.senderEmail || "careers@withsocio.com").trim();
+  const subject = String(input.subject || "SOCIO Update").trim();
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${subject}</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f7fb;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color: #1f2937;
+    }
+    .wrap {
+      width: 100%;
+      padding: 24px 12px;
+      box-sizing: border-box;
+    }
+    .card {
+      max-width: 640px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 18px rgba(2, 20, 55, 0.06);
+    }
+    .header {
+      background: linear-gradient(135deg, #154CB3 0%, #1a56c4 100%);
+      padding: 28px 24px;
+      color: #ffffff;
+      text-align: center;
+    }
+    .brand {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .subtitle {
+      margin: 8px 0 0;
+      font-size: 13px;
+      opacity: 0.92;
+    }
+    .content {
+      padding: 28px 24px;
+      font-size: 15px;
+      line-height: 1.75;
+      color: #334155;
+    }
+    .content p {
+      margin: 0 0 14px;
+    }
+    .content p:last-child {
+      margin-bottom: 0;
+    }
+    .footer {
+      padding: 18px 24px 22px;
+      border-top: 1px solid #e5e7eb;
+      color: #64748b;
+      font-size: 12px;
+      text-align: center;
+      background: #fafcff;
+    }
+    .footer a {
+      color: #154CB3;
+      text-decoration: none;
+      margin: 0 8px;
+    }
+    .footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <h1 class="brand">SOCIO</h1>
+        <p class="subtitle">Professional Correspondence</p>
+      </div>
+      <div class="content">${cleanContent}</div>
+      <div class="footer">
+        <div>
+          <a href="https://live.withsocio.com">Visit SOCIO</a>
+          <span>•</span>
+          <a href="mailto:${senderEmail}?subject=UNSUBSCRIBE">Unsubscribe</a>
+        </div>
+        <div style="margin-top: 8px;">© 2026 SOCIO. All rights reserved.</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+
 // ==================== IDENTIFIER RESOLUTION ====================
 // Simplified to direct intern lookup - admin access uses ADMIN_IDENTIFIER constant
 

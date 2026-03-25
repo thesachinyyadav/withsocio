@@ -4,137 +4,8 @@ import {
   authenticateRequest,
   sendEmail,
   createAuditLog,
+  buildSocioEmailHtml,
 } from "../../_utils";
-
-const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-
-const wrapInSocioTemplate = (htmlContent: string, senderEmail: string): string => {
-  // Remove any outer HTML/body tags from htmlContent if present
-  let cleanContent = htmlContent
-    .replace(/<\/?html[^>]*>/gi, "")
-    .replace(/<\/?head[^>]*>/gi, "")
-    .replace(/<\/?body[^>]*>/gi, "")
-    .replace(/<\/?style[^>]*>[\s\S]*?<\/style>/gi, "")
-    .trim();
-
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOCIO Mail</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            background-color: #154CB3;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            border: 1px solid #0f3d8f;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        .header {
-            background: #154CB3;
-            padding: 20px 24px;
-            text-align: center;
-            color: white;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 800;
-        }
-        .header p {
-            margin: 8px 0 0 0;
-            font-size: 13px;
-            opacity: 0.9;
-        }
-        .content {
-            padding: 32px 24px;
-        }
-        .content p {
-            margin: 0 0 16px 0;
-            font-size: 14px;
-            line-height: 1.7;
-            color: #444;
-        }
-        .content p:last-of-type {
-            margin-bottom: 0;
-        }
-        .footer {
-            background-color: #154CB3;
-            padding: 24px;
-            border-top: 1px solid #0f3d8f;
-            text-align: center;
-            font-size: 12px;
-            color: #eaf0ff;
-        }
-        .footer-links {
-            margin-bottom: 16px;
-        }
-        .footer-links a {
-            color: #ffffff;
-            text-decoration: none;
-            margin: 0 8px;
-            display: inline-block;
-        }
-        .footer-links a:hover {
-            text-decoration: underline;
-        }
-        .footer-text {
-            font-size: 11px;
-            color: #d7e3ff;
-            margin-top: 12px;
-        }
-        .divider {
-            height: 1px;
-            background-color: rgba(255, 255, 255, 0.3);
-            margin: 16px 0;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>SOCIO</h1>
-            <p>Professional Correspondence</p>
-        </div>
-        
-        <div class="content">
-            ${cleanContent}
-        </div>
-        
-        <div class="footer">
-            <div class="footer-links">
-            <a href="https://live.withsocio.com">Visit SOCIO</a>
-            <span>|</span>
-                <a href="mailto:${escapeHtml(senderEmail)}?subject=UNSUBSCRIBE">Unsubscribe</a>
-            </div>
-            <div class="divider"></div>
-            <div class="footer-text">
-            <p style="margin: 0; color: #d7e3ff;">© 2026 SOCIO. All rights reserved.</p>
-            <p style="margin: 8px 0 0 0; color: #c5d8ff;">This email was sent from SOCIO</p>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
-  `.trim();
-};
 
 /**
  * POST /api/interns/admin/send-email
@@ -210,7 +81,11 @@ export async function POST(request: NextRequest) {
     // Prepare email content wrapper
     let baseContent = htmlContent;
     if (useSocioTemplate) {
-      baseContent = wrapInSocioTemplate(htmlContent, "interns@socio.tech");
+      baseContent = buildSocioEmailHtml({
+        subject,
+        htmlContent,
+        senderEmail: "careers@withsocio.com",
+      });
     }
 
     // Send emails to each recipient
