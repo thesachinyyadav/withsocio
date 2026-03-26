@@ -23,22 +23,25 @@ export default function WorkLogsPage() {
   const [logs, setLogs] = useState<WorkLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     fetchWorkLogs();
-  }, []);
+  }, [page]);
 
   const fetchWorkLogs = async () => {
+    setLoading(true);
     try {
-      const token = localStorage.getItem("interns_token");
-      const response = await fetch(`/api/interns/work-logs?page=1&limit=200`, {
-        headers: { "x-interns-token": token || "" },
-      });
+      const response = await fetch(`/api/interns/work-logs?includeAll=true&page=${page}&limit=50`);
 
-      if (!response.ok) throw new Error("Failed to fetch work logs");
+      if (!response.ok) {
+        throw new Error("Failed to fetch work logs");
+      }
 
-      const data = await response.json();
-      setLogs(data.data || []);
+      const payload = await response.json();
+      setLogs(Array.isArray(payload.data) ? payload.data : []);
+      setTotalPages(payload.pagination?.pages || 1);
     } catch (err) {
       setError("Failed to load work logs");
       console.error(err);
@@ -205,6 +208,26 @@ export default function WorkLogsPage() {
               </section>
             );
           })}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-8 pb-8">
+          <button
+            onClick={() => { setPage((p: number) => Math.max(1, p - 1)); window.scrollTo(0, 0); }}
+            disabled={page === 1}
+            className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-50 text-slate-700 rounded-lg text-sm font-medium transition shadow-sm"
+          >
+            Previous
+          </button>
+          <span className="text-sm font-medium text-slate-600">Page {page} of {totalPages}</span>
+          <button
+            onClick={() => { setPage((p: number) => Math.min(totalPages, p + 1)); window.scrollTo(0, 0); }}
+            disabled={page === totalPages}
+            className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-50 text-slate-700 rounded-lg text-sm font-medium transition shadow-sm"
+          >
+            Next
+          </button>
         </div>
       )}
     </div>
