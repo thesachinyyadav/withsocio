@@ -239,8 +239,8 @@ export default function NewWorkLogPage() {
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition"
                 required
               >
-                <option value="onsite">🏢 Onsite</option>
-                <option value="wfh">🏠 Work From Home</option>
+                <option value="onsite">Onsite</option>
+                <option value="wfh">Work From Home</option>
               </select>
             </div>
           </div>
