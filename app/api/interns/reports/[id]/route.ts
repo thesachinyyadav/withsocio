@@ -4,6 +4,7 @@ import {
   authenticateRequest,
   createAuditLog,
   REPORT_STATUSES,
+  sendEmail,
 } from "../../_utils";
 
 /**
