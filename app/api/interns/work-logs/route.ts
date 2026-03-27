@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+
 import {
   supabaseAdmin,
   authenticateRequest,
@@ -121,16 +124,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Future date validation — no entries allowed for future dates (IST)
-    const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-    const todayStr = `${nowIST.getFullYear()}-${String(nowIST.getMonth() + 1).padStart(2, "0")}-${String(nowIST.getDate()).padStart(2, "0")}`;
-    if (logDate > todayStr) {
-      return NextResponse.json(
-        { error: "Cannot create work logs for future dates" },
-        { status: 400 }
-      );
-    }
-
     const normalizedWorkMode = String(workMode || "onsite").trim().toLowerCase();
     if (!["wfh", "onsite"].includes(normalizedWorkMode)) {
       return NextResponse.json(
@@ -168,41 +161,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate hours from time strings (HH:MM format)
-    let totalHours: number | null = null;
-    let startTimestamp: string | null = null;
-    let endTimestamp: string | null = null;
-
+    // Calculate hours
+    let totalHours = null;
     if (workStartTime && workEndTime) {
-      // workStartTime and workEndTime are "HH:MM" strings from <input type="time">
-      const [startH, startM] = workStartTime.split(":").map(Number);
-      const [endH, endM] = workEndTime.split(":").map(Number);
-
-      if (!isNaN(startH) && !isNaN(startM) && !isNaN(endH) && !isNaN(endM)) {
-        const startMinutes = startH * 60 + startM;
-        const endMinutes = endH * 60 + endM;
-        const diffMinutes = endMinutes - startMinutes;
-
-        if (diffMinutes > 0) {
-          totalHours = Math.round((diffMinutes / 60) * 100) / 100;
-        }
-
-        // Build proper ISO timestamps using logDate + time
-        startTimestamp = `${logDate}T${workStartTime}:00+05:30`;
-        endTimestamp = `${logDate}T${workEndTime}:00+05:30`;
-      }
+      const start = new Date(workStartTime).getTime();
+      const end = new Date(workEndTime).getTime();
+      totalHours = Math.round((end - start) / 3600000 * 100) / 100;
     }
-
-    // Sanitize attachments — ensure it's a valid array of objects
-    const safeAttachments = Array.isArray(attachments)
-      ? attachments.filter(
-          (a: Record<string, unknown>) => a && typeof a.name === "string" && typeof a.url === "string"
-        ).map((a: Record<string, unknown>) => ({
-          name: String(a.name).slice(0, 255),
-          url: String(a.url).slice(0, 2048),
-          type: ["file", "drive_link", "image", "link"].includes(String(a.type)) ? String(a.type) : "link",
-        }))
-      : [];
 
     // Create work log
     const { data: workLog, error } = await supabaseAdmin
@@ -215,9 +180,9 @@ export async function POST(request: NextRequest) {
         collaborator_emails: collaboratorEmails || [],
         progress_status: "submitted",
         created_by_email: auth.identifier,
-        attachments: safeAttachments,
-        work_start_time: startTimestamp,
-        work_end_time: endTimestamp,
+        attachments: attachments || [],
+        work_start_time: workStartTime || null,
+        work_end_time: workEndTime || null,
         total_hours: totalHours,
       })
       .select()

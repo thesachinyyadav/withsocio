@@ -145,6 +145,13 @@ export function buildSocioEmailHtml(input: {
       font-weight: 900;
       letter-spacing: 0.8px;
     }
+    .subtitle {
+      margin: 10px 0 0;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
     .content {
       padding: 24px;
       font-size: 15px;
@@ -178,6 +185,7 @@ export function buildSocioEmailHtml(input: {
     <div class="card">
       <div class="header">
         <h1 class="brand">SOCIO</h1>
+        <p class="subtitle">Professional Correspondence</p>
       </div>
       <div class="content">${cleanContent}</div>
       <div class="footer">
