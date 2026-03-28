@@ -13,6 +13,16 @@ import {
   WORK_LOG_STATUSES,
 } from "../_utils";
 
+const TIME_24H_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+function parseTimeToMinutes(value: string): number | null {
+  const match = TIME_24H_REGEX.exec(String(value || "").trim());
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  return hours * 60 + minutes;
+}
+
 export async function GET(request: NextRequest) {
   const auth = await authenticateRequest(request);
   if (!auth.ok) return auth.response;
@@ -161,12 +171,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate hours
+    // Validate and calculate hours from HH:mm inputs.
     let totalHours = null;
-    if (workStartTime && workEndTime) {
-      const start = new Date(workStartTime).getTime();
-      const end = new Date(workEndTime).getTime();
-      totalHours = Math.round((end - start) / 3600000 * 100) / 100;
+    let normalizedWorkStartTime: string | null = null;
+    let normalizedWorkEndTime: string | null = null;
+
+    const hasStartTime = Boolean(workStartTime);
+    const hasEndTime = Boolean(workEndTime);
+
+    if (hasStartTime !== hasEndTime) {
+      return NextResponse.json(
+        { error: "Please provide both start and end time." },
+        { status: 400 }
+      );
+    }
+
+    if (hasStartTime && hasEndTime) {
+      const startMinutes = parseTimeToMinutes(workStartTime);
+      const endMinutes = parseTimeToMinutes(workEndTime);
+
+      if (startMinutes === null || endMinutes === null) {
+        return NextResponse.json(
+          { error: "Time must be in HH:mm format." },
+          { status: 400 }
+        );
+      }
+
+      if (endMinutes <= startMinutes) {
+        return NextResponse.json(
+          { error: "End time must be later than start time." },
+          { status: 400 }
+        );
+      }
+
+      const durationMinutes = endMinutes - startMinutes;
+      totalHours = Math.round((durationMinutes / 60) * 100) / 100;
+      normalizedWorkStartTime = `${workStartTime}:00`;
+      normalizedWorkEndTime = `${workEndTime}:00`;
     }
 
     // Create work log
@@ -181,8 +222,8 @@ export async function POST(request: NextRequest) {
         progress_status: "submitted",
         created_by_email: auth.identifier,
         attachments: attachments || [],
-        work_start_time: workStartTime || null,
-        work_end_time: workEndTime || null,
+        work_start_time: normalizedWorkStartTime,
+        work_end_time: normalizedWorkEndTime,
         total_hours: totalHours,
       })
       .select()
