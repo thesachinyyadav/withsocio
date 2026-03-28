@@ -206,8 +206,8 @@ export async function POST(request: NextRequest) {
 
       const durationMinutes = endMinutes - startMinutes;
       totalHours = Math.round((durationMinutes / 60) * 100) / 100;
-      normalizedWorkStartTime = `${workStartTime}:00`;
-      normalizedWorkEndTime = `${workEndTime}:00`;
+      normalizedWorkStartTime = new Date(`${logDate}T${workStartTime}:00`).toISOString();
+      normalizedWorkEndTime = new Date(`${logDate}T${workEndTime}:00`).toISOString();
     }
 
     // Create work log
