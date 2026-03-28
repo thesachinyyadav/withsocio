@@ -185,7 +185,6 @@ export function buildSocioEmailHtml(input: {
     <div class="card">
       <div class="header">
         <h1 class="brand">SOCIO</h1>
-        <p class="subtitle">Professional Correspondence</p>
       </div>
       <div class="content">${cleanContent}</div>
       <div class="footer">
