@@ -253,8 +253,13 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Create error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    const message = error?.message || "Internal server error";
+    // Check for unique violation on date
+    if (error?.code === "23505") {
+      return NextResponse.json({ error: "You have already submitted a work log for this date." }, { status: 400 });
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
