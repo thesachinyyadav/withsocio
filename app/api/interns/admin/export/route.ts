@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { authenticateRequest, csvEscape, supabaseAdmin, toSafeSearch } from "../../_utils";
 
+export const dynamic = "force-dynamic";
+
 type ExportKind = "work-logs" | "reports";
 
 function normalizeKind(value: string): ExportKind {

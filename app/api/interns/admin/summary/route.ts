@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { authenticateRequest, supabaseAdmin } from "../../_utils";
 
+export const dynamic = "force-dynamic";
+
 type ActivityRow = {
   id: string;
   type: "work_log" | "report";
