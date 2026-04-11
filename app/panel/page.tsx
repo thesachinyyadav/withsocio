@@ -51,10 +51,10 @@ const statusColors = {
 const roleColors: Record<string, string> = {
   "Frontend Development": "bg-cyan-50 text-cyan-700 border border-cyan-200",
   "Database Handling": "bg-orange-50 text-orange-700 border border-orange-200",
+  "Finance": "bg-emerald-50 text-emerald-700 border border-emerald-200",
   "Operations": "bg-lime-50 text-lime-700 border border-lime-200",
   "Content Writing": "bg-pink-50 text-pink-700 border border-pink-200",
   "Marketing": "bg-indigo-50 text-indigo-700 border border-indigo-200",
-  "Digital Marketing": "bg-teal-50 text-teal-700 border border-teal-200",
   "Legal Intern": "bg-violet-50 text-violet-700 border border-violet-200",
   "Video Editing / Videographer": "bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200",
 };
@@ -673,10 +673,10 @@ export default function AdminDashboard() {
               <option value="">All Roles</option>
               <option value="Frontend Development">Frontend Development</option>
               <option value="Database Handling">Database Handling</option>
+              <option value="Finance">Finance</option>
               <option value="Operations">Operations</option>
               <option value="Content Writing">Content Writing</option>
               <option value="Marketing">Marketing</option>
-              <option value="Digital Marketing">Digital Marketing</option>
               <option value="Legal Intern">Legal Intern</option>
               <option value="Video Editing / Videographer">Video Editing / Videographer</option>
             </select>

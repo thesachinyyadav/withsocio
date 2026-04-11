@@ -12,10 +12,10 @@ CREATE TABLE IF NOT EXISTS internship_applications (
     role_interest TEXT NOT NULL CHECK (role_interest IN (
         'Database Handling',
         'Frontend Development',
+        'Finance',
         'Operations',
         'Content Writing',
         'Marketing',
-        'Digital Marketing',
         'Legal Intern',
         'Video Editing / Videographer'
     )),
@@ -314,10 +314,10 @@ ALTER TABLE internship_applications
     CHECK (role_interest IN (
         'Database Handling',
         'Frontend Development',
+        'Finance',
         'Operations',
         'Content Writing',
         'Marketing',
-        'Digital Marketing',
         'Legal Intern',
         'Video Editing / Videographer'
     ));
