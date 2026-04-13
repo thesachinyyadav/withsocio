@@ -9,6 +9,15 @@ const supabaseAdmin = createClient(
 const getAdminPassword = () =>
   process.env.ADMIN_DASHBOARD_PASSWORD || "socio2026";
 
+const ALLOWED_APPLICANT_STATUSES = [
+  "pending",
+  "reviewed",
+  "shortlisted",
+  "hired",
+  "alumni",
+  "rejected",
+] as const;
+
 const isAuthorized = (request: Request) => {
   const headerPassword = request.headers.get("x-admin-password");
   return headerPassword && headerPassword === getAdminPassword();
@@ -77,6 +86,10 @@ export async function POST(request: Request) {
 
   if (!id || !status) {
     return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
+  }
+
+  if (!ALLOWED_APPLICANT_STATUSES.includes(status)) {
+    return NextResponse.json({ error: "Invalid status value" }, { status: 400 });
   }
 
   const { error } = await supabaseAdmin

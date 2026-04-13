@@ -34,7 +34,7 @@ interface HiredInternRecord {
   id: string;
   full_name: string;
   email: string;
-  status: "hired";
+  status: "hired" | "alumni";
 }
 
 type ResolveIdentifierResult =
@@ -221,7 +221,7 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
     };
   }
 
-  // Fall back to hired intern check
+  // Fall back to intern status check
   if (!isValidEmail(normalized)) {
     return { ok: false, message: "Please enter a valid email.", status: 400 };
   }
@@ -230,7 +230,7 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
     .from("internship_applications")
     .select("id, full_name, email, status")
     .ilike("email", normalized)
-    .eq("status", "hired")
+    .in("status", ["hired", "alumni"])
     .maybeSingle();
 
   if (error) {
@@ -241,6 +241,14 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
     return {
       ok: false,
       message: "Only hired interns can access this workspace.",
+      status: 403,
+    };
+  }
+
+  if (intern.status === "alumni") {
+    return {
+      ok: false,
+      message: "You're no longer a working member of this organisation.",
       status: 403,
     };
   }
