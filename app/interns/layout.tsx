@@ -11,6 +11,26 @@ interface AuthUser {
   id?: string;
 }
 
+const INTERNS_SESSION_STARTED_AT_KEY = "interns_session_started_at";
+const INTERNS_SESSION_DURATION_MS = 2 * 24 * 60 * 60 * 1000;
+
+const clearInternsSession = () => {
+  localStorage.removeItem("interns_token");
+  localStorage.removeItem("interns_role");
+  localStorage.removeItem("interns_user");
+  localStorage.removeItem(INTERNS_SESSION_STARTED_AT_KEY);
+};
+
+const isSessionExpired = () => {
+  const startedAtRaw = localStorage.getItem(INTERNS_SESSION_STARTED_AT_KEY);
+  if (!startedAtRaw) return false;
+
+  const startedAt = Number(startedAtRaw);
+  if (!Number.isFinite(startedAt)) return true;
+
+  return Date.now() - startedAt > INTERNS_SESSION_DURATION_MS;
+};
+
 export default function InternsLayout({
   children,
 }: {
@@ -25,6 +45,15 @@ export default function InternsLayout({
     // Check for existing session token
     const token = localStorage.getItem("interns_token");
     const role = localStorage.getItem("interns_role");
+
+    if (token && isSessionExpired()) {
+      clearInternsSession();
+      if (!pathname.includes("/login")) {
+        router.push("/interns/login");
+      }
+      setLoading(false);
+      return;
+    }
     
     if (token) {
       verifyToken(token, role);
@@ -52,12 +81,13 @@ export default function InternsLayout({
           fullName: data?.user?.fullName || "SOCIO User",
           id: data?.user?.id,
         };
+        if (!localStorage.getItem(INTERNS_SESSION_STARTED_AT_KEY)) {
+          localStorage.setItem(INTERNS_SESSION_STARTED_AT_KEY, String(Date.now()));
+        }
         setUser(userData);
         localStorage.setItem("interns_user", JSON.stringify(userData));
       } else {
-        localStorage.removeItem("interns_token");
-        localStorage.removeItem("interns_role");
-        localStorage.removeItem("interns_user");
+        clearInternsSession();
         if (!pathname.includes("/login")) {
           router.push("/interns/login");
         }

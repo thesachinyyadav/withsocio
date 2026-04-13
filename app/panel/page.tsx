@@ -60,6 +60,27 @@ const roleColors: Record<string, string> = {
   "Video Editing / Videographer": "bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200",
 };
 
+const SOCIO_ADMIN_TOKEN_KEY = "socio_admin_token";
+const SOCIO_ADMIN_SESSION_STARTED_AT_KEY = "socio_admin_session_started_at";
+const SOCIO_ADMIN_SESSION_DURATION_MS = 2 * 24 * 60 * 60 * 1000;
+
+const clearAdminSessionStorage = () => {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(SOCIO_ADMIN_TOKEN_KEY);
+  window.localStorage.removeItem(SOCIO_ADMIN_SESSION_STARTED_AT_KEY);
+};
+
+const isAdminSessionExpired = () => {
+  if (typeof window === "undefined") return true;
+  const startedAtRaw = window.localStorage.getItem(SOCIO_ADMIN_SESSION_STARTED_AT_KEY);
+  if (!startedAtRaw) return false;
+
+  const startedAt = Number(startedAtRaw);
+  if (!Number.isFinite(startedAt)) return true;
+
+  return Date.now() - startedAt > SOCIO_ADMIN_SESSION_DURATION_MS;
+};
+
 export default function AdminDashboard() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
@@ -138,6 +159,13 @@ export default function AdminDashboard() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          clearAdminSessionStorage();
+          setIsAuthenticated(false);
+          setAdminToken("");
+          setAuthError("Session expired. Please login again.");
+          return;
+        }
         const payload = await response.json().catch(() => ({}));
         const message = payload?.error || "Failed to load applicants.";
         alert(message);
@@ -164,6 +192,22 @@ export default function AdminDashboard() {
   }, [adminToken, page, pageSize, filterRole, filterStatus, searchQuery]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const storedToken = window.localStorage.getItem(SOCIO_ADMIN_TOKEN_KEY);
+    if (!storedToken) return;
+
+    if (isAdminSessionExpired()) {
+      clearAdminSessionStorage();
+      return;
+    }
+
+    setAdminToken(storedToken);
+    setIsAuthenticated(true);
+    setAuthError("");
+  }, []);
+
+  useEffect(() => {
     if (isAuthenticated) {
       fetchApplicants();
     }
@@ -177,14 +221,42 @@ export default function AdminDashboard() {
     return () => clearTimeout(timeout);
   }, [searchDraft]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === "socio2026") {
+
+    const token = password.trim();
+    if (!token) {
+      setAuthError("Please enter password.");
+      return;
+    }
+
+    try {
+      const probe = await fetch("/api/admin/applicants?page=1&limit=1", {
+        headers: {
+          "x-admin-password": token,
+        },
+      });
+
+      if (probe.status === 401) {
+        setAuthError("Incorrect password. Please try again.");
+        return;
+      }
+
+      if (!probe.ok) {
+        const payload = await probe.json().catch(() => ({}));
+        setAuthError(payload?.error || "Unable to access admin panel.");
+        return;
+      }
+
       setIsAuthenticated(true);
-      setAdminToken(password);
+      setAdminToken(token);
       setAuthError("");
-    } else {
-      setAuthError("Incorrect password. Please try again.");
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(SOCIO_ADMIN_TOKEN_KEY, token);
+        window.localStorage.setItem(SOCIO_ADMIN_SESSION_STARTED_AT_KEY, String(Date.now()));
+      }
+    } catch {
+      setAuthError("Unable to verify password right now.");
     }
   };
 
@@ -628,7 +700,11 @@ export default function AdminDashboard() {
               {isLoading ? "Loading..." : "Refresh"}
             </button>
             <button
-              onClick={() => setIsAuthenticated(false)}
+              onClick={() => {
+                clearAdminSessionStorage();
+                setIsAuthenticated(false);
+                setAdminToken("");
+              }}
               className="text-sm px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100"
             >
               Logout

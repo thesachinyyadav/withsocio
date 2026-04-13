@@ -33,6 +33,7 @@ export default function InternsLoginPage() {
       localStorage.setItem("interns_token", data.token);
       localStorage.setItem("interns_role", data.role);
       localStorage.setItem("interns_user", JSON.stringify(data.user || null));
+      localStorage.setItem("interns_session_started_at", String(Date.now()));
 
       if (data.role === "admin") {
         router.push("/interns/dashboard");

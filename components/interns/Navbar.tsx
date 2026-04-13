@@ -24,6 +24,7 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
     localStorage.removeItem("interns_token");
     localStorage.removeItem("interns_role");
     localStorage.removeItem("interns_user");
+    localStorage.removeItem("interns_session_started_at");
     router.push("/interns/login");
   };
 
