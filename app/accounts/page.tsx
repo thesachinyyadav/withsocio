@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 type AccountsUser = "sachin" | "surya";
 type ExpenseStatus = "pending_approval" | "purchased" | "settled";
@@ -51,6 +50,7 @@ type ListResponse = {
 };
 
 const VALID_USERS: AccountsUser[] = ["sachin", "surya"];
+const USER_STORAGE_KEY = "accounts_username";
 
 function normalizeUser(value: string | null): AccountsUser | null {
   const normalized = String(value || "").trim().toLowerCase();
@@ -105,9 +105,53 @@ function statusPill(status: ExpenseStatus): string {
   return "bg-emerald-100 text-emerald-800 border-emerald-300";
 }
 
-function AccountsPageContent() {
-  const searchParams = useSearchParams();
-  const user = normalizeUser(searchParams.get("user"));
+function getWorkflowStep(expense: ExpenseRecord): number {
+  if (expense.status === "settled") return 4;
+  if (expense.status === "purchased") return 3;
+  if (expense.approval_sachin_at && expense.approval_surya_at) return 2;
+  return 1;
+}
+
+function WorkflowNode({
+  label,
+  active,
+  complete,
+}: {
+  label: string;
+  active: boolean;
+  complete: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className={`inline-flex h-6 w-6 items-center justify-center rounded-full border transition ${
+          complete
+            ? "border-blue-600 bg-blue-600 text-white"
+            : active
+              ? "border-blue-300 bg-blue-50 text-blue-700 animate-pulse-soft"
+              : "border-slate-300 bg-white text-slate-400"
+        }`}
+      >
+        {complete ? (
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+            <circle cx="12" cy="12" r="5" />
+          </svg>
+        )}
+      </span>
+      <span className={`text-xs font-semibold ${active ? "text-slate-800" : "text-slate-500"}`}>{label}</span>
+    </div>
+  );
+}
+
+export default function AccountsPage() {
+  const [activeUser, setActiveUser] = useState<AccountsUser | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [usernameInput, setUsernameInput] = useState("");
+  const [authError, setAuthError] = useState("");
 
   const [view, setView] = useState<"pending" | "processed">("pending");
   const [search, setSearch] = useState("");
@@ -119,6 +163,8 @@ function AccountsPageContent() {
 
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
   const [counts, setCounts] = useState({ pending: 0, purchased: 0, settled: 0 });
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [expandedExpenseIds, setExpandedExpenseIds] = useState<Record<string, boolean>>({});
 
   const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [reason, setReason] = useState("");
@@ -145,8 +191,17 @@ function AccountsPageContent() {
     };
   }, [splitSachinPercent, splitSuryaPercent, totalAmount]);
 
+  useEffect(() => {
+    const savedUser = typeof window !== "undefined" ? window.localStorage.getItem(USER_STORAGE_KEY) : null;
+    const resolvedUser = normalizeUser(savedUser);
+    if (resolvedUser) {
+      setActiveUser(resolvedUser);
+    }
+    setAuthReady(true);
+  }, []);
+
   const loadExpenses = async () => {
-    if (!user) return;
+    if (!activeUser) return;
 
     setLoading(true);
     setError("");
@@ -156,7 +211,7 @@ function AccountsPageContent() {
         `/api/accounts?view=${view}&q=${encodeURIComponent(search)}`,
         {
           headers: {
-            "x-accounts-user": user,
+            "x-accounts-user": activeUser,
           },
           cache: "no-store",
         }
@@ -179,13 +234,49 @@ function AccountsPageContent() {
   };
 
   useEffect(() => {
+    if (!activeUser) return;
     loadExpenses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, view]);
+  }, [activeUser, view]);
 
   const handleSearchSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     await loadExpenses();
+  };
+
+  const handleLogin = (event: React.FormEvent) => {
+    event.preventDefault();
+    const resolved = normalizeUser(usernameInput);
+
+    if (!resolved) {
+      setAuthError("wrongusername");
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(USER_STORAGE_KEY, resolved);
+    }
+
+    setActiveUser(resolved);
+    setAuthError("");
+    setUsernameInput("");
+  };
+
+  const handleLogout = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(USER_STORAGE_KEY);
+    }
+    setActiveUser(null);
+    setExpenses([]);
+    setCounts({ pending: 0, purchased: 0, settled: 0 });
+    setExpandedExpenseIds({});
+  };
+
+  const toggleExpenseExpand = (id: string) => {
+    setExpandedExpenseIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
 
   const handleSplitSachinChange = (value: string) => {
@@ -203,7 +294,7 @@ function AccountsPageContent() {
   };
 
   const uploadReceipts = async (): Promise<ReceiptAttachment[]> => {
-    if (!user || receiptFiles.length === 0) return [];
+    if (!activeUser || receiptFiles.length === 0) return [];
 
     const uploaded: ReceiptAttachment[] = [];
 
@@ -214,7 +305,7 @@ function AccountsPageContent() {
       const response = await fetch("/api/accounts/upload", {
         method: "POST",
         headers: {
-          "x-accounts-user": user,
+          "x-accounts-user": activeUser,
         },
         body: formData,
       });
@@ -234,7 +325,7 @@ function AccountsPageContent() {
 
   const handleCreateExpense = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!user) return;
+    if (!activeUser) return;
 
     setError("");
     setSuccess("");
@@ -263,7 +354,7 @@ function AccountsPageContent() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-accounts-user": user,
+          "x-accounts-user": activeUser,
         },
         body: JSON.stringify({
           expenseDate,
@@ -295,6 +386,7 @@ function AccountsPageContent() {
       setInternalNotes("");
       setReceiptFiles([]);
       setFileInputKey((prev) => prev + 1);
+      setShowCreateForm(false);
       await loadExpenses();
     } catch (createError) {
       const message = createError instanceof Error ? createError.message : "Failed to create expense.";
@@ -305,7 +397,7 @@ function AccountsPageContent() {
   };
 
   const handleExpenseAction = async (id: string, action: string) => {
-    if (!user) return;
+    if (!activeUser) return;
 
     setBusyExpenseId(id);
     setError("");
@@ -316,7 +408,7 @@ function AccountsPageContent() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "x-accounts-user": user,
+          "x-accounts-user": activeUser,
         },
         body: JSON.stringify({ action }),
       });
@@ -343,33 +435,51 @@ function AccountsPageContent() {
     }
   };
 
-  if (!user) {
+  if (!authReady) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 px-4 py-10">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="mb-8 flex items-center gap-4">
-            <Image src="/socio.svg" alt="SOCIO" width={54} height={54} className="h-14 w-14" priority />
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
+        <div className="rounded-xl border border-slate-200 bg-white px-6 py-5 text-sm text-slate-600 shadow-sm">
+          Loading SOCIO Accounts...
+        </div>
+      </div>
+    );
+  }
+
+  if (!activeUser) {
+    return (
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#e0f2fe_0%,_#f8fafc_45%,_#f8fafc_100%)] px-4 py-12">
+        <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="mb-6 flex items-center gap-4">
+            <Image src="/socio.svg" alt="SOCIO" width={58} height={58} className="h-14 w-14" priority />
             <div>
               <h1 className="text-2xl font-black text-slate-900">SOCIO Accounts</h1>
-              <p className="text-sm text-slate-600">Open using a valid direct link.</p>
+              <p className="text-sm text-slate-600">Expense workflow console</p>
             </div>
           </div>
 
-          <p className="mb-4 text-slate-700">Use one of these direct links:</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Link
-              href="/accounts?user=sachin"
-              className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
+          <form className="space-y-4" onSubmit={handleLogin}>
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Enter Username</label>
+              <input
+                type="text"
+                value={usernameInput}
+                onChange={(event) => {
+                  setUsernameInput(event.target.value);
+                  if (authError) setAuthError("");
+                }}
+                placeholder="sachin or surya"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                required
+              />
+              {authError ? <p className="mt-2 text-sm font-semibold text-rose-600">{authError}</p> : null}
+            </div>
+            <button
+              type="submit"
+              className="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800"
             >
-              /accounts?user=sachin
-            </Link>
-            <Link
-              href="/accounts?user=surya"
-              className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
-            >
-              /accounts?user=surya
-            </Link>
-          </div>
+              Enter Workspace
+            </button>
+          </form>
         </div>
       </div>
     );
@@ -385,12 +495,19 @@ function AccountsPageContent() {
               <div>
                 <h1 className="text-2xl font-black tracking-tight text-slate-900">SOCIO Accounts</h1>
                 <p className="text-sm text-slate-600">
-                  Logged in as <span className="font-bold uppercase text-blue-700">{user}</span> via direct link
+                  Logged in as <span className="font-bold uppercase text-blue-700">{activeUser}</span>
                 </p>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCreateForm((prev) => !prev)}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+              >
+                {showCreateForm ? "Hide Create Form" : "New Expense"}
+              </button>
               <button
                 type="button"
                 onClick={() => setView("pending")}
@@ -413,6 +530,13 @@ function AccountsPageContent() {
               >
                 Processed Expenses
               </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+              >
+                Logout
+              </button>
             </div>
           </div>
 
@@ -430,151 +554,168 @@ function AccountsPageContent() {
               <p className="mt-1 text-2xl font-black text-emerald-900">{counts.settled}</p>
             </div>
           </div>
+
+          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-500">Workflow</p>
+            <div className="mt-2 flex flex-wrap gap-4">
+              <WorkflowNode label="Submitted" active complete={false} />
+              <WorkflowNode label="Approved" active={false} complete={false} />
+              <WorkflowNode label="Purchased" active={false} complete={false} />
+              <WorkflowNode label="Settled" active={false} complete={false} />
+            </div>
+          </div>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[380px,1fr]">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <h2 className="text-lg font-extrabold text-slate-900">Create New Expense</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Add reason, split percentages, and optional receipt files.
-            </p>
+        <div className="grid gap-6 lg:grid-cols-[360px,1fr]">
+          <section className="space-y-4">
+            {showCreateForm ? (
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <h2 className="text-lg font-extrabold text-slate-900">Create New Expense</h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  Keep entries short. Workflow updates are tracked automatically.
+                </p>
 
-            <form className="mt-5 space-y-4" onSubmit={handleCreateExpense}>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Expense Date
-                </label>
-                <input
-                  type="date"
-                  value={expenseDate}
-                  onChange={(event) => setExpenseDate(event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
-                  required
-                />
+                <form className="mt-5 space-y-4" onSubmit={handleCreateExpense}>
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Expense Date
+                    </label>
+                    <input
+                      type="date"
+                      value={expenseDate}
+                      onChange={(event) => setExpenseDate(event.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Reason
+                    </label>
+                    <textarea
+                      value={reason}
+                      onChange={(event) => setReason(event.target.value)}
+                      rows={3}
+                      placeholder="Why is this expense required?"
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Total Amount (INR)
+                    </label>
+                    <input
+                      type="number"
+                      value={totalAmount}
+                      min="0"
+                      step="0.01"
+                      onChange={(event) => setTotalAmount(event.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        Sachin %
+                      </label>
+                      <input
+                        type="number"
+                        value={splitSachinPercent}
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        onChange={(event) => handleSplitSachinChange(event.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        Surya %
+                      </label>
+                      <input
+                        type="number"
+                        value={splitSuryaPercent}
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        onChange={(event) => handleSplitSuryaChange(event.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                    <p className="font-semibold text-slate-900">Split Preview</p>
+                    <p className="mt-1">Sachin: {formatINR(splitPreview.sachinAmount)}</p>
+                    <p>Surya: {formatINR(splitPreview.suryaAmount)}</p>
+                    <p className="mt-1 text-xs text-slate-500">Total percentage: {splitPreview.percentTotal}%</p>
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Extra CC Emails (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={extraCc}
+                      onChange={(event) => setExtraCc(event.target.value)}
+                      placeholder="name@example.com, another@example.com"
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Internal Notes (optional)
+                    </label>
+                    <textarea
+                      value={internalNotes}
+                      onChange={(event) => setInternalNotes(event.target.value)}
+                      rows={2}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Receipt Files (optional)
+                    </label>
+                    <input
+                      key={fileInputKey}
+                      type="file"
+                      multiple
+                      accept=".png,.jpg,.jpeg,.webp,.pdf"
+                      onChange={(event) => setReceiptFiles(Array.from(event.target.files || []))}
+                      className="w-full rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700"
+                    />
+                    {receiptFiles.length > 0 ? (
+                      <p className="mt-1 text-xs text-slate-500">{receiptFiles.length} file(s) selected.</p>
+                    ) : null}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-400"
+                  >
+                    {submitting ? "Saving Expense..." : "Save Expense"}
+                  </button>
+                </form>
               </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Reason
-                </label>
-                <textarea
-                  value={reason}
-                  onChange={(event) => setReason(event.target.value)}
-                  rows={3}
-                  placeholder="Example: Lighting equipment for campus workshop"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Total Amount (INR)
-                </label>
-                <input
-                  type="number"
-                  value={totalAmount}
-                  min="0"
-                  step="0.01"
-                  onChange={(event) => setTotalAmount(event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Sachin %
-                  </label>
-                  <input
-                    type="number"
-                    value={splitSachinPercent}
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    onChange={(event) => handleSplitSachinChange(event.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Surya %
-                  </label>
-                  <input
-                    type="number"
-                    value={splitSuryaPercent}
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    onChange={(event) => handleSplitSuryaChange(event.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                <p className="font-semibold text-slate-900">Split Preview</p>
-                <p className="mt-1">Sachin: {formatINR(splitPreview.sachinAmount)}</p>
-                <p>Surya: {formatINR(splitPreview.suryaAmount)}</p>
-                <p className="mt-1 text-xs text-slate-500">Total percentage: {splitPreview.percentTotal}%</p>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Extra CC Emails (optional)
-                </label>
-                <input
-                  type="text"
-                  value={extraCc}
-                  onChange={(event) => setExtraCc(event.target.value)}
-                  placeholder="name@example.com, another@example.com"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
-                />
-                <p className="mt-1 text-xs text-slate-500">
-                  Default notification goes to thesocio.blr@gmail.com.
+            ) : (
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-sm text-slate-600">
+                  Create form is hidden to keep this workspace clean. Click <span className="font-semibold">New Expense</span> when needed.
                 </p>
               </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Internal Notes (optional)
-                </label>
-                <textarea
-                  value={internalNotes}
-                  onChange={(event) => setInternalNotes(event.target.value)}
-                  rows={2}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Receipt Files (optional)
-                </label>
-                <input
-                  key={fileInputKey}
-                  type="file"
-                  multiple
-                  accept=".png,.jpg,.jpeg,.webp,.pdf"
-                  onChange={(event) => setReceiptFiles(Array.from(event.target.files || []))}
-                  className="w-full rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700"
-                />
-                {receiptFiles.length > 0 ? (
-                  <p className="mt-1 text-xs text-slate-500">{receiptFiles.length} file(s) selected.</p>
-                ) : null}
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-400"
-              >
-                {submitting ? "Saving Expense..." : "Save Expense"}
-              </button>
-            </form>
+            )}
           </section>
 
           <section className="space-y-4">
@@ -607,7 +748,7 @@ function AccountsPageContent() {
 
             {loading ? (
               <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-600 shadow-sm">
-                Loading expenses...
+                Loading workflow...
               </div>
             ) : expenses.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-600 shadow-sm">
@@ -619,15 +760,19 @@ function AccountsPageContent() {
                 const suryaApproved = Boolean(expense.approval_surya_at);
                 const canApprove =
                   expense.status === "pending_approval" &&
-                  ((user === "sachin" && !sachinApproved) || (user === "surya" && !suryaApproved));
+                  ((activeUser === "sachin" && !sachinApproved) ||
+                    (activeUser === "surya" && !suryaApproved));
                 const canMarkPurchased =
                   expense.status === "pending_approval" && sachinApproved && suryaApproved;
                 const canMarkSettled = expense.status === "purchased";
+                const workflowStep = getWorkflowStep(expense);
+                const progressPercent = ((workflowStep - 1) / 3) * 100;
+                const isExpanded = Boolean(expandedExpenseIds[expense.id]);
 
                 return (
                   <article
                     key={expense.id}
-                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+                    className="animate-fade-in-up rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
@@ -651,26 +796,28 @@ function AccountsPageContent() {
                       </div>
                     </div>
 
-                    <div className="mt-4 grid gap-3 md:grid-cols-2">
-                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                        <p className="font-semibold text-slate-900">Split</p>
-                        <p className="mt-1">
-                          Sachin: {expense.split_sachin_percent}% ({formatINR(expense.split_sachin_amount)})
-                        </p>
-                        <p>
-                          Surya: {expense.split_surya_percent}% ({formatINR(expense.split_surya_amount)})
-                        </p>
+                    <div className="mt-5">
+                      <div className="h-1 overflow-hidden rounded-full bg-slate-200">
+                        <div
+                          className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 transition-all duration-700 ease-out"
+                          style={{ width: `${progressPercent}%` }}
+                        />
                       </div>
-
-                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                        <p className="font-semibold text-slate-900">Approvals (IST)</p>
-                        <p className="mt-1">Sachin: {formatISTDateTime(expense.approval_sachin_at)}</p>
-                        <p>Surya: {formatISTDateTime(expense.approval_surya_at)}</p>
+                      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <WorkflowNode label="Submitted" active={workflowStep >= 1} complete={workflowStep > 1} />
+                        <WorkflowNode label="Approved" active={workflowStep >= 2} complete={workflowStep > 2} />
+                        <WorkflowNode label="Purchased" active={workflowStep >= 3} complete={workflowStep > 3} />
+                        <WorkflowNode label="Settled" active={workflowStep >= 4} complete={workflowStep >= 4} />
                       </div>
                     </div>
 
-                    <div className="mt-3 grid gap-3 md:grid-cols-2">
-                      <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                        <p className="font-semibold text-slate-900">Approval Timestamps (IST)</p>
+                        <p className="mt-1">Sachin: {formatISTDateTime(expense.approval_sachin_at)}</p>
+                        <p>Surya: {formatISTDateTime(expense.approval_surya_at)}</p>
+                      </div>
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
                         <p>
                           Purchased At: <span className="font-medium">{formatISTDateTime(expense.purchased_at)}</span>
                         </p>
@@ -678,35 +825,7 @@ function AccountsPageContent() {
                           Settled At: <span className="font-medium">{formatISTDateTime(expense.settled_at)}</span>
                         </p>
                       </div>
-                      <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
-                        <p className="font-medium text-slate-900">Receipt Files</p>
-                        {Array.isArray(expense.receipt_attachments) && expense.receipt_attachments.length > 0 ? (
-                          <ul className="mt-1 space-y-1">
-                            {expense.receipt_attachments.map((attachment, index) => (
-                              <li key={`${expense.id}-receipt-${index}`}>
-                                <a
-                                  href={attachment.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-blue-700 underline-offset-2 hover:underline"
-                                >
-                                  {attachment.name}
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="mt-1 text-slate-500">No receipts uploaded.</p>
-                        )}
-                      </div>
                     </div>
-
-                    {expense.internal_notes ? (
-                      <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                        <p className="font-semibold text-slate-900">Notes</p>
-                        <p className="mt-1 whitespace-pre-wrap">{expense.internal_notes}</p>
-                      </div>
-                    ) : null}
 
                     <div className="mt-4 flex flex-wrap gap-2">
                       {canApprove ? (
@@ -716,7 +835,7 @@ function AccountsPageContent() {
                           disabled={busyExpenseId === expense.id}
                           className="rounded-lg border border-amber-400 bg-amber-100 px-3 py-2 text-xs font-bold uppercase tracking-wide text-amber-900 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          {busyExpenseId === expense.id ? "Saving..." : `Approve as ${user}`}
+                          {busyExpenseId === expense.id ? "Saving..." : `Approve as ${activeUser}`}
                         </button>
                       ) : null}
 
@@ -742,15 +861,62 @@ function AccountsPageContent() {
                         </button>
                       ) : null}
 
-                      {expense.status === "settled" ? (
-                        <Link
-                          href={`/accounts/bill/${expense.id}?user=${user}`}
-                          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-800 transition hover:border-slate-400"
-                        >
-                          Print Bill
-                        </Link>
-                      ) : null}
+                      <Link
+                        href={`/accounts/bill/${expense.id}`}
+                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-800 transition hover:border-slate-400"
+                      >
+                        {expense.status === "settled" ? "Print Bill" : "Print Provisional Bill"}
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleExpenseExpand(expense.id)}
+                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-700 transition hover:border-slate-400"
+                      >
+                        {isExpanded ? "Hide Details" : "View Details"}
+                      </button>
                     </div>
+
+                    {isExpanded ? (
+                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                          <p className="font-medium text-slate-900">Split</p>
+                          <p className="mt-1">
+                            Sachin: {expense.split_sachin_percent}% ({formatINR(expense.split_sachin_amount)})
+                          </p>
+                          <p>
+                            Surya: {expense.split_surya_percent}% ({formatINR(expense.split_surya_amount)})
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                          <p className="font-medium text-slate-900">Receipt Files</p>
+                          {Array.isArray(expense.receipt_attachments) && expense.receipt_attachments.length > 0 ? (
+                            <ul className="mt-1 space-y-1">
+                              {expense.receipt_attachments.map((attachment, index) => (
+                                <li key={`${expense.id}-receipt-${index}`}>
+                                  <a
+                                    href={attachment.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-blue-700 underline-offset-2 hover:underline"
+                                  >
+                                    {attachment.name}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="mt-1 text-slate-500">No receipts uploaded.</p>
+                          )}
+                        </div>
+                        {expense.internal_notes ? (
+                          <div className="md:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                            <p className="font-medium text-slate-900">Notes</p>
+                            <p className="mt-1 whitespace-pre-wrap">{expense.internal_notes}</p>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </article>
                 );
               })
@@ -759,23 +925,5 @@ function AccountsPageContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-function AccountsPageFallback() {
-  return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
-      <div className="rounded-xl border border-slate-200 bg-white px-6 py-5 text-sm text-slate-600 shadow-sm">
-        Loading SOCIO Accounts...
-      </div>
-    </div>
-  );
-}
-
-export default function AccountsPage() {
-  return (
-    <Suspense fallback={<AccountsPageFallback />}>
-      <AccountsPageContent />
-    </Suspense>
   );
 }

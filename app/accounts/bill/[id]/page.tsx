@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 type AccountsUser = "sachin" | "surya";
 
@@ -33,6 +33,7 @@ type ExpenseRecord = {
 };
 
 const VALID_USERS: AccountsUser[] = ["sachin", "surya"];
+const USER_STORAGE_KEY = "accounts_username";
 
 function normalizeUser(value: string | null): AccountsUser | null {
   const normalized = String(value || "").trim().toLowerCase();
@@ -72,10 +73,13 @@ function formatISTDate(value: string): string {
 
 export default function AccountsBillPage() {
   const params = useParams<{ id: string }>();
-  const searchParams = useSearchParams();
 
-  const user = normalizeUser(searchParams.get("user"));
   const expenseId = String(params?.id || "");
+
+  const [activeUser, setActiveUser] = useState<AccountsUser | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [usernameInput, setUsernameInput] = useState("");
+  const [authError, setAuthError] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -89,8 +93,35 @@ export default function AccountsBillPage() {
   const [showNotes, setShowNotes] = useState(true);
 
   useEffect(() => {
+    const savedUser = typeof window !== "undefined" ? window.localStorage.getItem(USER_STORAGE_KEY) : null;
+    const resolvedUser = normalizeUser(savedUser);
+    if (resolvedUser) {
+      setActiveUser(resolvedUser);
+    }
+    setAuthReady(true);
+  }, []);
+
+  const handleLogin = (event: React.FormEvent) => {
+    event.preventDefault();
+    const resolved = normalizeUser(usernameInput);
+
+    if (!resolved) {
+      setAuthError("wrongusername");
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(USER_STORAGE_KEY, resolved);
+    }
+
+    setActiveUser(resolved);
+    setAuthError("");
+    setUsernameInput("");
+  };
+
+  useEffect(() => {
     const loadBill = async () => {
-      if (!user || !expenseId) {
+      if (!activeUser || !expenseId) {
         setLoading(false);
         return;
       }
@@ -98,7 +129,7 @@ export default function AccountsBillPage() {
       try {
         const response = await fetch(`/api/accounts/${expenseId}`, {
           headers: {
-            "x-accounts-user": user,
+            "x-accounts-user": activeUser,
           },
           cache: "no-store",
         });
@@ -118,26 +149,59 @@ export default function AccountsBillPage() {
     };
 
     loadBill();
-  }, [expenseId, user]);
+  }, [activeUser, expenseId]);
 
-  if (!user) {
+  if (!authReady) {
     return (
-      <div className="min-h-screen bg-slate-100 px-4 py-10">
-        <div className="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <h1 className="text-xl font-bold text-slate-900">Invalid Bill Access</h1>
-          <p className="mt-2 text-sm text-slate-600">Open this page with a valid user link.</p>
-          <div className="mt-4 flex justify-center gap-3">
-            <Link href="/accounts?user=sachin" className="text-sm font-semibold text-blue-700 hover:underline">
-              sachin link
-            </Link>
-            <Link href="/accounts?user=surya" className="text-sm font-semibold text-blue-700 hover:underline">
-              surya link
-            </Link>
-          </div>
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
+        <div className="rounded-xl border border-slate-200 bg-white px-6 py-5 text-sm text-slate-600 shadow-sm">
+          Loading bill workspace...
         </div>
       </div>
     );
   }
+
+  if (!activeUser) {
+    return (
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#e0f2fe_0%,_#f8fafc_45%,_#f8fafc_100%)] px-4 py-12">
+        <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="mb-6 flex items-center gap-4">
+            <Image src="/socio.svg" alt="SOCIO" width={58} height={58} className="h-14 w-14" priority />
+            <div>
+              <h1 className="text-2xl font-black text-slate-900">SOCIO Accounts</h1>
+              <p className="text-sm text-slate-600">Bill Print Access</p>
+            </div>
+          </div>
+
+          <form className="space-y-4" onSubmit={handleLogin}>
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Enter Username</label>
+              <input
+                type="text"
+                value={usernameInput}
+                onChange={(event) => {
+                  setUsernameInput(event.target.value);
+                  if (authError) setAuthError("");
+                }}
+                placeholder="sachin or surya"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                required
+              />
+              {authError ? <p className="mt-2 text-sm font-semibold text-rose-600">{authError}</p> : null}
+            </div>
+            <button
+              type="submit"
+              className="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800"
+            >
+              Continue
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  const isSettled = expense?.status === "settled";
 
   return (
     <>
@@ -154,10 +218,7 @@ export default function AccountsBillPage() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <Link
-                  href={`/accounts?user=${user}`}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
-                >
+                <Link href="/accounts" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
                   Back to Accounts
                 </Link>
                 <button
@@ -165,7 +226,7 @@ export default function AccountsBillPage() {
                   onClick={() => window.print()}
                   className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white"
                 >
-                  Print Bill
+                  {isSettled ? "Print Bill" : "Print Provisional Bill"}
                 </button>
               </div>
             </div>
@@ -210,6 +271,12 @@ export default function AccountsBillPage() {
             </div>
           </div>
 
+          {!loading && expense && !isSettled ? (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              This bill is pending clearance. You can print it now for review, but settlement is still pending.
+            </div>
+          ) : null}
+
           {loading ? (
             <div className="rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-600 shadow-sm">
               Loading bill...
@@ -221,119 +288,129 @@ export default function AccountsBillPage() {
               No expense found.
             </div>
           ) : (
-            <article className="print-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-                <div className="flex items-center gap-3">
-                  <Image src="/socio.svg" alt="SOCIO" width={44} height={44} className="h-11 w-11" />
+            <article className="print-card relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              {!isSettled ? (
+                <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center">
+                  <div className="rotate-[-20deg] border-4 border-rose-300/35 px-8 py-2 text-center text-3xl font-black tracking-[0.25em] text-rose-300/35 sm:text-5xl">
+                    PENDING CLEARANCE
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="relative z-10">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+                  <div className="flex items-center gap-3">
+                    <Image src="/socio.svg" alt="SOCIO" width={44} height={44} className="h-11 w-11" />
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-slate-500">SOCIO Accounts</p>
+                      <h2 className="text-xl font-black text-slate-900">Expense Bill</h2>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-slate-500">Bill ID</p>
+                    <p className="text-sm font-semibold text-slate-800">{expense.id}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-slate-500">SOCIO Accounts</p>
-                    <h2 className="text-xl font-black text-slate-900">Expense Settlement Bill</h2>
+                    <p className="text-xs uppercase tracking-wide text-slate-500">Expense Date</p>
+                    <p className="text-sm font-semibold text-slate-900">{formatISTDate(expense.expense_date)}</p>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-slate-500">Bill ID</p>
-                  <p className="text-sm font-semibold text-slate-800">{expense.id}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Expense Date</p>
-                  <p className="text-sm font-semibold text-slate-900">{formatISTDate(expense.expense_date)}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Total Amount</p>
-                  <p className="text-sm font-semibold text-slate-900">{formatINR(expense.total_amount)}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Created By</p>
-                  <p className="text-sm font-semibold uppercase text-slate-900">{expense.created_by_user}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Status</p>
-                  <p className="text-sm font-semibold uppercase text-slate-900">
-                    {expense.status.replaceAll("_", " ")}
-                  </p>
-                </div>
-              </div>
-
-              {showReason ? (
-                <section className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-sm font-bold text-slate-900">Reason</h3>
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{expense.reason}</p>
-                </section>
-              ) : null}
-
-              {showSplit ? (
-                <section className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-sm font-bold text-slate-900">Payment Split</h3>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2 text-sm text-slate-700">
-                    <p>
-                      Sachin: {expense.split_sachin_percent}% ({formatINR(expense.split_sachin_amount)})
-                    </p>
-                    <p>
-                      Surya: {expense.split_surya_percent}% ({formatINR(expense.split_surya_amount)})
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-slate-500">Total Amount</p>
+                    <p className="text-sm font-semibold text-slate-900">{formatINR(expense.total_amount)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-slate-500">Created By</p>
+                    <p className="text-sm font-semibold uppercase text-slate-900">{expense.created_by_user}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-slate-500">Status</p>
+                    <p className="text-sm font-semibold uppercase text-slate-900">
+                      {expense.status.replaceAll("_", " ")}
                     </p>
                   </div>
-                </section>
-              ) : null}
+                </div>
 
-              {showApprovals ? (
-                <section className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-sm font-bold text-slate-900">Approval Timestamps (IST)</h3>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2 text-sm text-slate-700">
-                    <p>Sachin: {formatIST(expense.approval_sachin_at)}</p>
-                    <p>Surya: {formatIST(expense.approval_surya_at)}</p>
-                  </div>
-                </section>
-              ) : null}
+                {showReason ? (
+                  <section className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <h3 className="text-sm font-bold text-slate-900">Reason</h3>
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{expense.reason}</p>
+                  </section>
+                ) : null}
 
-              {showTimeline ? (
-                <section className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-sm font-bold text-slate-900">Processing Timeline (IST)</h3>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2 text-sm text-slate-700">
-                    <p>Purchased At: {formatIST(expense.purchased_at)}</p>
-                    <p>Settled At: {formatIST(expense.settled_at)}</p>
-                  </div>
-                </section>
-              ) : null}
+                {showSplit ? (
+                  <section className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <h3 className="text-sm font-bold text-slate-900">Payment Split</h3>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2 text-sm text-slate-700">
+                      <p>
+                        Sachin: {expense.split_sachin_percent}% ({formatINR(expense.split_sachin_amount)})
+                      </p>
+                      <p>
+                        Surya: {expense.split_surya_percent}% ({formatINR(expense.split_surya_amount)})
+                      </p>
+                    </div>
+                  </section>
+                ) : null}
 
-              {showReceipts ? (
-                <section className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-sm font-bold text-slate-900">Receipt Attachments</h3>
-                  {Array.isArray(expense.receipt_attachments) && expense.receipt_attachments.length > 0 ? (
-                    <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                      {expense.receipt_attachments.map((attachment, index) => (
-                        <li key={`bill-receipt-${index}`}>
-                          <a
-                            href={attachment.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-blue-700 underline-offset-2 hover:underline"
-                          >
-                            {attachment.name}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="mt-2 text-sm text-slate-500">No receipts attached.</p>
-                  )}
-                </section>
-              ) : null}
+                {showApprovals ? (
+                  <section className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <h3 className="text-sm font-bold text-slate-900">Approval Timestamps (IST)</h3>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2 text-sm text-slate-700">
+                      <p>Sachin: {formatIST(expense.approval_sachin_at)}</p>
+                      <p>Surya: {formatIST(expense.approval_surya_at)}</p>
+                    </div>
+                  </section>
+                ) : null}
 
-              {showNotes ? (
-                <section className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-sm font-bold text-slate-900">Internal Notes</h3>
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
-                    {expense.internal_notes || "No notes added."}
-                  </p>
-                </section>
-              ) : null}
+                {showTimeline ? (
+                  <section className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <h3 className="text-sm font-bold text-slate-900">Processing Timeline (IST)</h3>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2 text-sm text-slate-700">
+                      <p>Purchased At: {formatIST(expense.purchased_at)}</p>
+                      <p>Settled At: {formatIST(expense.settled_at)}</p>
+                    </div>
+                  </section>
+                ) : null}
 
-              <p className="mt-6 text-center text-xs text-slate-500">
-                Generated on {formatIST(new Date().toISOString())} (IST)
-              </p>
+                {showReceipts ? (
+                  <section className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <h3 className="text-sm font-bold text-slate-900">Receipt Attachments</h3>
+                    {Array.isArray(expense.receipt_attachments) && expense.receipt_attachments.length > 0 ? (
+                      <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                        {expense.receipt_attachments.map((attachment, index) => (
+                          <li key={`bill-receipt-${index}`}>
+                            <a
+                              href={attachment.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-700 underline-offset-2 hover:underline"
+                            >
+                              {attachment.name}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-2 text-sm text-slate-500">No receipts attached.</p>
+                    )}
+                  </section>
+                ) : null}
+
+                {showNotes ? (
+                  <section className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <h3 className="text-sm font-bold text-slate-900">Internal Notes</h3>
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
+                      {expense.internal_notes || "No notes added."}
+                    </p>
+                  </section>
+                ) : null}
+
+                <p className="mt-6 text-center text-xs text-slate-500">
+                  Generated on {formatIST(new Date().toISOString())} (IST)
+                </p>
+              </div>
             </article>
           )}
         </div>
