@@ -30,7 +30,7 @@ Use this to put the site on hold while keeping `careers` and `panel` available.
 
 When enabled, all routes return `Site Unavailable` except:
 
-- `/careers/*`
+- `/socio/careers/*`
 - `/interns/*`
 - `/panel/*`
 - `/api/apply/*`

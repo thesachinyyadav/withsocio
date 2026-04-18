@@ -501,10 +501,10 @@ export default function MailboxPage() {
           </form>
 
           <div className="mt-5 flex items-center justify-between text-sm">
-            <Link href={`/careers/${campusId}`} className="text-[#154CB3] hover:underline">
+            <Link href={`/socio/careers/${campusId}`} className="text-[#154CB3] hover:underline">
               Back to Careers
             </Link>
-            <Link href="/panel" className="text-[#154CB3] hover:underline">
+            <Link href="/socio/panel" className="text-[#154CB3] hover:underline">
               Interview Panel
             </Link>
           </div>

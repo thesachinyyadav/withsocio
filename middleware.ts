@@ -4,10 +4,10 @@ import type { NextRequest } from "next/server";
 const MAINTENANCE_MODE = process.env.MAINTENANCE_MODE === "true";
 
 const ALLOWED_PREFIXES = [
-  "/careers",
-  "/interns",
-  "/accounts",
-  "/panel",
+  "/socio/careers",
+  "/socio/interns",
+  "/socio/accounts",
+  "/socio/panel",
   "/api/apply",
   "/api/admin",
   "/api/interns",

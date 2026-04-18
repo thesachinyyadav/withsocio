@@ -437,7 +437,7 @@ export default function CareersApplicationPage() {
             <p className="text-gray-500 text-center mb-6 text-sm">This form works best on a laptop or desktop.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowMobileWarning(false)} className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-sm">Continue Anyway</button>
-              <a href="https://withsocio.com/careers/christid" className="flex-1 px-4 py-3 bg-[#154CB3] text-white font-semibold rounded-xl hover:bg-[#0f3d8f] transition-colors text-center text-sm">Open on Desktop</a>
+              <a href="https://withsocio.com/socio/careers/christid" className="flex-1 px-4 py-3 bg-[#154CB3] text-white font-semibold rounded-xl hover:bg-[#0f3d8f] transition-colors text-center text-sm">Open on Desktop</a>
             </div>
           </div>
         </div>
@@ -453,7 +453,7 @@ export default function CareersApplicationPage() {
           </h1>
           <p className="text-center text-gray-600 text-base md:text-lg max-w-xl mx-auto">Apply for our internship programme and build with us.</p>
           <div className="flex justify-center mt-6">
-            <a href={`/careers/${campusId}/about-socio`} className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-800 font-semibold rounded-full hover:border-[#154CB3] hover:text-[#154CB3] transition-colors text-sm">
+            <a href={`/socio/careers/${campusId}/about-socio`} className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-800 font-semibold rounded-full hover:border-[#154CB3] hover:text-[#154CB3] transition-colors text-sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               View Job Description
             </a>

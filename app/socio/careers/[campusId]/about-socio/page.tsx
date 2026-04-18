@@ -53,7 +53,7 @@ export default async function AboutSocioPage({
           <p className="text-sm font-semibold tracking-wide text-white/80 mb-3">SOCIO</p>
           <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">About Socio and Role Descriptions</h1>
           <p className="text-white/75 mt-4 max-w-2xl">A quick overview of how we work and what each internship role is responsible for.</p>
-          <BackToApplicationButton fallbackHref={`/careers/${campusId}`} />
+          <BackToApplicationButton fallbackHref={`/socio/careers/${campusId}`} />
         </div>
       </div>
 

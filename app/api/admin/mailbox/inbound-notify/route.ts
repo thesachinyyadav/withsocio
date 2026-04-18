@@ -7,7 +7,7 @@ const supabaseAdmin = createClient(
 );
 
 const getNotifySecret = () => process.env.MAILBOX_NOTIFY_SECRET || "";
-const DEFAULT_MAILBOX_PATH = "/careers/christid/mailbox";
+const DEFAULT_MAILBOX_PATH = "/socio/careers/christid/mailbox";
 
 const getMailboxUrl = (request: Request) => {
   const configuredUrl = (process.env.MAILBOX_APP_URL || "").trim();
