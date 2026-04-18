@@ -145,14 +145,14 @@ export default function InternWorkspace() {
           <p className="text-sm font-medium text-slate-800">
             {isAlumni
               ? "Read-only access: You can review your previous work logs and reports."
-              : "Reminder: add your today&apos;s worklog before the day ends."}
+              : "Reminder: add your today's worklog before the day ends."}
           </p>
           {!isAlumni ? (
             <Link
               href="/socio/interns/workspace/work-logs/new"
               className="inline-flex items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition"
             >
-              Add Today&apos;s Worklog
+              Add Today's Worklog
             </Link>
           ) : null}
         </div>
