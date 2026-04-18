@@ -31,6 +31,11 @@ function parsePage(searchParams: URLSearchParams) {
   return { safePage, safeLimit, from, to };
 }
 
+function toAmount(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export async function GET(request: NextRequest) {
   const auth = authenticateAccountsUser(request);
   if (!auth.ok) return auth.response;
@@ -59,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     query = query.range(from, to);
 
-    const [listResult, pendingCount, purchasedCount, settledCount] = await Promise.all([
+    const [listResult, pendingCount, purchasedCount, settledCount, summaryRows] = await Promise.all([
       query,
       supabaseAdmin
         .from("accounts_expenses")
@@ -73,11 +78,54 @@ export async function GET(request: NextRequest) {
         .from("accounts_expenses")
         .select("id", { count: "exact", head: true })
         .eq("status", "settled"),
+      supabaseAdmin
+        .from("accounts_expenses")
+        .select("status,total_amount,split_sachin_amount,split_surya_amount"),
     ]);
 
     if (listResult.error) {
       return NextResponse.json({ error: listResult.error.message }, { status: 500 });
     }
+
+    if (summaryRows.error) {
+      return NextResponse.json({ error: summaryRows.error.message }, { status: 500 });
+    }
+
+    const summary = {
+      totalExpenses: 0,
+      totalAmount: 0,
+      pendingApprovalAmount: 0,
+      purchasedAmount: 0,
+      settledAmount: 0,
+      pendingClearanceAmount: 0,
+      sachinShareTotal: 0,
+      suryaShareTotal: 0,
+      pendingApprovalCount: pendingCount.count || 0,
+      purchasedCount: purchasedCount.count || 0,
+      settledCount: settledCount.count || 0,
+    };
+
+    for (const row of summaryRows.data || []) {
+      const totalAmount = toAmount((row as { total_amount?: unknown }).total_amount);
+      const sachinShare = toAmount((row as { split_sachin_amount?: unknown }).split_sachin_amount);
+      const suryaShare = toAmount((row as { split_surya_amount?: unknown }).split_surya_amount);
+      const status = String((row as { status?: string }).status || "");
+
+      summary.totalExpenses += 1;
+      summary.totalAmount += totalAmount;
+      summary.sachinShareTotal += sachinShare;
+      summary.suryaShareTotal += suryaShare;
+
+      if (status === "pending_approval") {
+        summary.pendingApprovalAmount += totalAmount;
+      } else if (status === "purchased") {
+        summary.purchasedAmount += totalAmount;
+      } else if (status === "settled") {
+        summary.settledAmount += totalAmount;
+      }
+    }
+
+    summary.pendingClearanceAmount = summary.pendingApprovalAmount + summary.purchasedAmount;
 
     return NextResponse.json({
       success: true,
@@ -94,6 +142,7 @@ export async function GET(request: NextRequest) {
         purchased: purchasedCount.count || 0,
         settled: settledCount.count || 0,
       },
+      summary,
       allowedStatuses: ACCOUNTS_STATUSES,
     });
   } catch (error) {
