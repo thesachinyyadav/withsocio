@@ -42,6 +42,12 @@ type ListResponse = {
   success: boolean;
   currentUser: AccountsUser;
   data: ExpenseRecord[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
   counts: {
     pending: number;
     purchased: number;
@@ -51,6 +57,7 @@ type ListResponse = {
 
 const VALID_USERS: AccountsUser[] = ["sachin", "surya"];
 const USER_STORAGE_KEY = "accounts_username";
+const PAGE_SIZE = 8;
 
 function normalizeUser(value: string | null): AccountsUser | null {
   const normalized = String(value || "").trim().toLowerCase();
@@ -97,6 +104,61 @@ function splitEmails(value: string): string[] {
         .filter(Boolean)
     )
   );
+}
+
+function csvEscape(value: unknown): string {
+  const normalized = String(value ?? "").replace(/\r\n|\r/g, "\n");
+  if (/[",\n]/.test(normalized)) {
+    return `"${normalized.replace(/"/g, '""')}"`;
+  }
+  return normalized;
+}
+
+function tsvCell(value: unknown): string {
+  return String(value ?? "")
+    .replace(/\r\n|\r/g, "\n")
+    .replace(/\n/g, " ")
+    .replace(/\t/g, " ");
+}
+
+function downloadTextFile(filename: string, content: string, mimeType: string): void {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function copyTextToClipboard(value: string): Promise<boolean> {
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return true;
+  }
+
+  const textArea = document.createElement("textarea");
+  textArea.value = value;
+  textArea.style.position = "fixed";
+  textArea.style.top = "-9999px";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  const result = document.execCommand("copy");
+  textArea.remove();
+  return result;
+}
+
+function exportTimestamp(value: string | null): string {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "Asia/Kolkata",
+  }).format(new Date(value));
 }
 
 function statusPill(status: ExpenseStatus): string {
@@ -163,8 +225,11 @@ export default function AccountsPage() {
 
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
   const [counts, setCounts] = useState({ pending: 0, purchased: 0, settled: 0 });
+  const [pagination, setPagination] = useState({ page: 1, limit: PAGE_SIZE, total: 0, pages: 0 });
+  const [currentPage, setCurrentPage] = useState(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [expandedExpenseIds, setExpandedExpenseIds] = useState<Record<string, boolean>>({});
+  const [exporting, setExporting] = useState(false);
 
   const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [reason, setReason] = useState("");
@@ -200,31 +265,50 @@ export default function AccountsPage() {
     setAuthReady(true);
   }, []);
 
-  const loadExpenses = async () => {
+  const fetchExpensePage = async (page: number, limit: number): Promise<ListResponse> => {
+    if (!activeUser) {
+      throw new Error("Missing active user.");
+    }
+
+    const response = await fetch(
+      `/api/accounts?view=${view}&q=${encodeURIComponent(search)}&page=${page}&limit=${limit}`,
+      {
+        headers: {
+          "x-accounts-user": activeUser,
+        },
+        cache: "no-store",
+      }
+    );
+
+    const payload = (await response.json()) as ListResponse | { error?: string };
+    if (!response.ok) {
+      throw new Error((payload as { error?: string }).error || "Failed to fetch expenses.");
+    }
+
+    return payload as ListResponse;
+  };
+
+  const loadExpenses = async (pageToLoad = currentPage) => {
     if (!activeUser) return;
 
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch(
-        `/api/accounts?view=${view}&q=${encodeURIComponent(search)}`,
-        {
-          headers: {
-            "x-accounts-user": activeUser,
-          },
-          cache: "no-store",
-        }
-      );
+      const data = await fetchExpensePage(pageToLoad, PAGE_SIZE);
+      const nextPagination =
+        data.pagination ||
+        ({ page: pageToLoad, limit: PAGE_SIZE, total: data.data.length, pages: data.data.length ? 1 : 0 } as const);
 
-      const payload = (await response.json()) as ListResponse | { error?: string };
-      if (!response.ok) {
-        throw new Error((payload as { error?: string }).error || "Failed to fetch expenses.");
-      }
-
-      const data = payload as ListResponse;
       setExpenses(Array.isArray(data.data) ? data.data : []);
       setCounts(data.counts || { pending: 0, purchased: 0, settled: 0 });
+      setPagination(nextPagination);
+
+      if (nextPagination.pages > 0 && pageToLoad > nextPagination.pages) {
+        setCurrentPage(nextPagination.pages);
+      } else if (nextPagination.total === 0 && pageToLoad !== 1) {
+        setCurrentPage(1);
+      }
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : "Failed to fetch expenses.";
       setError(message);
@@ -237,11 +321,16 @@ export default function AccountsPage() {
     if (!activeUser) return;
     loadExpenses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeUser, view]);
+  }, [activeUser, view, currentPage]);
 
   const handleSearchSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    await loadExpenses();
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+      return;
+    }
+
+    await loadExpenses(1);
   };
 
   const handleLogin = (event: React.FormEvent) => {
@@ -260,6 +349,7 @@ export default function AccountsPage() {
     setActiveUser(resolved);
     setAuthError("");
     setUsernameInput("");
+    setCurrentPage(1);
   };
 
   const handleLogout = () => {
@@ -269,6 +359,8 @@ export default function AccountsPage() {
     setActiveUser(null);
     setExpenses([]);
     setCounts({ pending: 0, purchased: 0, settled: 0 });
+    setPagination({ page: 1, limit: PAGE_SIZE, total: 0, pages: 0 });
+    setCurrentPage(1);
     setExpandedExpenseIds({});
   };
 
@@ -387,7 +479,8 @@ export default function AccountsPage() {
       setReceiptFiles([]);
       setFileInputKey((prev) => prev + 1);
       setShowCreateForm(false);
-      await loadExpenses();
+      setCurrentPage(1);
+      await loadExpenses(1);
     } catch (createError) {
       const message = createError instanceof Error ? createError.message : "Failed to create expense.";
       setError(message);
@@ -435,6 +528,150 @@ export default function AccountsPage() {
     }
   };
 
+  const fetchAllFilteredExpenses = async (): Promise<ExpenseRecord[]> => {
+    const firstPage = await fetchExpensePage(1, 200);
+    const allRows = [...(Array.isArray(firstPage.data) ? firstPage.data : [])];
+    const totalPages = Math.max(1, firstPage.pagination?.pages || 0);
+
+    for (let page = 2; page <= totalPages; page += 1) {
+      const nextPage = await fetchExpensePage(page, 200);
+      if (Array.isArray(nextPage.data) && nextPage.data.length > 0) {
+        allRows.push(...nextPage.data);
+      }
+    }
+
+    return allRows;
+  };
+
+  const toExportRows = (rows: ExpenseRecord[]): string[][] => {
+    return rows.map((expense) => [
+      expense.id,
+      formatISTDate(expense.expense_date),
+      expense.reason,
+      String(expense.total_amount),
+      expense.status,
+      expense.created_by_user,
+      String(expense.split_sachin_percent),
+      String(expense.split_surya_percent),
+      String(expense.split_sachin_amount),
+      String(expense.split_surya_amount),
+      exportTimestamp(expense.approval_sachin_at),
+      exportTimestamp(expense.approval_surya_at),
+      exportTimestamp(expense.purchased_at),
+      exportTimestamp(expense.settled_at),
+      expense.internal_notes || "",
+      String(Array.isArray(expense.receipt_attachments) ? expense.receipt_attachments.length : 0),
+      formatISTDateTime(expense.updated_at),
+    ]);
+  };
+
+  const handleExportCsv = async () => {
+    if (!activeUser) return;
+
+    setExporting(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const rows = await fetchAllFilteredExpenses();
+      if (rows.length === 0) {
+        setSuccess("No rows to export for the current view and filters.");
+        return;
+      }
+
+      const header = [
+        "Expense ID",
+        "Expense Date (IST)",
+        "Reason",
+        "Total Amount",
+        "Status",
+        "Created By",
+        "Sachin %",
+        "Surya %",
+        "Sachin Amount",
+        "Surya Amount",
+        "Sachin Approved At (IST)",
+        "Surya Approved At (IST)",
+        "Purchased At (IST)",
+        "Settled At (IST)",
+        "Internal Notes",
+        "Receipt Count",
+        "Last Updated At (IST)",
+      ];
+
+      const content = [header, ...toExportRows(rows)]
+        .map((line) => line.map((cell) => csvEscape(cell)).join(","))
+        .join("\n");
+
+      const stamp = new Date().toISOString().slice(0, 10);
+      downloadTextFile(`socio-accounts-${view}-${stamp}.csv`, content, "text/csv;charset=utf-8");
+      setSuccess(`CSV exported successfully with ${rows.length} row${rows.length === 1 ? "" : "s"}.`);
+    } catch (exportError) {
+      const message = exportError instanceof Error ? exportError.message : "Failed to export CSV.";
+      setError(message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleCopyForGoogleSheets = async () => {
+    if (!activeUser) return;
+
+    setExporting(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const rows = await fetchAllFilteredExpenses();
+      if (rows.length === 0) {
+        setSuccess("No rows to copy for the current view and filters.");
+        return;
+      }
+
+      const header = [
+        "Expense ID",
+        "Expense Date (IST)",
+        "Reason",
+        "Total Amount",
+        "Status",
+        "Created By",
+        "Sachin %",
+        "Surya %",
+        "Sachin Amount",
+        "Surya Amount",
+        "Sachin Approved At (IST)",
+        "Surya Approved At (IST)",
+        "Purchased At (IST)",
+        "Settled At (IST)",
+        "Internal Notes",
+        "Receipt Count",
+        "Last Updated At (IST)",
+      ];
+
+      const tsvPayload = [header, ...toExportRows(rows)]
+        .map((line) => line.map((cell) => tsvCell(cell)).join("\t"))
+        .join("\n");
+
+      const copied = await copyTextToClipboard(tsvPayload);
+      if (!copied) {
+        throw new Error("Copy failed in this browser. Please use CSV export instead.");
+      }
+
+      setSuccess(
+        `Copied ${rows.length} row${rows.length === 1 ? "" : "s"} for Google Sheets. Paste into the sheet.`
+      );
+    } catch (copyError) {
+      const message = copyError instanceof Error ? copyError.message : "Failed to copy data.";
+      setError(message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const totalPages = pagination.pages;
+  const showingFrom = pagination.total === 0 ? 0 : (currentPage - 1) * pagination.limit + 1;
+  const showingTo = pagination.total === 0 ? 0 : Math.min(currentPage * pagination.limit, pagination.total);
+
   if (!authReady) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
@@ -467,7 +704,7 @@ export default function AccountsPage() {
                   setUsernameInput(event.target.value);
                   if (authError) setAuthError("");
                 }}
-                placeholder="sachin or surya"
+                placeholder="Username"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
                 required
               />
@@ -486,8 +723,8 @@ export default function AccountsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#e0f2fe_0%,_#f8fafc_45%,_#f8fafc_100%)] px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="bg-[radial-gradient(circle_at_top,_#e0f2fe_0%,_#f8fafc_45%,_#f8fafc_100%)] px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-5xl space-y-5">
         <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
@@ -510,7 +747,10 @@ export default function AccountsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setView("pending")}
+                onClick={() => {
+                  setView("pending");
+                  setCurrentPage(1);
+                }}
                 className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${
                   view === "pending"
                     ? "border-blue-700 bg-blue-700 text-white"
@@ -521,7 +761,10 @@ export default function AccountsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setView("processed")}
+                onClick={() => {
+                  setView("processed");
+                  setCurrentPage(1);
+                }}
                 className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${
                   view === "processed"
                     ? "border-emerald-700 bg-emerald-700 text-white"
@@ -566,7 +809,7 @@ export default function AccountsPage() {
           </div>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[360px,1fr]">
+        <div className="space-y-4">
           <section className="space-y-4">
             {showCreateForm ? (
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -735,6 +978,28 @@ export default function AccountsPage() {
                   Apply
                 </button>
               </form>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportCsv}
+                  disabled={exporting || loading}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {exporting ? "Preparing..." : "Export CSV"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyForGoogleSheets}
+                  disabled={exporting || loading}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {exporting ? "Preparing..." : "Copy for Google Sheets"}
+                </button>
+                <span className="text-xs text-slate-500 sm:ml-auto">
+                  {pagination.total > 0 ? `Page ${currentPage} of ${totalPages}` : "No rows"}
+                </span>
+              </div>
             </div>
 
             {error ? (
@@ -921,6 +1186,37 @@ export default function AccountsPage() {
                 );
               })
             )}
+
+            {pagination.total > 0 ? (
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs text-slate-600">
+                    Showing {showingFrom}-{showingTo} of {pagination.total}
+                  </p>
+                  <div className="ml-auto flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={currentPage <= 1 || loading}
+                      className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-xs font-semibold text-slate-600">
+                      {currentPage} / {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage >= totalPages || loading}
+                      className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </section>
         </div>
       </div>

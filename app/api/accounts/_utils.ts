@@ -282,7 +282,7 @@ export async function sendNewExpenseEmail(input: {
   ccEmails: string[];
   internalNotes?: string | null;
 }) {
-  const subject = `[SOCIO Accounts] New Expense Added - ${input.reason.slice(0, 50)}`;
+  const subject = `SOCIO Accounts - New Expense Added - ${input.reason.slice(0, 50)}`;
 
   const safeCreatedBy = escapeHtml(input.createdByUser);
   const safeExpenseDate = escapeHtml(input.expenseDate);
