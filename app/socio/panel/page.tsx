@@ -22,7 +22,7 @@ interface Applicant {
   resume_file_name: string;
   campus_id: string;
   created_at: string;
-  status: "pending" | "reviewed" | "shortlisted" | "hired" | "rejected";
+  status: "pending" | "reviewed" | "shortlisted" | "hired" | "alumni" | "rejected";
 }
 
 interface InterviewScore {
@@ -45,6 +45,7 @@ const statusColors = {
   reviewed: "bg-sky-50 text-sky-700 border border-sky-200",
   shortlisted: "bg-emerald-50 text-emerald-700 border border-emerald-200",
   hired: "bg-violet-50 text-violet-700 border border-violet-200",
+  alumni: "bg-slate-100 text-slate-700 border border-slate-300",
   rejected: "bg-rose-50 text-rose-700 border border-rose-200",
 };
 
@@ -690,6 +691,7 @@ export default function AdminDashboard() {
               <option value="reviewed">Reviewed</option>
               <option value="shortlisted">Shortlisted</option>
               <option value="hired">Hired</option>
+              <option value="alumni">Alumni</option>
               <option value="rejected">Rejected</option>
             </select>
           </div>
@@ -983,6 +985,7 @@ export default function AdminDashboard() {
                         { value: "reviewed", label: "Reviewed" },
                         { value: "shortlisted", label: "Shortlisted" },
                         { value: "hired", label: "Hired" },
+                        { value: "alumni", label: "Alumni" },
                         { value: "rejected", label: "Rejected" },
                       ] as const).map(({ value, label }) => (
                         <button

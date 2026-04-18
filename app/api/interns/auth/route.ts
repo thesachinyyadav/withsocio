@@ -20,9 +20,9 @@ export async function GET(request: NextRequest) {
 
   const { data: intern } = await supabaseAdmin
     .from("internship_applications")
-    .select("id, full_name, email")
+    .select("id, full_name, email, status")
     .ilike("email", auth.identifier)
-    .eq("status", "hired")
+    .in("status", ["hired", "alumni"])
     .maybeSingle();
 
   return NextResponse.json({
@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
       id: intern?.id,
       email: intern?.email || auth.identifier,
       fullName: intern?.full_name || "SOCIO Intern",
+      status: intern?.status || "hired",
     },
   });
 }
@@ -65,6 +66,7 @@ export async function POST(request: Request) {
       id: resolved.intern.id,
       email: resolved.intern.email,
       fullName: resolved.intern.full_name,
+      status: resolved.intern.status,
     },
   });
 }

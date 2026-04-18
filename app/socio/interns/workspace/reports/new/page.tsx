@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function NewReportPage() {
   const [formData, setFormData] = useState({
@@ -12,7 +13,18 @@ export default function NewReportPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isAlumni, setIsAlumni] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem("interns_user");
+      const parsedUser = rawUser ? JSON.parse(rawUser) : null;
+      setIsAlumni(String(parsedUser?.status || "").toLowerCase() === "alumni");
+    } catch {
+      setIsAlumni(false);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +57,25 @@ export default function NewReportPage() {
       setLoading(false);
     }
   };
+
+  if (isAlumni) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        <div className="rounded-xl border border-slate-300 bg-slate-100 p-6 text-center">
+          <h1 className="text-2xl font-bold text-slate-900">Read-Only Alumni Access</h1>
+          <p className="mt-2 text-sm text-slate-700">
+            Creating new reports is disabled for alumni accounts.
+          </p>
+          <Link
+            href="/socio/interns/workspace/reports"
+            className="mt-5 inline-flex rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900"
+          >
+            Back to Reports
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">

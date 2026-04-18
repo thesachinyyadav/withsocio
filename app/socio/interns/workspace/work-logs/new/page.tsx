@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface Attachment {
   url: string;
@@ -36,8 +37,19 @@ export default function NewWorkLogPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isAlumni, setIsAlumni] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem("interns_user");
+      const parsedUser = rawUser ? JSON.parse(rawUser) : null;
+      setIsAlumni(String(parsedUser?.status || "").toLowerCase() === "alumni");
+    } catch {
+      setIsAlumni(false);
+    }
+  }, []);
 
   // ── File upload ──────────────────────────────────────────────────────────
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,6 +191,25 @@ export default function NewWorkLogPage() {
 
   const hasActiveUploads = uploadingFiles.some((u) => u.progress === "uploading");
   const uploadErrors = uploadingFiles.filter((u) => u.progress === "error");
+
+  if (isAlumni) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        <div className="rounded-xl border border-slate-300 bg-slate-100 p-6 text-center">
+          <h1 className="text-2xl font-bold text-slate-900">Read-Only Alumni Access</h1>
+          <p className="mt-2 text-sm text-slate-700">
+            Creating new work logs is disabled for alumni accounts.
+          </p>
+          <Link
+            href="/socio/interns/workspace/work-logs"
+            className="mt-5 inline-flex rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900"
+          >
+            Back to Work Logs
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">

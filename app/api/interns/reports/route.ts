@@ -29,6 +29,10 @@ export async function GET(request: NextRequest) {
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false });
 
+    if (auth.role === "intern" && auth.intern.status === "alumni") {
+      query = query.eq("created_by_email", auth.identifier);
+    }
+
     // Filters
     const category = searchParams.get("category");
     if (category && REPORT_CATEGORIES.includes(category as any)) {
@@ -128,6 +132,13 @@ export async function POST(request: NextRequest) {
   if (auth.role === "admin") {
     return NextResponse.json(
       { error: "Admins cannot submit reports" },
+      { status: 403 }
+    );
+  }
+
+  if (auth.intern.status === "alumni") {
+    return NextResponse.json(
+      { error: "Alumni access is read-only. New reports are disabled." },
       { status: 403 }
     );
   }

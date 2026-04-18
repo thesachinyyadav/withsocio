@@ -36,6 +36,7 @@ export default function InternWorkspace() {
   const [showWelcomeSplash, setShowWelcomeSplash] = useState(false);
   const [splashAnimateIn, setSplashAnimateIn] = useState(false);
   const [displayName, setDisplayName] = useState("Intern");
+  const [isAlumni, setIsAlumni] = useState(false);
 
   useEffect(() => {
     try {
@@ -45,6 +46,7 @@ export default function InternWorkspace() {
       const firstName = fullName.split(" ")[0] || "Intern";
       const normalizedName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
       setDisplayName(normalizedName);
+      setIsAlumni(String(parsedUser?.status || "").toLowerCase() === "alumni");
 
       const hasSeenWelcome = sessionStorage.getItem("interns_welcome_seen") === "true";
       if (!hasSeenWelcome) {
@@ -131,18 +133,28 @@ export default function InternWorkspace() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome, {displayName}</h1>
-        <p className="text-slate-600">Continue your internship work and track progress.</p>
+        <p className="text-slate-600">
+          {isAlumni
+            ? "Alumni mode is active. You can view your past work in read-only mode."
+            : "Continue your internship work and track progress."}
+        </p>
       </div>
 
       <div className="mb-6 rounded-xl border border-blue-200 bg-blue-100 px-5 py-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-medium text-slate-800">Reminder: add your today&apos;s worklog before the day ends.</p>
-          <Link
-            href="/socio/interns/workspace/work-logs/new"
-            className="inline-flex items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition"
-          >
-            Add Today&apos;s Worklog
-          </Link>
+          <p className="text-sm font-medium text-slate-800">
+            {isAlumni
+              ? "Read-only access: You can review your previous work logs and reports."
+              : "Reminder: add your today&apos;s worklog before the day ends."}
+          </p>
+          {!isAlumni ? (
+            <Link
+              href="/socio/interns/workspace/work-logs/new"
+              className="inline-flex items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition"
+            >
+              Add Today&apos;s Worklog
+            </Link>
+          ) : null}
         </div>
       </div>
 
@@ -158,17 +170,27 @@ export default function InternWorkspace() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-900 mb-2">Work Log</h3>
-          <p className="text-slate-600 text-sm mb-4">Share daily work and accomplishments.</p>
-          <Link href="/socio/interns/workspace/work-logs/new" className="inline-flex w-full items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition">
-            Submit Log
+          <p className="text-slate-600 text-sm mb-4">
+            {isAlumni ? "Review your submitted work logs." : "Share daily work and accomplishments."}
+          </p>
+          <Link
+            href={isAlumni ? "/socio/interns/workspace/work-logs" : "/socio/interns/workspace/work-logs/new"}
+            className="inline-flex w-full items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition"
+          >
+            {isAlumni ? "View Logs" : "Submit Log"}
           </Link>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-900 mb-2">Report Issue</h3>
-          <p className="text-slate-600 text-sm mb-4">Report bugs or workflow issues.</p>
-          <Link href="/socio/interns/workspace/reports/new" className="inline-flex w-full items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition">
-            New Report
+          <p className="text-slate-600 text-sm mb-4">
+            {isAlumni ? "Review reports you submitted while active." : "Report bugs or workflow issues."}
+          </p>
+          <Link
+            href={isAlumni ? "/socio/interns/workspace/reports" : "/socio/interns/workspace/reports/new"}
+            className="inline-flex w-full items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition"
+          >
+            {isAlumni ? "View Reports" : "New Report"}
           </Link>
         </div>
 

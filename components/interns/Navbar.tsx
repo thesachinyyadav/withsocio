@@ -10,6 +10,7 @@ interface NavbarProps {
     email: string;
     fullName: string;
     role: "admin" | "intern";
+    status?: "hired" | "alumni";
   };
 }
 
@@ -19,6 +20,7 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
   const [showMenu, setShowMenu] = useState(false);
 
   const isAdmin = user?.role === "admin";
+  const isAlumni = user?.role === "intern" && user?.status === "alumni";
 
   const handleLogout = () => {
     localStorage.removeItem("interns_token");
@@ -91,6 +93,11 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
             {isAdmin && (
               <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">
                 Admin
+              </span>
+            )}
+            {isAlumni && (
+              <span className="text-xs bg-slate-200 text-slate-700 px-2 py-1 rounded">
+                Alumni
               </span>
             )}
           </Link>

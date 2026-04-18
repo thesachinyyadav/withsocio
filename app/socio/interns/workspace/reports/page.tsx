@@ -26,6 +26,7 @@ export default function InternReportsPage() {
   const [viewerEmail, setViewerEmail] = useState("");
   const [viewerName, setViewerName] = useState("My Work");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAlumni, setIsAlumni] = useState(false);
 
   useEffect(() => {
     try {
@@ -33,9 +34,11 @@ export default function InternReportsPage() {
       const parsedUser = rawUser ? JSON.parse(rawUser) : null;
       setViewerEmail((parsedUser?.email || "").toLowerCase());
       setViewerName(parsedUser?.fullName || parsedUser?.name || "My Work");
+      setIsAlumni(String(parsedUser?.status || "").toLowerCase() === "alumni");
     } catch {
       setViewerEmail("");
       setViewerName("My Work");
+      setIsAlumni(false);
     }
   }, []);
 
@@ -78,6 +81,8 @@ export default function InternReportsPage() {
   };
 
   const handleClaim = async (reportId: string) => {
+    if (isAlumni) return;
+
     try {
       setClaimingId(reportId);
       const token = localStorage.getItem("interns_token");
@@ -105,6 +110,8 @@ export default function InternReportsPage() {
   };
 
   const handleStatusChange = async (reportId: string, nextStatus: string) => {
+    if (isAlumni) return;
+
     try {
       setUpdatingStatusId(reportId);
       const token = localStorage.getItem("interns_token");
@@ -187,7 +194,7 @@ export default function InternReportsPage() {
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                 handleStatusChange(report.id, e.target.value)
               }
-              disabled={!isOwner || updatingStatusId === report.id}
+              disabled={isAlumni || !isOwner || updatingStatusId === report.id}
               className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400"
             >
               <option value="open">open</option>
@@ -196,7 +203,7 @@ export default function InternReportsPage() {
               <option value="closed">closed</option>
             </select>
 
-            {report.status !== "resolved" && report.status !== "closed" && !isOwner && (
+            {report.status !== "resolved" && report.status !== "closed" && !isOwner && !isAlumni && (
               <button
                 onClick={() => handleClaim(report.id)}
                 disabled={claimingId === report.id}
@@ -226,14 +233,26 @@ export default function InternReportsPage() {
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Reports Board</h1>
-          <p className="text-slate-600">See all reports, current owner, and status</p>
+          <p className="text-slate-600">
+            {isAlumni
+              ? "Read-only archive of reports you previously raised"
+              : "See all reports, current owner, and status"}
+          </p>
         </div>
-        <Link href="/socio/interns/workspace/reports/new">
-          <button className="px-6 py-2 bg-blue-800 hover:bg-blue-900 text-white font-semibold rounded-lg transition">
-            New Report
-          </button>
-        </Link>
+        {!isAlumni ? (
+          <Link href="/socio/interns/workspace/reports/new">
+            <button className="px-6 py-2 bg-blue-800 hover:bg-blue-900 text-white font-semibold rounded-lg transition">
+              New Report
+            </button>
+          </Link>
+        ) : null}
       </div>
+
+      {isAlumni ? (
+        <div className="mb-6 rounded-lg border border-slate-300 bg-slate-100 px-4 py-3 text-sm text-slate-700">
+          Alumni accounts are view-only. Creating or updating reports is disabled.
+        </div>
+      ) : null}
 
       <div className="mb-4 text-sm text-slate-600">Total reports: {totalReports}</div>
 
@@ -284,11 +303,13 @@ export default function InternReportsPage() {
             ) : (
               <>
                 <p className="text-slate-600 mb-4">No reports yet</p>
-                <Link href="/socio/interns/workspace/reports/new">
-                  <button className="text-blue-800 hover:text-blue-900 transition">
-                    Submit your first report
-                  </button>
-                </Link>
+                {!isAlumni ? (
+                  <Link href="/socio/interns/workspace/reports/new">
+                    <button className="text-blue-800 hover:text-blue-900 transition">
+                      Submit your first report
+                    </button>
+                  </Link>
+                ) : null}
               </>
             )}
           </div>

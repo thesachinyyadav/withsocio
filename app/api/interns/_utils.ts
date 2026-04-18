@@ -34,7 +34,7 @@ interface HiredInternRecord {
   id: string;
   full_name: string;
   email: string;
-  status: "hired";
+  status: "hired" | "alumni";
 }
 
 type ResolveIdentifierResult =
@@ -230,7 +230,7 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
     .from("internship_applications")
     .select("id, full_name, email, status")
     .ilike("email", normalized)
-    .eq("status", "hired")
+    .in("status", ["hired", "alumni"])
     .maybeSingle();
 
   if (error) {
@@ -240,7 +240,7 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
   if (!intern) {
     return {
       ok: false,
-      message: "Only hired interns can access this workspace.",
+      message: "Only hired or alumni interns can access this workspace.",
       status: 403,
     };
   }
@@ -253,7 +253,7 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
       id: intern.id,
       full_name: intern.full_name,
       email: normalizeIdentifier(intern.email),
-      status: "hired",
+      status: intern.status,
     },
   };
 }

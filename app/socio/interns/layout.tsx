@@ -8,6 +8,7 @@ interface AuthUser {
   email: string;
   fullName: string;
   role: "admin" | "intern";
+  status?: "hired" | "alumni";
   id?: string;
 }
 
@@ -50,6 +51,7 @@ export default function InternsLayout({
           role: (data.role || role || "intern") as "admin" | "intern",
           email: data?.user?.email || "",
           fullName: data?.user?.fullName || "SOCIO User",
+          status: data?.user?.status,
           id: data?.user?.id,
         };
         setUser(userData);

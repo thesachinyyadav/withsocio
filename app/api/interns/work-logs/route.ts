@@ -37,8 +37,11 @@ export async function GET(request: NextRequest) {
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false });
 
-    if (auth.role === "intern" && !includeAll) {
-      query = query.eq("created_by_email", auth.identifier);
+    if (auth.role === "intern") {
+      const shouldRestrictToSelf = auth.intern.status === "alumni" || !includeAll;
+      if (shouldRestrictToSelf) {
+        query = query.eq("created_by_email", auth.identifier);
+      }
     }
 
     // Filters
@@ -114,6 +117,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (auth.intern.status === "alumni") {
+      return NextResponse.json(
+        { error: "Alumni access is read-only. New work logs are disabled." },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const {
       logDate,
@@ -156,7 +166,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify creator is a hired intern
+    // Verify creator is an active hired intern
     const { data: creator } = await supabaseAdmin
       .from("internship_applications")
       .select("id, full_name, email")

@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS internship_applications (
         'reviewed',
         'shortlisted',
         'hired',
+        'alumni',
         'rejected'
     )),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -320,6 +321,21 @@ ALTER TABLE internship_applications
         'Digital Marketing',
         'Legal Intern',
         'Video Editing / Videographer'
+    ));
+
+-- IMPORTANT: Update status CHECK constraint to include alumni lifecycle stage
+ALTER TABLE internship_applications
+    DROP CONSTRAINT IF EXISTS internship_applications_status_check;
+
+ALTER TABLE internship_applications
+    ADD CONSTRAINT internship_applications_status_check
+    CHECK (status IN (
+        'pending',
+        'reviewed',
+        'shortlisted',
+        'hired',
+        'alumni',
+        'rejected'
     ));
 
 -- Storage bucket for resumes (run this in Supabase Dashboard -> Storage)

@@ -28,6 +28,13 @@ export async function PATCH(
   const auth = await authenticateRequest(request);
   if (!auth.ok) return auth.response;
 
+  if (auth.role === "intern" && auth.intern.status === "alumni") {
+    return NextResponse.json(
+      { error: "Alumni access is read-only. Report updates are disabled." },
+      { status: 403 }
+    );
+  }
+
   try {
     const { id } = await params;
     const body = await request.json();

@@ -25,8 +25,17 @@ export default function AllWorkLogsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isAlumni, setIsAlumni] = useState(false);
 
   useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem("interns_user");
+      const parsedUser = rawUser ? JSON.parse(rawUser) : null;
+      setIsAlumni(String(parsedUser?.status || "").toLowerCase() === "alumni");
+    } catch {
+      setIsAlumni(false);
+    }
+
     const fetchAllLogs = async () => {
       setLoading(true);
       try {
@@ -84,10 +93,12 @@ export default function AllWorkLogsPage() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Company WorkLogs</h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">
+            {isAlumni ? "My WorkLogs Archive" : "Company WorkLogs"}
+          </h1>
           <p className="text-sm font-medium text-slate-500 flex items-center gap-2">
             <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-            Everyone&apos;s entries categorized by date
+            {isAlumni ? "Your own entries categorized by date" : "Everyone's entries categorized by date"}
           </p>
         </div>
         <Link

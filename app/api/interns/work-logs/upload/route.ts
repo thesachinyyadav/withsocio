@@ -35,6 +35,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (auth.intern.status === "alumni") {
+    return NextResponse.json(
+      { error: "Alumni access is read-only. Uploads are disabled." },
+      { status: 403 }
+    );
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file");

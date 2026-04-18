@@ -18,8 +18,17 @@ export default function InternWorkLogsPage() {
   const [logs, setLogs] = useState<WorkLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState("all");
+  const [isAlumni, setIsAlumni] = useState(false);
 
   useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem("interns_user");
+      const parsedUser = rawUser ? JSON.parse(rawUser) : null;
+      setIsAlumni(String(parsedUser?.status || "").toLowerCase() === "alumni");
+    } catch {
+      setIsAlumni(false);
+    }
+
     fetchWorkLogs();
   }, []);
 
@@ -65,20 +74,24 @@ export default function InternWorkLogsPage() {
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">My Work Logs</h1>
-          <p className="text-slate-600">Look at your entries and add your entries</p>
+          <p className="text-slate-600">
+            {isAlumni ? "Read-only archive of your submitted logs" : "Look at your entries and add your entries"}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Link
             href="/socio/interns/workspace/work-logs/all"
             className="px-4 py-2 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-lg transition text-sm"
           >
-            View All WorkLogs
+            {isAlumni ? "View Archive" : "View All WorkLogs"}
           </Link>
-          <Link href="/socio/interns/workspace/work-logs/new">
-            <button className="px-6 py-2 bg-blue-800 hover:bg-blue-900 text-white font-semibold rounded-lg transition">
-              New Log
-            </button>
-          </Link>
+          {!isAlumni ? (
+            <Link href="/socio/interns/workspace/work-logs/new">
+              <button className="px-6 py-2 bg-blue-800 hover:bg-blue-900 text-white font-semibold rounded-lg transition">
+                New Log
+              </button>
+            </Link>
+          ) : null}
         </div>
       </div>
 
@@ -149,12 +162,16 @@ export default function InternWorkLogsPage() {
           ))
         ) : (
           <div className="text-center py-12 bg-white border border-slate-200 rounded-xl">
-            <p className="text-slate-600 mb-4">No work logs for selected date</p>
-            <Link href="/socio/interns/workspace/work-logs/new">
-              <button className="text-blue-800 hover:text-blue-900 transition">
-                Create your first work log
-              </button>
-            </Link>
+            <p className="text-slate-600 mb-4">
+              {isAlumni ? "No archived work logs for selected date" : "No work logs for selected date"}
+            </p>
+            {!isAlumni ? (
+              <Link href="/socio/interns/workspace/work-logs/new">
+                <button className="text-blue-800 hover:text-blue-900 transition">
+                  Create your first work log
+                </button>
+              </Link>
+            ) : null}
           </div>
         )}
       </div>
