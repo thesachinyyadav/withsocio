@@ -13,7 +13,7 @@ const isAuthorized = (request: Request) => {
 
 const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 const isValidPrefix = (value: string) => /^[a-z0-9._-]{1,32}$/i.test(value);
-const DEFAULT_MAILBOX_PATH = "/socio/careers/christid/mailbox";
+const DEFAULT_MAILBOX_PATH = "/mail";
 
 const escapeHtml = (value: string) =>
   value

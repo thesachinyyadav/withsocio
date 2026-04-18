@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 const MAINTENANCE_MODE = process.env.MAINTENANCE_MODE === "true";
 
 const ALLOWED_PREFIXES = [
+  "/mail",
   "/socio/careers",
   "/socio/interns",
   "/socio/accounts",

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import RouteTitleSync from "@/components/RouteTitleSync";
 import "./globals.css";
 
 const dmSans = DM_Sans({ 
@@ -61,6 +62,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#154CB3" />
       </head>
       <body className={`${dmSans.variable} font-sans antialiased`}>
+        <RouteTitleSync />
         {children}
         <Analytics />
       </body>

@@ -54,7 +54,7 @@ const MAILBOX_SESSION_KEY = "socio_mailbox_admin_token";
 
 export default function MailboxPage() {
   const params = useParams();
-  const campusId = String(params.campusId || "");
+  const campusId = String(params.campusId || "christid");
 
   const [activeTab, setActiveTab] = useState<TabType>("inbox");
   const [adminToken, setAdminToken] = useState("");
