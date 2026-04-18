@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type AccountsUser = "sachin" | "surya";
@@ -105,7 +105,7 @@ function statusPill(status: ExpenseStatus): string {
   return "bg-emerald-100 text-emerald-800 border-emerald-300";
 }
 
-export default function AccountsPage() {
+function AccountsPageContent() {
   const searchParams = useSearchParams();
   const user = normalizeUser(searchParams.get("user"));
 
@@ -759,5 +759,23 @@ export default function AccountsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function AccountsPageFallback() {
+  return (
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
+      <div className="rounded-xl border border-slate-200 bg-white px-6 py-5 text-sm text-slate-600 shadow-sm">
+        Loading SOCIO Accounts...
+      </div>
+    </div>
+  );
+}
+
+export default function AccountsPage() {
+  return (
+    <Suspense fallback={<AccountsPageFallback />}>
+      <AccountsPageContent />
+    </Suspense>
   );
 }
