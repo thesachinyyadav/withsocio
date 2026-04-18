@@ -225,6 +225,7 @@ export default function AccountsPage() {
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [busyExpenseId, setBusyExpenseId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -236,6 +237,8 @@ export default function AccountsPage() {
     pages: 0,
   });
   const [summary, setSummary] = useState<SummaryStats>(EMPTY_SUMMARY);
+  const [pendingQueue, setPendingQueue] = useState<ExpenseRecord[]>([]);
+  const [purchasedQueue, setPurchasedQueue] = useState<ExpenseRecord[]>([]);
 
   const splitPreview = useMemo(() => {
     const total = toNumber(totalAmountInput);
@@ -284,6 +287,47 @@ export default function AccountsPage() {
     return payload as ListResponse;
   };
 
+  const fetchQueues = async () => {
+    if (!activeUser) {
+      throw new Error("Missing active user.");
+    }
+
+    const [pendingResponse, processedResponse] = await Promise.all([
+      fetch(`/api/accounts?view=pending&page=1&limit=200`, {
+        headers: { "x-accounts-user": activeUser },
+        cache: "no-store",
+      }),
+      fetch(`/api/accounts?view=processed&page=1&limit=200`, {
+        headers: { "x-accounts-user": activeUser },
+        cache: "no-store",
+      }),
+    ]);
+
+    const pendingPayload = (await pendingResponse.json().catch(() => ({}))) as ListResponse | { error?: string };
+    const processedPayload = (await processedResponse.json().catch(() => ({}))) as ListResponse | { error?: string };
+
+    if (!pendingResponse.ok) {
+      throw new Error((pendingPayload as { error?: string }).error || "Failed to fetch pending approvals.");
+    }
+
+    if (!processedResponse.ok) {
+      throw new Error((processedPayload as { error?: string }).error || "Failed to fetch settlement queue.");
+    }
+
+    const pendingItems = Array.isArray((pendingPayload as ListResponse).data)
+      ? (pendingPayload as ListResponse).data
+      : [];
+
+    const processedItems = Array.isArray((processedPayload as ListResponse).data)
+      ? (processedPayload as ListResponse).data
+      : [];
+
+    return {
+      pending: pendingItems,
+      purchased: processedItems.filter((item) => item.status === "purchased"),
+    };
+  };
+
   const loadDashboard = async (pageToLoad = currentPage) => {
     if (!activeUser) return;
 
@@ -302,6 +346,16 @@ export default function AccountsPage() {
       setExpenses(Array.isArray(data.data) ? data.data : []);
       setPagination(nextPagination);
       setSummary(normalizeSummary(data.summary));
+
+      try {
+        const queueData = await fetchQueues();
+        setPendingQueue(queueData.pending);
+        setPurchasedQueue(queueData.purchased);
+      } catch (queueError) {
+        const queueMessage =
+          queueError instanceof Error ? queueError.message : "Failed to fetch approval queues.";
+        setError(queueMessage);
+      }
 
       if (nextPagination.pages > 0 && pageToLoad > nextPagination.pages) {
         setCurrentPage(nextPagination.pages);
@@ -452,6 +506,48 @@ export default function AccountsPage() {
       setError(message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleExpenseAction = async (
+    expenseId: string,
+    action: "approve" | "mark_purchased" | "mark_settled"
+  ) => {
+    if (!activeUser) return;
+
+    setBusyExpenseId(expenseId);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch(`/api/accounts/${expenseId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-accounts-user": activeUser,
+        },
+        body: JSON.stringify({ action }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to update expense.");
+      }
+
+      if (action === "approve") {
+        setSuccess("Approval recorded.");
+      } else if (action === "mark_purchased") {
+        setSuccess("Expense marked as purchased.");
+      } else {
+        setSuccess("Expense marked as settled.");
+      }
+
+      await loadDashboard(currentPage);
+    } catch (actionError) {
+      const message = actionError instanceof Error ? actionError.message : "Failed to update expense.";
+      setError(message);
+    } finally {
+      setBusyExpenseId(null);
     }
   };
 
@@ -873,6 +969,125 @@ export default function AccountsPage() {
           </div>
         </section>
 
+        <section className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-extrabold text-slate-900">Pending Approvals</h2>
+              <span className="text-xs font-semibold text-amber-700">{pendingQueue.length} pending</span>
+            </div>
+
+            {pendingQueue.length === 0 ? (
+              <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+                No expenses awaiting approval.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {pendingQueue.map((expense) => {
+                  const userApproved =
+                    activeUser === "sachin"
+                      ? Boolean(expense.approval_sachin_at)
+                      : Boolean(expense.approval_surya_at);
+
+                  const canApprove = expense.status === "pending_approval" && !userApproved;
+                  const canMarkPurchased =
+                    expense.status === "pending_approval" &&
+                    Boolean(expense.approval_sachin_at) &&
+                    Boolean(expense.approval_surya_at);
+
+                  return (
+                    <div key={`pending-${expense.id}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">{expense.reason}</p>
+                          <p className="text-xs text-slate-500">{formatISTDate(expense.expense_date)} • {formatINR(expense.total_amount)}</p>
+                        </div>
+                        <Link
+                          href={`/socio/accounts/bill/${expense.id}`}
+                          className="text-xs font-semibold text-blue-700 underline-offset-2 hover:underline"
+                        >
+                          View Bill
+                        </Link>
+                      </div>
+
+                      <p className="mt-2 text-xs text-slate-600">
+                        Sachin: {formatISTDateTime(expense.approval_sachin_at)} • Surya: {formatISTDateTime(expense.approval_surya_at)}
+                      </p>
+
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {canApprove ? (
+                          <button
+                            type="button"
+                            onClick={() => handleExpenseAction(expense.id, "approve")}
+                            disabled={busyExpenseId === expense.id}
+                            className="rounded-lg border border-amber-400 bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {busyExpenseId === expense.id ? "Saving..." : `Approve as ${activeUser}`}
+                          </button>
+                        ) : null}
+
+                        {canMarkPurchased ? (
+                          <button
+                            type="button"
+                            onClick={() => handleExpenseAction(expense.id, "mark_purchased")}
+                            disabled={busyExpenseId === expense.id}
+                            className="rounded-lg border border-sky-400 bg-sky-100 px-3 py-1.5 text-xs font-semibold text-sky-900 transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {busyExpenseId === expense.id ? "Saving..." : "Mark Purchased"}
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-sky-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-extrabold text-slate-900">Awaiting Settlement</h2>
+              <span className="text-xs font-semibold text-sky-700">{purchasedQueue.length} purchased</span>
+            </div>
+
+            {purchasedQueue.length === 0 ? (
+              <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+                No purchased expenses awaiting settlement.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {purchasedQueue.map((expense) => (
+                  <div key={`purchased-${expense.id}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{expense.reason}</p>
+                        <p className="text-xs text-slate-500">
+                          {formatISTDate(expense.expense_date)} • {formatINR(expense.total_amount)} • Purchased: {formatISTDateTime(expense.purchased_at)}
+                        </p>
+                      </div>
+                      <Link
+                        href={`/socio/accounts/bill/${expense.id}`}
+                        className="text-xs font-semibold text-blue-700 underline-offset-2 hover:underline"
+                      >
+                        View Bill
+                      </Link>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleExpenseAction(expense.id, "mark_settled")}
+                        disabled={busyExpenseId === expense.id}
+                        className="rounded-lg border border-emerald-400 bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-900 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {busyExpenseId === expense.id ? "Saving..." : "Mark Settled"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-base font-extrabold text-slate-900">Expense Data Snapshot</h2>
@@ -939,12 +1154,27 @@ export default function AccountsPage() {
                     <th className="px-3 py-2 text-left font-semibold text-slate-600">Reason</th>
                     <th className="px-3 py-2 text-right font-semibold text-slate-600">Amount</th>
                     <th className="px-3 py-2 text-left font-semibold text-slate-600">Status</th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-600">Approvals</th>
                     <th className="px-3 py-2 text-left font-semibold text-slate-600">Created By</th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-600">Actions</th>
                     <th className="px-3 py-2 text-left font-semibold text-slate-600">Bill</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
-                  {expenses.map((expense) => (
+                  {expenses.map((expense) => {
+                    const userApproved =
+                      activeUser === "sachin"
+                        ? Boolean(expense.approval_sachin_at)
+                        : Boolean(expense.approval_surya_at);
+
+                    const canApprove = expense.status === "pending_approval" && !userApproved;
+                    const canMarkPurchased =
+                      expense.status === "pending_approval" &&
+                      Boolean(expense.approval_sachin_at) &&
+                      Boolean(expense.approval_surya_at);
+                    const canMarkSettled = expense.status === "purchased";
+
+                    return (
                     <tr key={expense.id}>
                       <td className="px-3 py-2 text-slate-700">{formatISTDate(expense.expense_date)}</td>
                       <td className="px-3 py-2 text-slate-800">
@@ -960,7 +1190,51 @@ export default function AccountsPage() {
                           {statusLabel(expense.status)}
                         </span>
                       </td>
+                      <td className="px-3 py-2 text-xs text-slate-600">
+                        <p>S: {formatISTDateTime(expense.approval_sachin_at)}</p>
+                        <p>Y: {formatISTDateTime(expense.approval_surya_at)}</p>
+                      </td>
                       <td className="px-3 py-2 uppercase text-slate-700">{expense.created_by_user}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex flex-wrap gap-1">
+                          {canApprove ? (
+                            <button
+                              type="button"
+                              onClick={() => handleExpenseAction(expense.id, "approve")}
+                              disabled={busyExpenseId === expense.id}
+                              className="rounded-md border border-amber-400 bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-900 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {busyExpenseId === expense.id ? "..." : "Approve"}
+                            </button>
+                          ) : null}
+
+                          {canMarkPurchased ? (
+                            <button
+                              type="button"
+                              onClick={() => handleExpenseAction(expense.id, "mark_purchased")}
+                              disabled={busyExpenseId === expense.id}
+                              className="rounded-md border border-sky-400 bg-sky-100 px-2 py-1 text-[11px] font-semibold text-sky-900 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {busyExpenseId === expense.id ? "..." : "Purchased"}
+                            </button>
+                          ) : null}
+
+                          {canMarkSettled ? (
+                            <button
+                              type="button"
+                              onClick={() => handleExpenseAction(expense.id, "mark_settled")}
+                              disabled={busyExpenseId === expense.id}
+                              className="rounded-md border border-emerald-400 bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-900 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {busyExpenseId === expense.id ? "..." : "Settled"}
+                            </button>
+                          ) : null}
+
+                          {!canApprove && !canMarkPurchased && !canMarkSettled ? (
+                            <span className="text-xs text-slate-400">No action</span>
+                          ) : null}
+                        </div>
+                      </td>
                       <td className="px-3 py-2">
                         <Link
                           href={`/socio/accounts/bill/${expense.id}`}
@@ -970,7 +1244,7 @@ export default function AccountsPage() {
                         </Link>
                       </td>
                     </tr>
-                  ))}
+                  )})}
                 </tbody>
               </table>
             </div>
