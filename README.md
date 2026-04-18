@@ -46,6 +46,25 @@ New route: `/interns`
 - Intern features: submit work logs, submit feature/bug/issue/problem reports, view shared activity
 - Admin features: command-center summary, status updates, filters, CSV/XLSX exports
 
+## SOCIO Accounts Module
+
+New route: `/accounts`
+
+- Direct links (no password):
+	- `/accounts?user=sachin`
+	- `/accounts?user=surya`
+- Workflow: `pending_approval` -> `purchased` -> `settled`
+- Purchase is blocked until both Sachin and Surya approvals are recorded
+- New expense notifications are sent to `thesocio.blr@gmail.com` with optional extra CC emails
+- Settled expenses include a printable bill view with section toggles
+
+Setup notes:
+
+1. Ensure `RESEND_API_KEY` is configured for notifications.
+2. Optional `RESEND_FROM_EMAIL` can override sender identity.
+3. Create a Supabase storage bucket named `accounts-expense-receipts` for file uploads.
+4. Run the latest SQL in `lib/supabase-schema.sql` to create `accounts_expenses`.
+
 To switch the full site back on, set `MAINTENANCE_MODE=false` (or remove it) and restart.
 
 ## Tech Stack

@@ -12,10 +12,10 @@ CREATE TABLE IF NOT EXISTS internship_applications (
     role_interest TEXT NOT NULL CHECK (role_interest IN (
         'Database Handling',
         'Frontend Development',
-        'Finance',
         'Operations',
         'Content Writing',
         'Marketing',
+        'Digital Marketing',
         'Legal Intern',
         'Video Editing / Videographer'
     )),
@@ -40,7 +40,6 @@ CREATE TABLE IF NOT EXISTS internship_applications (
         'reviewed',
         'shortlisted',
         'hired',
-        'alumni',
         'rejected'
     )),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -315,27 +314,12 @@ ALTER TABLE internship_applications
     CHECK (role_interest IN (
         'Database Handling',
         'Frontend Development',
-        'Finance',
         'Operations',
         'Content Writing',
         'Marketing',
+        'Digital Marketing',
         'Legal Intern',
         'Video Editing / Videographer'
-    ));
-
--- IMPORTANT: Update status CHECK constraint if table exists
-ALTER TABLE internship_applications
-    DROP CONSTRAINT IF EXISTS internship_applications_status_check;
-
-ALTER TABLE internship_applications
-    ADD CONSTRAINT internship_applications_status_check
-    CHECK (status IN (
-        'pending',
-        'reviewed',
-        'shortlisted',
-        'hired',
-        'alumni',
-        'rejected'
     ));
 
 -- Storage bucket for resumes (run this in Supabase Dashboard -> Storage)
@@ -359,3 +343,46 @@ CREATE POLICY "Allow public reads" ON storage.objects
     FOR SELECT
     USING (bucket_id = 'internship-resumes');
 */
+
+-- Accounts expense tracking (sachin + surya approvals)
+CREATE TABLE IF NOT EXISTS accounts_expenses (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    expense_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    reason TEXT NOT NULL,
+    total_amount NUMERIC(12,2) NOT NULL CHECK (total_amount > 0),
+    currency TEXT NOT NULL DEFAULT 'INR',
+    status TEXT NOT NULL DEFAULT 'pending_approval' CHECK (status IN (
+        'pending_approval',
+        'purchased',
+        'settled'
+    )),
+    created_by_user TEXT NOT NULL CHECK (created_by_user IN ('sachin', 'surya')),
+    split_sachin_percent NUMERIC(5,2) NOT NULL,
+    split_surya_percent NUMERIC(5,2) NOT NULL,
+    split_sachin_amount NUMERIC(12,2) NOT NULL,
+    split_surya_amount NUMERIC(12,2) NOT NULL,
+    approval_sachin_at TIMESTAMP WITH TIME ZONE,
+    approval_surya_at TIMESTAMP WITH TIME ZONE,
+    purchased_at TIMESTAMP WITH TIME ZONE,
+    settled_at TIMESTAMP WITH TIME ZONE,
+    receipt_attachments JSONB NOT NULL DEFAULT '[]'::jsonb,
+    internal_notes TEXT,
+    cc_emails TEXT[] NOT NULL DEFAULT '{}',
+    last_updated_by_user TEXT CHECK (last_updated_by_user IN ('sachin', 'surya')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT accounts_expenses_split_percent_total_check
+        CHECK (ROUND((split_sachin_percent + split_surya_percent)::numeric, 2) = 100.00),
+    CONSTRAINT accounts_expenses_split_amount_total_check
+        CHECK (ROUND((split_sachin_amount + split_surya_amount)::numeric, 2) = ROUND(total_amount, 2))
+);
+
+CREATE INDEX IF NOT EXISTS idx_accounts_expenses_status ON accounts_expenses(status);
+CREATE INDEX IF NOT EXISTS idx_accounts_expenses_expense_date ON accounts_expenses(expense_date DESC);
+CREATE INDEX IF NOT EXISTS idx_accounts_expenses_created_at ON accounts_expenses(created_at DESC);
+
+DROP TRIGGER IF EXISTS update_accounts_expenses_updated_at ON accounts_expenses;
+CREATE TRIGGER update_accounts_expenses_updated_at
+    BEFORE UPDATE ON accounts_expenses
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
