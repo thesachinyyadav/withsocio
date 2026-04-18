@@ -18,11 +18,6 @@ const roleDescriptions = [
       "This role focuses on developing and maintaining the user-facing components of Socio’s digital platforms. The individual will work on implementing functional and responsive interfaces while ensuring usability and visual consistency. The role requires collaboration with other teams to translate requirements into effective frontend solutions. A structured approach to development and basic technical proficiency are expected.",
   },
   {
-    title: "Finance",
-    description:
-      "This role supports budgeting, expense tracking, and financial planning activities within Socio. The individual will help maintain financial records, organize transactions, and prepare basic summaries that support informed decision-making. The role requires accuracy, accountability, and comfort working with spreadsheets and structured financial data.",
-  },
-  {
     title: "Operations",
     description:
       "This role is responsible for ensuring smooth execution of internal processes and activities. The individual will coordinate tasks, manage timelines, and support workflow alignment across teams. The role plays a critical part in ensuring that plans are executed efficiently and operational gaps are addressed promptly. Strong organizational skills and accountability are key requirements.",
@@ -33,7 +28,7 @@ const roleDescriptions = [
       "This role focuses on developing clear, professional, and purpose-driven written communication. The individual will create and refine content for internal and external use while maintaining consistency in tone and messaging. The role requires strong language proficiency, clarity of thought, and the ability to communicate ideas effectively.",
   },
   {
-    title: "Marketing",
+    title: "Digital Marketing",
     description:
       "This role involves managing Socio’s digital presence and supporting outreach initiatives. The individual will work on executing digital campaigns, monitoring engagement, and improving visibility across platforms. The role requires an understanding of digital platforms, consistency in execution, and the ability to analyze basic performance metrics.",
   },
@@ -41,11 +36,6 @@ const roleDescriptions = [
     title: "Legal Intern",
     description:
       "This role supports compliance and legal documentation workflows within Socio. The individual will assist with legal research, drafting and reviewing basic agreements, maintaining records, and helping ensure policies and processes align with applicable guidelines. Strong attention to detail, confidentiality, and clear written communication are important for this role.",
-  },
-  {
-    title: "Video Editing / Videographer",
-    description:
-      "This role focuses on creating and refining visual content for Socio’s communication and outreach needs. The individual will handle video editing, organize footage, and produce clear, engaging outputs aligned with campaign objectives and brand standards. The role requires creative consistency, time management, and basic proficiency in modern editing tools.",
   },
 ];
 

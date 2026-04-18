@@ -34,7 +34,7 @@ interface HiredInternRecord {
   id: string;
   full_name: string;
   email: string;
-  status: "hired" | "alumni";
+  status: "hired";
 }
 
 type ResolveIdentifierResult =
@@ -221,7 +221,7 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
     };
   }
 
-  // Fall back to intern status check
+  // Fall back to hired intern check
   if (!isValidEmail(normalized)) {
     return { ok: false, message: "Please enter a valid email.", status: 400 };
   }
@@ -230,7 +230,7 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
     .from("internship_applications")
     .select("id, full_name, email, status")
     .ilike("email", normalized)
-    .in("status", ["hired", "alumni"])
+    .eq("status", "hired")
     .maybeSingle();
 
   if (error) {
@@ -241,14 +241,6 @@ export async function resolveIdentifier(identifier: string): Promise<ResolveIden
     return {
       ok: false,
       message: "Only hired interns can access this workspace.",
-      status: 403,
-    };
-  }
-
-  if (intern.status === "alumni") {
-    return {
-      ok: false,
-      message: "You're no longer a working member of this organisation.",
       status: 403,
     };
   }
@@ -436,6 +428,7 @@ export async function updateStreak(internEmail: string) {
 
 export async function sendEmail(input: {
   to: string;
+  cc?: string[];
   subject: string;
   html: string;
   adminEmail: string;
@@ -449,14 +442,33 @@ export async function sendEmail(input: {
   console.log(`[EMAIL] Preparing to send email to ${input.to} with subject: ${input.subject}`);
 
   try {
-    const payload = {
+    const cc = Array.isArray(input.cc)
+      ? Array.from(new Set(input.cc.map((entry) => String(entry || "").trim().toLowerCase()).filter(Boolean)))
+      : [];
+
+    const payload: {
+      from: string;
+      to: string;
+      cc?: string[];
+      subject: string;
+      html: string;
+    } = {
       from: RESEND_FROM_EMAIL,
       to: input.to,
       subject: input.subject,
       html: input.html,
     };
 
-    console.log(`[EMAIL] Resend API request payload:`, { from: payload.from, to: payload.to, subject: payload.subject });
+    if (cc.length) {
+      payload.cc = cc;
+    }
+
+    console.log(`[EMAIL] Resend API request payload:`, {
+      from: payload.from,
+      to: payload.to,
+      cc: payload.cc || [],
+      subject: payload.subject,
+    });
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",

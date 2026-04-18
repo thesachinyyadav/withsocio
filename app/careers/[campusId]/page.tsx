@@ -28,10 +28,9 @@ interface FormErrors {
 const roleIcons: Record<string, string> = {
   "Database Handling": "M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4",
   "Frontend Development": "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4",
-  "Finance": "M12 8c-2.21 0-4 .895-4 2s1.79 2 4 2 4 .895 4 2-1.79 2-4 2m0-8v8m0 0v3m0-3c-2.21 0-4 .895-4 2s1.79 2 4 2 4-.895 4-2-1.79-2-4-2",
   "Operations": "M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2",
   "Content Writing": "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z",
-  "Marketing": "M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z",
+  "Digital Marketing": "M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z",
   "Legal Intern": "M9 12h6m-6 4h6M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z",
   "Video Editing / Videographer": "M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z",
 };
@@ -92,10 +91,9 @@ export default function CareersApplicationPage() {
   const roleSkillOptions: Record<string, string[]> = {
     "Frontend Development": ["HTML", "CSS", "JavaScript", "React", "Next.js", "Other"],
     "Database Handling": ["SQL", "PostgreSQL", "MySQL", "MongoDB", "Other"],
-    "Finance": ["Financial Analysis", "Budgeting", "Excel/Sheets", "Accounting Basics", "Other"],
     "Operations": ["Excel/Sheets", "Process Ops", "Project Management", "Documentation", "Other"],
     "Content Writing": ["Blog Writing", "Copywriting", "SEO Writing", "Social Media Content", "Other"],
-    "Marketing": ["SEO", "SEM", "Social Media", "Email Marketing", "Analytics", "Other"],
+    "Digital Marketing": ["SEO", "SEM", "Social Media", "Email Marketing", "Analytics", "Other"],
     "Legal Intern": ["Legal Research", "Contract Review", "Compliance", "Documentation", "Other"],
     "Video Editing / Videographer": ["Adobe Premiere Pro", "After Effects", "DaVinci Resolve", "Final Cut Pro", "CapCut", "Other"],
   };
