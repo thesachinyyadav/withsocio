@@ -688,7 +688,7 @@ export default function AccountsPage() {
                       <td className="px-3 py-2 uppercase text-slate-700">{expense.created_by_user}</td>
                       <td className="px-3 py-2">
                         <Link
-                          href={`/accounts/bill/${expense.id}`}
+                          href={`/socio/accounts/bill/${expense.id}`}
                           className="text-xs font-semibold text-blue-700 underline-offset-2 hover:underline"
                         >
                           View Bill

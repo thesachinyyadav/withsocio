@@ -30,7 +30,7 @@ export default function InternsLayout({
       verifyToken(token, role);
     } else if (!pathname.includes("/login")) {
       // Redirect to login if no token and not on login page
-      router.push("/interns/login");
+      router.push("/socio/interns/login");
     } else {
       setLoading(false);
     }
@@ -59,7 +59,7 @@ export default function InternsLayout({
         localStorage.removeItem("interns_role");
         localStorage.removeItem("interns_user");
         if (!pathname.includes("/login")) {
-          router.push("/interns/login");
+          router.push("/socio/interns/login");
         }
       }
     } catch (error) {
@@ -70,11 +70,11 @@ export default function InternsLayout({
           setUser(JSON.parse(cachedUserRaw));
         } catch {
           if (!pathname.includes("/login")) {
-            router.push("/interns/login");
+            router.push("/socio/interns/login");
           }
         }
       } else if (!pathname.includes("/login")) {
-        router.push("/interns/login");
+        router.push("/socio/interns/login");
       }
     } finally {
       setLoading(false);

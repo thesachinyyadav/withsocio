@@ -168,7 +168,7 @@ export default function NewWorkLogPage() {
         return;
       }
 
-      router.push("/interns/workspace/work-logs");
+      router.push("/socio/interns/workspace/work-logs");
     } catch (err) {
       setError("An error occurred while submitting. Please try again.");
       console.error(err);

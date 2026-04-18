@@ -69,12 +69,12 @@ export default function InternWorkLogsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/interns/workspace/work-logs/all"
+            href="/socio/interns/workspace/work-logs/all"
             className="px-4 py-2 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-lg transition text-sm"
           >
             View All WorkLogs
           </Link>
-          <Link href="/interns/workspace/work-logs/new">
+          <Link href="/socio/interns/workspace/work-logs/new">
             <button className="px-6 py-2 bg-blue-800 hover:bg-blue-900 text-white font-semibold rounded-lg transition">
               New Log
             </button>
@@ -150,7 +150,7 @@ export default function InternWorkLogsPage() {
         ) : (
           <div className="text-center py-12 bg-white border border-slate-200 rounded-xl">
             <p className="text-slate-600 mb-4">No work logs for selected date</p>
-            <Link href="/interns/workspace/work-logs/new">
+            <Link href="/socio/interns/workspace/work-logs/new">
               <button className="text-blue-800 hover:text-blue-900 transition">
                 Create your first work log
               </button>

@@ -91,7 +91,7 @@ export default function AllWorkLogsPage() {
           </p>
         </div>
         <Link
-          href="/interns/workspace/work-logs"
+          href="/socio/interns/workspace/work-logs"
           className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
         >
           Back to My WorkLogs

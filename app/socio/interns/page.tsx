@@ -11,16 +11,16 @@ export default function InternsRootPage() {
     const role = localStorage.getItem("interns_role");
 
     if (!token) {
-      router.replace("/interns/login");
+      router.replace("/socio/interns/login");
       return;
     }
 
     if (role === "admin") {
-      router.replace("/interns/dashboard");
+      router.replace("/socio/interns/dashboard");
       return;
     }
 
-    router.replace("/interns/workspace");
+    router.replace("/socio/interns/workspace");
   }, [router]);
 
   return (

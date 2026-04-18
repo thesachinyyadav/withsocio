@@ -35,9 +35,9 @@ export default function InternsLoginPage() {
       localStorage.setItem("interns_user", JSON.stringify(data.user || null));
 
       if (data.role === "admin") {
-        router.push("/interns/dashboard");
+        router.push("/socio/interns/dashboard");
       } else {
-        router.push("/interns/workspace");
+        router.push("/socio/interns/workspace");
       }
     } catch (err) {
       setError("An error occurred. Please try again.");

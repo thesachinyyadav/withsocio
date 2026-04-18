@@ -138,7 +138,7 @@ export default function InternWorkspace() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-medium text-slate-800">Reminder: add your today&apos;s worklog before the day ends.</p>
           <Link
-            href="/interns/workspace/work-logs/new"
+            href="/socio/interns/workspace/work-logs/new"
             className="inline-flex items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition"
           >
             Add Today&apos;s Worklog
@@ -159,7 +159,7 @@ export default function InternWorkspace() {
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-900 mb-2">Work Log</h3>
           <p className="text-slate-600 text-sm mb-4">Share daily work and accomplishments.</p>
-          <Link href="/interns/workspace/work-logs/new" className="inline-flex w-full items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition">
+          <Link href="/socio/interns/workspace/work-logs/new" className="inline-flex w-full items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition">
             Submit Log
           </Link>
         </div>
@@ -167,7 +167,7 @@ export default function InternWorkspace() {
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-900 mb-2">Report Issue</h3>
           <p className="text-slate-600 text-sm mb-4">Report bugs or workflow issues.</p>
-          <Link href="/interns/workspace/reports/new" className="inline-flex w-full items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition">
+          <Link href="/socio/interns/workspace/reports/new" className="inline-flex w-full items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition">
             New Report
           </Link>
         </div>
@@ -175,7 +175,7 @@ export default function InternWorkspace() {
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-900 mb-2">My Profile</h3>
           <p className="text-slate-600 text-sm mb-4">View your calendar and report status.</p>
-          <Link href="/interns/workspace/leaderboard" className="inline-flex w-full items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition">
+          <Link href="/socio/interns/workspace/leaderboard" className="inline-flex w-full items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 transition">
             Open Profile
           </Link>
         </div>
@@ -199,7 +199,7 @@ export default function InternWorkspace() {
           ) : (
             <p className="text-sm text-slate-500">No work logs submitted yet.</p>
           )}
-          <Link href="/interns/workspace/work-logs" className="inline-flex mt-4 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
+          <Link href="/socio/interns/workspace/work-logs" className="inline-flex mt-4 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
             View All
           </Link>
         </div>
@@ -231,7 +231,7 @@ export default function InternWorkspace() {
           ) : (
             <p className="text-sm text-slate-500">No reports submitted yet.</p>
           )}
-          <Link href="/interns/workspace/reports" className="inline-flex mt-4 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
+          <Link href="/socio/interns/workspace/reports" className="inline-flex mt-4 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
             View All
           </Link>
         </div>

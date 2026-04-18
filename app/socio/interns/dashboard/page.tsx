@@ -228,10 +228,10 @@ export default function AdminDashboard() {
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h2>
           <div className="space-y-2">
-            <Link href="/interns/dashboard/reports" className="block rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">View Reports</Link>
-            <Link href="/interns/dashboard/work-logs" className="block rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">View Work Logs</Link>
-            <Link href="/interns/dashboard/interns" className="block rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Manage Interns</Link>
-            <Link href="/interns/dashboard/send-email" className="block rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Send Email</Link>
+            <Link href="/socio/interns/dashboard/reports" className="block rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">View Reports</Link>
+            <Link href="/socio/interns/dashboard/work-logs" className="block rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">View Work Logs</Link>
+            <Link href="/socio/interns/dashboard/interns" className="block rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Manage Interns</Link>
+            <Link href="/socio/interns/dashboard/send-email" className="block rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Send Email</Link>
             <a href="/api/interns/admin/export?kind=work-logs&format=xlsx" className="block rounded-lg border border-blue-200 bg-blue-100 px-4 py-2 text-sm text-blue-800 hover:bg-blue-200">Export WorkLogs (XLSX)</a>
             <a href="/api/interns/admin/export?kind=work-logs&format=csv" className="block rounded-lg border border-blue-200 bg-blue-100 px-4 py-2 text-sm text-blue-800 hover:bg-blue-200">Export WorkLogs (CSV)</a>
           </div>

@@ -228,7 +228,7 @@ export default function InternReportsPage() {
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Reports Board</h1>
           <p className="text-slate-600">See all reports, current owner, and status</p>
         </div>
-        <Link href="/interns/workspace/reports/new">
+        <Link href="/socio/interns/workspace/reports/new">
           <button className="px-6 py-2 bg-blue-800 hover:bg-blue-900 text-white font-semibold rounded-lg transition">
             New Report
           </button>
@@ -284,7 +284,7 @@ export default function InternReportsPage() {
             ) : (
               <>
                 <p className="text-slate-600 mb-4">No reports yet</p>
-                <Link href="/interns/workspace/reports/new">
+                <Link href="/socio/interns/workspace/reports/new">
                   <button className="text-blue-800 hover:text-blue-900 transition">
                     Submit your first report
                   </button>

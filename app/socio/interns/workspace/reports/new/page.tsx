@@ -37,7 +37,7 @@ export default function NewReportPage() {
         return;
       }
 
-      router.push("/interns/workspace/reports");
+      router.push("/socio/interns/workspace/reports");
     } catch (err) {
       setError("An error occurred");
       console.error(err);

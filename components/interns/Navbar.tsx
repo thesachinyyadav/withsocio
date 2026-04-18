@@ -24,50 +24,50 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
     localStorage.removeItem("interns_token");
     localStorage.removeItem("interns_role");
     localStorage.removeItem("interns_user");
-    router.push("/interns/login");
+    router.push("/socio/interns/login");
   };
 
   const navItems = isAdmin
     ? [
         {
-          href: "/interns/dashboard",
+          href: "/socio/interns/dashboard",
           label: "Dashboard",
           description: "View overall internship analytics and admin insights",
         },
         {
-          href: "/interns/dashboard/reports",
+          href: "/socio/interns/dashboard/reports",
           label: "Reports",
           description: "Review and manage all reported issues and requests",
         },
         {
-          href: "/interns/dashboard/work-logs",
+          href: "/socio/interns/dashboard/work-logs",
           label: "Work Logs",
           description: "Monitor daily logs submitted by interns",
         },
         {
-          href: "/interns/dashboard/interns",
+          href: "/socio/interns/dashboard/interns",
           label: "Interns",
           description: "See hired interns and their participation details",
         },
       ]
     : [
         {
-          href: "/interns/workspace",
+          href: "/socio/interns/workspace",
           label: "Workspace",
           description: "Your home for latest updates, logs, and reports",
         },
         {
-          href: "/interns/workspace/work-logs",
+          href: "/socio/interns/workspace/work-logs",
           label: "Work Logs",
           description: "Add and review your daily worklog entries",
         },
         {
-          href: "/interns/workspace/reports",
+          href: "/socio/interns/workspace/reports",
           label: "Reports",
           description: "Raise new issues and track report status",
         },
         {
-          href: "/interns/workspace/leaderboard",
+          href: "/socio/interns/workspace/leaderboard",
           label: "Profile",
           description: "View your activity calendar and report progress",
         },
@@ -78,7 +78,7 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/interns" className="flex items-center space-x-2">
+          <Link href="/socio/interns" className="flex items-center space-x-2">
             <Image
               src="/socio.svg"
               alt="SOCIO logo"

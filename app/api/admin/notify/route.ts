@@ -12,7 +12,7 @@ const isAuthorized = (request: Request) => {
 };
 
 const baseUrl = "https://socio.christuniversity.in";
-const DEFAULT_PANEL_PATH = "/panel";
+const DEFAULT_PANEL_PATH = "/socio/panel";
 
 const escapeHtml = (value: string) =>
   value

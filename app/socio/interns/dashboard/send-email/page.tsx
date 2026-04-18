@@ -60,7 +60,7 @@ export default function SendEmailPage() {
       setContent("");
       setRecipients([]);
 
-      setTimeout(() => router.push("/interns/dashboard"), 2000);
+      setTimeout(() => router.push("/socio/interns/dashboard"), 2000);
     } catch (err) {
       setError("Failed to send email");
       console.error(err);
