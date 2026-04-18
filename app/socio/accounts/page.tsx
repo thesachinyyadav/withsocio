@@ -745,7 +745,7 @@ export default function AccountsPage() {
 
   return (
     <div className="bg-[radial-gradient(circle_at_top,_#e0f2fe_0%,_#f8fafc_45%,_#f8fafc_100%)] px-4 py-6 sm:px-6">
-      <div className="mx-auto max-w-5xl space-y-5">
+      <div className="mx-auto flex max-w-5xl flex-col gap-5">
         <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
@@ -969,7 +969,7 @@ export default function AccountsPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-2">
+        <section className="order-2 grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-base font-extrabold text-slate-900">Pending Approvals</h2>
@@ -1088,7 +1088,7 @@ export default function AccountsPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <section className="order-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-base font-extrabold text-slate-900">Expense Data Snapshot</h2>
             <p className="text-xs text-slate-500">Recent entries with search, export, and pagination</p>

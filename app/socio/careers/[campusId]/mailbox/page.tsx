@@ -50,6 +50,8 @@ interface MailListResponse {
   error?: string;
 }
 
+const MAILBOX_SESSION_KEY = "socio_mailbox_admin_token";
+
 export default function MailboxPage() {
   const params = useParams();
   const campusId = String(params.campusId || "");
@@ -238,6 +240,48 @@ export default function MailboxPage() {
     [fetchMailDetail]
   );
 
+  const loginWithToken = useCallback(
+    async (token: string) => {
+      const probe = await fetch("/api/admin/mailbox/received?limit=1", {
+        headers: {
+          "x-admin-password": token,
+        },
+      });
+
+      const payload = (await probe.json().catch(() => ({}))) as { error?: string };
+
+      if (probe.status === 401) {
+        throw new Error("Invalid password.");
+      }
+
+      if (!probe.ok) {
+        throw new Error(payload?.error || "Mailbox API unavailable. Check Resend receiving setup.");
+      }
+
+      setAdminToken(token);
+      setIsAuthenticated(true);
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(MAILBOX_SESSION_KEY, token);
+      }
+      await fetchMailList("inbox", token, { resetHistory: true });
+    },
+    [fetchMailList]
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const savedToken = window.sessionStorage.getItem(MAILBOX_SESSION_KEY) || "";
+    if (!savedToken) return;
+
+    setPasswordInput(savedToken);
+    void loginWithToken(savedToken).catch(() => {
+      window.sessionStorage.removeItem(MAILBOX_SESSION_KEY);
+      setAdminToken("");
+      setIsAuthenticated(false);
+    });
+  }, [loginWithToken]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
@@ -249,29 +293,24 @@ export default function MailboxPage() {
     }
 
     try {
-      const probe = await fetch("/api/admin/mailbox/received?limit=1", {
-        headers: {
-          "x-admin-password": token,
-        },
-      });
-
-      const payload = (await probe.json().catch(() => ({}))) as { error?: string };
-
-      if (probe.status === 401) {
-        setAuthError("Invalid password.");
-        return;
+      await loginWithToken(token);
+    } catch (error) {
+      if (typeof window !== "undefined") {
+        window.sessionStorage.removeItem(MAILBOX_SESSION_KEY);
       }
+      setAdminToken("");
+      setIsAuthenticated(false);
+      setAuthError(error instanceof Error ? error.message : "Could not connect to mailbox API.");
+    }
+  };
 
-      if (!probe.ok) {
-        setAuthError(payload?.error || "Mailbox API unavailable. Check Resend receiving setup.");
-        return;
-      }
-
-      setAdminToken(token);
-      setIsAuthenticated(true);
-      await fetchMailList("inbox", token, { resetHistory: true });
-    } catch {
-      setAuthError("Could not connect to mailbox API.");
+  const handleLogout = () => {
+    setAdminToken("");
+    setPasswordInput("");
+    setIsAuthenticated(false);
+    setAuthError("");
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(MAILBOX_SESSION_KEY);
     }
   };
 
@@ -533,6 +572,12 @@ export default function MailboxPage() {
               className="px-3 py-2 rounded-lg bg-[#154CB3] text-white text-sm font-semibold hover:bg-[#0f3d8f]"
             >
               Compose
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-3 py-2 rounded-lg border border-rose-300 bg-rose-50 text-sm font-semibold text-rose-700 hover:bg-rose-100"
+            >
+              Logout
             </button>
           </div>
         </header>

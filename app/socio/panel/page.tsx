@@ -60,6 +60,8 @@ const roleColors: Record<string, string> = {
   "Video Editing / Videographer": "bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200",
 };
 
+const PANEL_SESSION_KEY = "socio_panel_admin_token";
+
 export default function AdminDashboard() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
@@ -177,14 +179,37 @@ export default function AdminDashboard() {
     return () => clearTimeout(timeout);
   }, [searchDraft]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const savedToken = window.sessionStorage.getItem(PANEL_SESSION_KEY) || "";
+    if (!savedToken) return;
+
+    setPassword(savedToken);
+    setAdminToken(savedToken);
+    setIsAuthenticated(true);
+  }, []);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (password === "socio2026") {
       setIsAuthenticated(true);
       setAdminToken(password);
       setAuthError("");
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(PANEL_SESSION_KEY, password);
+      }
     } else {
       setAuthError("Incorrect password. Please try again.");
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setPassword("");
+    setAdminToken("");
+    setAuthError("");
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(PANEL_SESSION_KEY);
     }
   };
 
@@ -628,7 +653,7 @@ export default function AdminDashboard() {
               {isLoading ? "Loading..." : "Refresh"}
             </button>
             <button
-              onClick={() => setIsAuthenticated(false)}
+              onClick={handleLogout}
               className="text-sm px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100"
             >
               Logout
