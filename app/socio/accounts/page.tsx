@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type AccountsUser = "sachin" | "surya";
 type ExpenseStatus = "pending_approval" | "purchased" | "settled";
@@ -162,6 +162,17 @@ function tsvCell(value: unknown): string {
     .replace(/\t/g, " ");
 }
 
+function splitEmails(value: string): string[] {
+  return Array.from(
+    new Set(
+      String(value || "")
+        .split(",")
+        .map((entry) => entry.trim().toLowerCase())
+        .filter(Boolean)
+    )
+  );
+}
+
 function downloadTextFile(filename: string, content: string, mimeType: string): void {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
@@ -201,9 +212,19 @@ export default function AccountsPage() {
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showAddExpense, setShowAddExpense] = useState(false);
+
+  const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [expenseReason, setExpenseReason] = useState("");
+  const [totalAmountInput, setTotalAmountInput] = useState("0");
+  const [splitSachinPercent, setSplitSachinPercent] = useState("50");
+  const [splitSuryaPercent, setSplitSuryaPercent] = useState("50");
+  const [extraCc, setExtraCc] = useState("");
+  const [internalNotes, setInternalNotes] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -215,6 +236,21 @@ export default function AccountsPage() {
     pages: 0,
   });
   const [summary, setSummary] = useState<SummaryStats>(EMPTY_SUMMARY);
+
+  const splitPreview = useMemo(() => {
+    const total = toNumber(totalAmountInput);
+    const sachinPercent = toNumber(splitSachinPercent);
+    const suryaPercent = toNumber(splitSuryaPercent);
+    const sachinAmount = Math.round(((total * sachinPercent) / 100 + Number.EPSILON) * 100) / 100;
+    const suryaAmount = Math.round((total - sachinAmount + Number.EPSILON) * 100) / 100;
+
+    return {
+      total,
+      percentTotal: Math.round((sachinPercent + suryaPercent) * 100) / 100,
+      sachinAmount,
+      suryaAmount,
+    };
+  }, [splitSachinPercent, splitSuryaPercent, totalAmountInput]);
 
   useEffect(() => {
     const savedUser = typeof window !== "undefined" ? window.localStorage.getItem(USER_STORAGE_KEY) : null;
@@ -329,6 +365,94 @@ export default function AccountsPage() {
     }
 
     await loadDashboard(1);
+  };
+
+  const handleSplitSachinChange = (value: string) => {
+    const safe = Math.max(0, Math.min(100, Number(value || "0")));
+    const formatted = Number.isFinite(safe) ? safe : 0;
+    setSplitSachinPercent(String(formatted));
+    setSplitSuryaPercent(String(Math.max(0, 100 - formatted)));
+  };
+
+  const handleSplitSuryaChange = (value: string) => {
+    const safe = Math.max(0, Math.min(100, Number(value || "0")));
+    const formatted = Number.isFinite(safe) ? safe : 0;
+    setSplitSuryaPercent(String(formatted));
+    setSplitSachinPercent(String(Math.max(0, 100 - formatted)));
+  };
+
+  const resetCreateForm = () => {
+    setExpenseDate(new Date().toISOString().split("T")[0]);
+    setExpenseReason("");
+    setTotalAmountInput("0");
+    setSplitSachinPercent("50");
+    setSplitSuryaPercent("50");
+    setExtraCc("");
+    setInternalNotes("");
+  };
+
+  const handleCreateExpense = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!activeUser) return;
+
+    setError("");
+    setSuccess("");
+
+    if (!expenseReason.trim()) {
+      setError("Please provide a reason for the expense.");
+      return;
+    }
+
+    if (splitPreview.total <= 0) {
+      setError("Total amount must be greater than 0.");
+      return;
+    }
+
+    if (splitPreview.percentTotal !== 100) {
+      setError("Split percentages must add up to exactly 100.");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const response = await fetch("/api/accounts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-accounts-user": activeUser,
+        },
+        body: JSON.stringify({
+          expenseDate,
+          reason: expenseReason.trim(),
+          totalAmount: splitPreview.total,
+          splitSachinPercent: toNumber(splitSachinPercent),
+          splitSuryaPercent: toNumber(splitSuryaPercent),
+          ccEmails: splitEmails(extraCc),
+          internalNotes: internalNotes.trim(),
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to create expense.");
+      }
+
+      const emailMessage = payload?.email?.sent
+        ? "Notification email sent."
+        : "Expense created, but notification email failed.";
+
+      setSuccess(`Expense created successfully. ${emailMessage}`);
+      setShowAddExpense(false);
+      resetCreateForm();
+      setCurrentPage(1);
+      await loadDashboard(1);
+    } catch (createError) {
+      const message = createError instanceof Error ? createError.message : "Failed to create expense.";
+      setError(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const fetchAllFilteredExpenses = async (): Promise<ExpenseRecord[]> => {
@@ -541,6 +665,17 @@ export default function AccountsPage() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                onClick={() => {
+                  setShowAddExpense((prev) => !prev);
+                  setError("");
+                  setSuccess("");
+                }}
+                className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
+              >
+                {showAddExpense ? "Close Add Expense" : "Add Expense"}
+              </button>
+              <button
+                type="button"
                 onClick={() => loadDashboard(currentPage)}
                 className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
               >
@@ -556,6 +691,146 @@ export default function AccountsPage() {
             </div>
           </div>
         </header>
+
+        {showAddExpense ? (
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-base font-extrabold text-slate-900">Add New Expense</h2>
+              <p className="text-xs text-slate-500">This stays hidden unless needed</p>
+            </div>
+
+            <form onSubmit={handleCreateExpense} className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    Expense Date
+                  </label>
+                  <input
+                    type="date"
+                    value={expenseDate}
+                    onChange={(event) => setExpenseDate(event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    Total Amount (INR)
+                  </label>
+                  <input
+                    type="number"
+                    value={totalAmountInput}
+                    min="0"
+                    step="0.01"
+                    onChange={(event) => setTotalAmountInput(event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Reason
+                </label>
+                <textarea
+                  value={expenseReason}
+                  onChange={(event) => setExpenseReason(event.target.value)}
+                  rows={3}
+                  placeholder="Why is this expense required?"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                  required
+                />
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    Sachin %
+                  </label>
+                  <input
+                    type="number"
+                    value={splitSachinPercent}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    onChange={(event) => handleSplitSachinChange(event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    Surya %
+                  </label>
+                  <input
+                    type="number"
+                    value={splitSuryaPercent}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    onChange={(event) => handleSplitSuryaChange(event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                <p className="font-semibold text-slate-900">Split Preview</p>
+                <p className="mt-1">Sachin: {formatINR(splitPreview.sachinAmount)}</p>
+                <p>Surya: {formatINR(splitPreview.suryaAmount)}</p>
+                <p className="mt-1 text-xs text-slate-500">Total percentage: {splitPreview.percentTotal}%</p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    Extra CC Emails (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={extraCc}
+                    onChange={(event) => setExtraCc(event.target.value)}
+                    placeholder="name@example.com, another@example.com"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    Internal Notes (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={internalNotes}
+                    onChange={(event) => setInternalNotes(event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-600/20 transition focus:ring-4"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-400"
+                >
+                  {submitting ? "Saving..." : "Save Expense"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddExpense(false);
+                    resetCreateForm();
+                  }}
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </section>
+        ) : null}
 
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
