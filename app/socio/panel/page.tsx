@@ -62,6 +62,7 @@ const roleColors: Record<string, string> = {
 
 const PANEL_SESSION_KEY = "socio_panel_admin_token";
 const MASTER_ADMIN_SESSION_KEY = "socio_master_admin_token";
+const PANEL_BYPASS_ONCE_KEY = "socio_panel_bypass_once";
 
 export default function AdminDashboard() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
@@ -182,16 +183,23 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const savedToken =
-      window.sessionStorage.getItem(PANEL_SESSION_KEY) ||
-      window.sessionStorage.getItem(MASTER_ADMIN_SESSION_KEY) ||
-      "";
-    if (!savedToken) return;
+    const savedPanelToken = window.sessionStorage.getItem(PANEL_SESSION_KEY) || "";
+    if (savedPanelToken) {
+      setPassword(savedPanelToken);
+      setAdminToken(savedPanelToken);
+      setIsAuthenticated(true);
+      return;
+    }
 
-    setPassword(savedToken);
-    setAdminToken(savedToken);
+    const masterToken = window.sessionStorage.getItem(MASTER_ADMIN_SESSION_KEY) || "";
+    const allowBypass = window.sessionStorage.getItem(PANEL_BYPASS_ONCE_KEY) === "1";
+    if (!masterToken || !allowBypass) return;
+
+    window.sessionStorage.removeItem(PANEL_BYPASS_ONCE_KEY);
+    setPassword(masterToken);
+    setAdminToken(masterToken);
     setIsAuthenticated(true);
-    window.sessionStorage.setItem(PANEL_SESSION_KEY, savedToken);
+    window.sessionStorage.setItem(PANEL_SESSION_KEY, masterToken);
   }, []);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -217,6 +225,7 @@ export default function AdminDashboard() {
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem(PANEL_SESSION_KEY);
       window.sessionStorage.removeItem(MASTER_ADMIN_SESSION_KEY);
+      window.sessionStorage.removeItem(PANEL_BYPASS_ONCE_KEY);
     }
   };
 

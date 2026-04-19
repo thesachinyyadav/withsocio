@@ -95,6 +95,9 @@ const HUB_SESSION_KEY = "socio_admin_hub_token";
 const MASTER_ADMIN_SESSION_KEY = "socio_master_admin_token";
 const PANEL_SESSION_KEY = "socio_panel_admin_token";
 const MAILBOX_SESSION_KEY = "socio_mailbox_admin_token";
+const PANEL_BYPASS_ONCE_KEY = "socio_panel_bypass_once";
+const MAILBOX_BYPASS_ONCE_KEY = "socio_mailbox_bypass_once";
+const INTERNS_ADMIN_BYPASS_ONCE_KEY = "socio_interns_admin_bypass_once";
 
 const quickLinks: QuickLink[] = [
   {
@@ -564,18 +567,17 @@ export default function SocioAdminHubPage() {
     window.sessionStorage.setItem(MASTER_ADMIN_SESSION_KEY, token);
 
     if (module === "panel") {
-      window.sessionStorage.setItem(PANEL_SESSION_KEY, token);
+      window.sessionStorage.setItem(PANEL_BYPASS_ONCE_KEY, "1");
       return;
     }
 
     if (module === "mailbox") {
-      window.sessionStorage.setItem(MAILBOX_SESSION_KEY, token);
+      window.sessionStorage.setItem(MAILBOX_BYPASS_ONCE_KEY, "1");
       return;
     }
 
     if (module === "internDashboard") {
-      window.localStorage.setItem("interns_token", token);
-      window.localStorage.setItem("interns_role", "admin");
+      window.sessionStorage.setItem(INTERNS_ADMIN_BYPASS_ONCE_KEY, "1");
     }
   };
 
@@ -653,6 +655,9 @@ export default function SocioAdminHubPage() {
       window.sessionStorage.removeItem(MASTER_ADMIN_SESSION_KEY);
       window.sessionStorage.removeItem(PANEL_SESSION_KEY);
       window.sessionStorage.removeItem(MAILBOX_SESSION_KEY);
+      window.sessionStorage.removeItem(PANEL_BYPASS_ONCE_KEY);
+      window.sessionStorage.removeItem(MAILBOX_BYPASS_ONCE_KEY);
+      window.sessionStorage.removeItem(INTERNS_ADMIN_BYPASS_ONCE_KEY);
       window.localStorage.removeItem("interns_token");
       window.localStorage.removeItem("interns_role");
     }

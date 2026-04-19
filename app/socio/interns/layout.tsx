@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Navbar from "@/components/interns/Navbar";
 
 const MASTER_ADMIN_SESSION_KEY = "socio_master_admin_token";
+const INTERNS_ADMIN_BYPASS_ONCE_KEY = "socio_interns_admin_bypass_once";
 
 interface AuthUser {
   email: string;
@@ -33,7 +34,9 @@ export default function InternsLayout({
       verifyToken(token, role);
     } else if (!pathname.includes("/login")) {
       const masterAdminToken = sessionStorage.getItem(MASTER_ADMIN_SESSION_KEY) || "";
-      if (masterAdminToken) {
+      const allowBypass = sessionStorage.getItem(INTERNS_ADMIN_BYPASS_ONCE_KEY) === "1";
+      if (masterAdminToken && allowBypass) {
+        sessionStorage.removeItem(INTERNS_ADMIN_BYPASS_ONCE_KEY);
         localStorage.setItem("interns_token", masterAdminToken);
         localStorage.setItem("interns_role", "admin");
         verifyToken(masterAdminToken, "admin");

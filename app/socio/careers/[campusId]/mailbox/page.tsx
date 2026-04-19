@@ -52,6 +52,7 @@ interface MailListResponse {
 
 const MAILBOX_SESSION_KEY = "socio_mailbox_admin_token";
 const MASTER_ADMIN_SESSION_KEY = "socio_master_admin_token";
+const MAILBOX_BYPASS_ONCE_KEY = "socio_mailbox_bypass_once";
 
 export default function MailboxPage() {
   const params = useParams();
@@ -273,14 +274,24 @@ export default function MailboxPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const savedToken =
-      window.sessionStorage.getItem(MAILBOX_SESSION_KEY) ||
-      window.sessionStorage.getItem(MASTER_ADMIN_SESSION_KEY) ||
-      "";
-    if (!savedToken) return;
+    const savedMailboxToken = window.sessionStorage.getItem(MAILBOX_SESSION_KEY) || "";
+    if (savedMailboxToken) {
+      setPasswordInput(savedMailboxToken);
+      void loginWithToken(savedMailboxToken).catch(() => {
+        window.sessionStorage.removeItem(MAILBOX_SESSION_KEY);
+        setAdminToken("");
+        setIsAuthenticated(false);
+      });
+      return;
+    }
 
-    setPasswordInput(savedToken);
-    void loginWithToken(savedToken).catch(() => {
+    const masterToken = window.sessionStorage.getItem(MASTER_ADMIN_SESSION_KEY) || "";
+    const allowBypass = window.sessionStorage.getItem(MAILBOX_BYPASS_ONCE_KEY) === "1";
+    if (!masterToken || !allowBypass) return;
+
+    window.sessionStorage.removeItem(MAILBOX_BYPASS_ONCE_KEY);
+    setPasswordInput(masterToken);
+    void loginWithToken(masterToken).catch(() => {
       window.sessionStorage.removeItem(MAILBOX_SESSION_KEY);
       window.sessionStorage.removeItem(MASTER_ADMIN_SESSION_KEY);
       setAdminToken("");
@@ -319,6 +330,7 @@ export default function MailboxPage() {
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem(MAILBOX_SESSION_KEY);
       window.sessionStorage.removeItem(MASTER_ADMIN_SESSION_KEY);
+      window.sessionStorage.removeItem(MAILBOX_BYPASS_ONCE_KEY);
     }
   };
 
