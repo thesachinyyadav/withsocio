@@ -61,6 +61,7 @@ const roleColors: Record<string, string> = {
 };
 
 const PANEL_SESSION_KEY = "socio_panel_admin_token";
+const MASTER_ADMIN_SESSION_KEY = "socio_master_admin_token";
 
 export default function AdminDashboard() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
@@ -181,12 +182,16 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const savedToken = window.sessionStorage.getItem(PANEL_SESSION_KEY) || "";
+    const savedToken =
+      window.sessionStorage.getItem(PANEL_SESSION_KEY) ||
+      window.sessionStorage.getItem(MASTER_ADMIN_SESSION_KEY) ||
+      "";
     if (!savedToken) return;
 
     setPassword(savedToken);
     setAdminToken(savedToken);
     setIsAuthenticated(true);
+    window.sessionStorage.setItem(PANEL_SESSION_KEY, savedToken);
   }, []);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -197,6 +202,7 @@ export default function AdminDashboard() {
       setAuthError("");
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(PANEL_SESSION_KEY, password);
+        window.sessionStorage.setItem(MASTER_ADMIN_SESSION_KEY, password);
       }
     } else {
       setAuthError("Incorrect password. Please try again.");
@@ -210,6 +216,7 @@ export default function AdminDashboard() {
     setAuthError("");
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem(PANEL_SESSION_KEY);
+      window.sessionStorage.removeItem(MASTER_ADMIN_SESSION_KEY);
     }
   };
 

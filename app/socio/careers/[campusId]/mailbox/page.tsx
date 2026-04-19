@@ -51,6 +51,7 @@ interface MailListResponse {
 }
 
 const MAILBOX_SESSION_KEY = "socio_mailbox_admin_token";
+const MASTER_ADMIN_SESSION_KEY = "socio_master_admin_token";
 
 export default function MailboxPage() {
   const params = useParams();
@@ -262,6 +263,7 @@ export default function MailboxPage() {
       setIsAuthenticated(true);
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(MAILBOX_SESSION_KEY, token);
+        window.sessionStorage.setItem(MASTER_ADMIN_SESSION_KEY, token);
       }
       await fetchMailList("inbox", token, { resetHistory: true });
     },
@@ -271,12 +273,16 @@ export default function MailboxPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const savedToken = window.sessionStorage.getItem(MAILBOX_SESSION_KEY) || "";
+    const savedToken =
+      window.sessionStorage.getItem(MAILBOX_SESSION_KEY) ||
+      window.sessionStorage.getItem(MASTER_ADMIN_SESSION_KEY) ||
+      "";
     if (!savedToken) return;
 
     setPasswordInput(savedToken);
     void loginWithToken(savedToken).catch(() => {
       window.sessionStorage.removeItem(MAILBOX_SESSION_KEY);
+      window.sessionStorage.removeItem(MASTER_ADMIN_SESSION_KEY);
       setAdminToken("");
       setIsAuthenticated(false);
     });
@@ -297,6 +303,7 @@ export default function MailboxPage() {
     } catch (error) {
       if (typeof window !== "undefined") {
         window.sessionStorage.removeItem(MAILBOX_SESSION_KEY);
+        window.sessionStorage.removeItem(MASTER_ADMIN_SESSION_KEY);
       }
       setAdminToken("");
       setIsAuthenticated(false);
@@ -311,6 +318,7 @@ export default function MailboxPage() {
     setAuthError("");
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem(MAILBOX_SESSION_KEY);
+      window.sessionStorage.removeItem(MASTER_ADMIN_SESSION_KEY);
     }
   };
 

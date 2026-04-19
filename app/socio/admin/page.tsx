@@ -92,6 +92,9 @@ type QuickLink = {
 };
 
 const HUB_SESSION_KEY = "socio_admin_hub_token";
+const MASTER_ADMIN_SESSION_KEY = "socio_master_admin_token";
+const PANEL_SESSION_KEY = "socio_panel_admin_token";
+const MAILBOX_SESSION_KEY = "socio_mailbox_admin_token";
 
 const quickLinks: QuickLink[] = [
   {
@@ -555,6 +558,27 @@ export default function SocioAdminHubPage() {
     [overview]
   );
 
+  const primeRedirectSession = (module: QuickLinkModule) => {
+    if (!token || typeof window === "undefined") return;
+
+    window.sessionStorage.setItem(MASTER_ADMIN_SESSION_KEY, token);
+
+    if (module === "panel") {
+      window.sessionStorage.setItem(PANEL_SESSION_KEY, token);
+      return;
+    }
+
+    if (module === "mailbox") {
+      window.sessionStorage.setItem(MAILBOX_SESSION_KEY, token);
+      return;
+    }
+
+    if (module === "internDashboard") {
+      window.localStorage.setItem("interns_token", token);
+      window.localStorage.setItem("interns_role", "admin");
+    }
+  };
+
   const fetchOverview = async (adminToken: string) => {
     setIsLoading(true);
     setAuthError("");
@@ -584,6 +608,7 @@ export default function SocioAdminHubPage() {
       setIsAuthenticated(true);
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(HUB_SESSION_KEY, adminToken);
+        window.sessionStorage.setItem(MASTER_ADMIN_SESSION_KEY, adminToken);
       }
     } catch (error) {
       setOverview(null);
@@ -591,6 +616,7 @@ export default function SocioAdminHubPage() {
       setIsAuthenticated(false);
       if (typeof window !== "undefined") {
         window.sessionStorage.removeItem(HUB_SESSION_KEY);
+        window.sessionStorage.removeItem(MASTER_ADMIN_SESSION_KEY);
       }
       setAuthError(error instanceof Error ? error.message : "Could not load admin overview.");
     } finally {
@@ -624,6 +650,11 @@ export default function SocioAdminHubPage() {
     setAuthError("");
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem(HUB_SESSION_KEY);
+      window.sessionStorage.removeItem(MASTER_ADMIN_SESSION_KEY);
+      window.sessionStorage.removeItem(PANEL_SESSION_KEY);
+      window.sessionStorage.removeItem(MAILBOX_SESSION_KEY);
+      window.localStorage.removeItem("interns_token");
+      window.localStorage.removeItem("interns_role");
     }
   };
 
@@ -639,10 +670,7 @@ export default function SocioAdminHubPage() {
               ADMIN HUB
             </span>
           </div>
-          <h1 className="text-2xl font-black text-slate-900">SOCIO Command Deck</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Mission control for accounts, mailbox, interns, and careers.
-          </p>
+          <h1 className="text-2xl font-black text-slate-900">Master Admin</h1>
 
           <form onSubmit={handleLogin} className="mt-6 space-y-4">
             <input
@@ -690,10 +718,7 @@ export default function SocioAdminHubPage() {
             <div className="flex items-center gap-3">
               <Image src="/socio.svg" alt="SOCIO" width={120} height={32} />
               <div>
-                <h1 className="text-2xl font-black tracking-tight text-slate-900">SOCIO Mission Control</h1>
-                <p className="text-sm text-slate-600">
-                  God-view command center for every SOCIO surface
-                </p>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900">Master Admin</h1>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -807,6 +832,7 @@ export default function SocioAdminHubPage() {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={() => primeRedirectSession(link.module)}
                 className="group relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-[#154CB3]/50 hover:bg-white hover:shadow-sm"
               >
                 <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-blue-100/70 blur-2xl transition group-hover:bg-blue-200/80" />

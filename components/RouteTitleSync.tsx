@@ -9,7 +9,7 @@ const HOME_TITLE =
 const TITLE_OVERRIDES: Record<string, string> = {
   "/mail": "SOCIO Mail",
   "/socio": "SOCIO",
-  "/socio/admin": "SOCIO Admin Hub",
+  "/socio/admin": "Master Admin",
   "/socio/accounts": "SOCIO Accounts",
   "/socio/panel": "SOCIO Admin Panel",
   "/socio/interns": "SOCIO Interns",

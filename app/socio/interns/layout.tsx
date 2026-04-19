@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Navbar from "@/components/interns/Navbar";
 
+const MASTER_ADMIN_SESSION_KEY = "socio_master_admin_token";
+
 interface AuthUser {
   email: string;
   fullName: string;
@@ -26,10 +28,18 @@ export default function InternsLayout({
     // Check for existing session token
     const token = localStorage.getItem("interns_token");
     const role = localStorage.getItem("interns_role");
-    
+
     if (token) {
       verifyToken(token, role);
     } else if (!pathname.includes("/login")) {
+      const masterAdminToken = sessionStorage.getItem(MASTER_ADMIN_SESSION_KEY) || "";
+      if (masterAdminToken) {
+        localStorage.setItem("interns_token", masterAdminToken);
+        localStorage.setItem("interns_role", "admin");
+        verifyToken(masterAdminToken, "admin");
+        return;
+      }
+
       // Redirect to login if no token and not on login page
       router.push("/socio/interns/login");
     } else {
