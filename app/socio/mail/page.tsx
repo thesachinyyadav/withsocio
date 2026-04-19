@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import MailboxPage from "../socio/careers/[campusId]/mailbox/page";
+import MailboxPage from "../careers/[campusId]/mailbox/page";
 
 export const metadata: Metadata = {
   title: "SOCIO Mail",

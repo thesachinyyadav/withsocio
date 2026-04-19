@@ -7,7 +7,7 @@ const HOME_TITLE =
   "WSOCIO - Creative Agency | Video Production, Personal Branding & Web Development";
 
 const TITLE_OVERRIDES: Record<string, string> = {
-  "/mail": "SOCIO Mail",
+  "/socio/mail": "SOCIO Mail",
   "/socio": "SOCIO",
   "/socio/admin": "Master Admin",
   "/socio/accounts": "SOCIO Accounts",

@@ -7,7 +7,7 @@ const supabaseAdmin = createClient(
 );
 
 const getNotifySecret = () => process.env.MAILBOX_NOTIFY_SECRET || "";
-const DEFAULT_MAILBOX_PATH = "/mail";
+const DEFAULT_MAILBOX_PATH = "/socio/mail";
 
 const getMailboxUrl = (request: Request) => {
   const configuredUrl = (process.env.MAILBOX_APP_URL || "").trim();

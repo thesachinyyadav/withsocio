@@ -8,7 +8,7 @@ const supabaseAdmin = createClient(
 
 const getAdminPassword = () =>
   process.env.ADMIN_DASHBOARD_PASSWORD || "socio2026";
-const DEFAULT_MAILBOX_PATH = "/mail";
+const DEFAULT_MAILBOX_PATH = "/socio/mail";
 
 const getMailboxUrl = (request: Request) => {
   const configuredUrl = (process.env.MAILBOX_APP_URL || "").trim();

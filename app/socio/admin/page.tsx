@@ -109,7 +109,7 @@ const quickLinks: QuickLink[] = [
   {
     title: "SOCIO Mail",
     description: "Inbox, sent emails, compose and state",
-    href: "/mail",
+    href: "/socio/mail",
     module: "mailbox",
   },
   {
@@ -702,7 +702,7 @@ export default function SocioAdminHubPage() {
             <Link href="/socio/accounts" className="font-semibold text-[#154CB3] hover:underline">
               Accounts
             </Link>
-            <Link href="/mail" className="font-semibold text-[#154CB3] hover:underline">
+            <Link href="/socio/mail" className="font-semibold text-[#154CB3] hover:underline">
               Mailbox
             </Link>
           </div>
