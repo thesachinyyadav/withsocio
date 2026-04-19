@@ -27,7 +27,32 @@ function isAllowedPath(pathname: string): boolean {
   return ALLOWED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
+function getCanonicalRedirect(request: NextRequest): NextResponse | null {
+  const { pathname, search } = request.nextUrl;
+
+  if (pathname === "/mail" || pathname.startsWith("/mail/")) {
+    const target = request.nextUrl.clone();
+    target.pathname = "/socio/mail";
+    target.search = search;
+    return NextResponse.redirect(target, 308);
+  }
+
+  if (/^\/socio\/careers\/[^/]+\/mailbox(?:\/.*)?$/.test(pathname)) {
+    const target = request.nextUrl.clone();
+    target.pathname = "/socio/mail";
+    target.search = search;
+    return NextResponse.redirect(target, 308);
+  }
+
+  return null;
+}
+
 export function middleware(request: NextRequest) {
+  const canonicalRedirect = getCanonicalRedirect(request);
+  if (canonicalRedirect) {
+    return canonicalRedirect;
+  }
+
   if (!MAINTENANCE_MODE) {
     return NextResponse.next();
   }
