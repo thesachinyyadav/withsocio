@@ -7,6 +7,7 @@ const ALLOWED_PREFIXES = [
   "/mail",
   "/socio/careers",
   "/socio/interns",
+  "/socio/admin",
   "/socio/accounts",
   "/socio/panel",
   "/api/apply",
